@@ -1,0 +1,384 @@
+{
+  "_meta": {
+    "models": {
+      "approvals": "A request for human review and sign-off on agent-generated work or deliverables. Enforces the human-in-the-loop requirement before work goes out.",
+      "tasks": "Individual action items that make up a work order. Represents the smallest unit of work that can be assigned and tracked.",
+      "blockers": "Tasks or work orders flagged with blocking issues that prevent progress (missing info, waiting on someone, stuck).",
+      "upcomingDeadlines": "Work orders with due dates in the next 7 days that need attention to stay on schedule.",
+      "activities": "Recent actions and events in the system that track changes to work items, keeping users informed of what happened since they last logged in.",
+      "dailySummary": "AI-generated overview from PM Copilot highlighting priorities and what needs to happen today.",
+      "metrics": "Dashboard statistics showing tasks completed, approvals pending, and hours logged."
+    },
+    "relationships": [
+      "Each Approval references a Work Order or Deliverable that needs review",
+      "Each Task belongs to a Work Order and references its Project context",
+      "Blockers are Tasks or Work Orders with special 'blocked' status flags",
+      "Activities track recent changes to any work item (Projects, Work Orders, Tasks, Deliverables)",
+      "Upcoming Deadlines pull from Work Orders with due dates in the next 7 days"
+    ]
+  },
+  "approvals": [
+    {
+      "id": "apr-001",
+      "type": "deliverable",
+      "title": "Website Redesign - Final Mockups",
+      "description": "PM Copilot has compiled final mockups for the Acme Corp website redesign based on client feedback from previous rounds.",
+      "createdBy": "PM Copilot",
+      "createdAt": "2024-01-15T09:30:00Z",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand",
+      "priority": "high",
+      "dueDate": "2024-01-16T17:00:00Z"
+    },
+    {
+      "id": "apr-002",
+      "type": "estimate",
+      "title": "Q1 Marketing Campaign - Time Estimate",
+      "description": "Analyst agent has estimated 80 hours for the Q1 marketing campaign work order based on historical data and scope.",
+      "createdBy": "Analyst",
+      "createdAt": "2024-01-15T14:20:00Z",
+      "workOrderId": "wo-205",
+      "workOrderTitle": "Q1 Marketing Campaign",
+      "projectTitle": "TechStart Marketing",
+      "priority": "medium",
+      "dueDate": "2024-01-17T12:00:00Z"
+    },
+    {
+      "id": "apr-003",
+      "type": "draft",
+      "title": "Monthly Status Report - December",
+      "description": "Copywriter agent has drafted the monthly status report for the BuildRight Construction project.",
+      "createdBy": "Copywriter",
+      "createdAt": "2024-01-14T16:45:00Z",
+      "workOrderId": "wo-312",
+      "workOrderTitle": "Monthly Reporting",
+      "projectTitle": "BuildRight Construction",
+      "priority": "medium",
+      "dueDate": "2024-01-16T09:00:00Z"
+    },
+    {
+      "id": "apr-004",
+      "type": "deliverable",
+      "title": "API Integration Documentation",
+      "description": "QA agent has completed testing and documentation for the API integration deliverable.",
+      "createdBy": "QA Agent",
+      "createdAt": "2024-01-15T11:15:00Z",
+      "workOrderId": "wo-178",
+      "workOrderTitle": "Third-party API Integration",
+      "projectTitle": "DataFlow Platform",
+      "priority": "high",
+      "dueDate": "2024-01-16T14:00:00Z"
+    },
+    {
+      "id": "apr-005",
+      "type": "draft",
+      "title": "Client Proposal - E-commerce Platform",
+      "description": "PM Copilot has drafted a proposal for the new e-commerce platform project based on client discovery call notes.",
+      "createdBy": "PM Copilot",
+      "createdAt": "2024-01-15T08:00:00Z",
+      "workOrderId": "wo-401",
+      "workOrderTitle": "Project Proposal",
+      "projectTitle": "ShopLocal E-commerce",
+      "priority": "low",
+      "dueDate": "2024-01-18T17:00:00Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-001",
+      "title": "Review wireframes with client",
+      "description": "Schedule and conduct wireframe review meeting with Acme Corp stakeholders",
+      "status": "todo",
+      "priority": "high",
+      "dueDate": "2024-01-15T15:00:00Z",
+      "isOverdue": true,
+      "assignedTo": "You",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand",
+      "estimatedHours": 2
+    },
+    {
+      "id": "task-002",
+      "title": "Finalize Q1 budget allocation",
+      "description": "Review and approve budget distribution across marketing channels for Q1",
+      "status": "in_progress",
+      "priority": "high",
+      "dueDate": "2024-01-15T17:00:00Z",
+      "isOverdue": false,
+      "assignedTo": "You",
+      "workOrderId": "wo-205",
+      "workOrderTitle": "Q1 Marketing Campaign",
+      "projectTitle": "TechStart Marketing",
+      "estimatedHours": 1.5
+    },
+    {
+      "id": "task-003",
+      "title": "Update project timeline in client portal",
+      "description": "Sync latest project milestones and deadlines to BuildRight's client dashboard",
+      "status": "todo",
+      "priority": "medium",
+      "dueDate": "2024-01-15T12:00:00Z",
+      "isOverdue": true,
+      "assignedTo": "You",
+      "workOrderId": "wo-312",
+      "workOrderTitle": "Monthly Reporting",
+      "projectTitle": "BuildRight Construction",
+      "estimatedHours": 0.5
+    },
+    {
+      "id": "task-004",
+      "title": "Test API authentication flow",
+      "description": "Validate OAuth implementation and error handling for DataFlow API integration",
+      "status": "todo",
+      "priority": "high",
+      "dueDate": "2024-01-15T16:00:00Z",
+      "isOverdue": false,
+      "assignedTo": "You",
+      "workOrderId": "wo-178",
+      "workOrderTitle": "Third-party API Integration",
+      "projectTitle": "DataFlow Platform",
+      "estimatedHours": 3
+    },
+    {
+      "id": "task-005",
+      "title": "Prepare discovery call notes",
+      "description": "Compile and organize notes from initial client discovery session",
+      "status": "todo",
+      "priority": "low",
+      "dueDate": "2024-01-15T14:00:00Z",
+      "isOverdue": false,
+      "assignedTo": "You",
+      "workOrderId": "wo-401",
+      "workOrderTitle": "Project Proposal",
+      "projectTitle": "ShopLocal E-commerce",
+      "estimatedHours": 1
+    },
+    {
+      "id": "task-006",
+      "title": "Sign off on brand guidelines",
+      "description": "Final approval needed on updated brand guidelines document before distribution",
+      "status": "todo",
+      "priority": "medium",
+      "dueDate": "2024-01-14T17:00:00Z",
+      "isOverdue": true,
+      "assignedTo": "You",
+      "workOrderId": "wo-102",
+      "workOrderTitle": "Brand Guidelines Update",
+      "projectTitle": "Acme Corp Rebrand",
+      "estimatedHours": 0.5
+    }
+  ],
+  "blockers": [
+    {
+      "id": "block-001",
+      "type": "task",
+      "title": "Design system component library setup",
+      "reason": "waiting_on_external",
+      "blockerDetails": "Waiting on design team to finalize color tokens and spacing scale",
+      "blockedSince": "2024-01-12T10:00:00Z",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand",
+      "priority": "high",
+      "assignedTo": "Sarah Chen"
+    },
+    {
+      "id": "block-002",
+      "type": "work_order",
+      "title": "Mobile App Development",
+      "reason": "missing_information",
+      "blockerDetails": "Client hasn't provided final requirements for push notification preferences",
+      "blockedSince": "2024-01-10T14:30:00Z",
+      "workOrderId": "wo-450",
+      "workOrderTitle": "Mobile App Development",
+      "projectTitle": "ShopLocal E-commerce",
+      "priority": "high",
+      "assignedTo": "Dev Team"
+    },
+    {
+      "id": "block-003",
+      "type": "task",
+      "title": "Database migration script",
+      "reason": "technical_issue",
+      "blockerDetails": "Production database schema conflict - needs DevOps review before proceeding",
+      "blockedSince": "2024-01-13T09:15:00Z",
+      "workOrderId": "wo-178",
+      "workOrderTitle": "Third-party API Integration",
+      "projectTitle": "DataFlow Platform",
+      "priority": "medium",
+      "assignedTo": "Marcus Johnson"
+    },
+    {
+      "id": "block-004",
+      "type": "task",
+      "title": "Social media content calendar",
+      "reason": "waiting_on_approval",
+      "blockerDetails": "Waiting on client approval for January content themes before scheduling posts",
+      "blockedSince": "2024-01-11T11:00:00Z",
+      "workOrderId": "wo-205",
+      "workOrderTitle": "Q1 Marketing Campaign",
+      "projectTitle": "TechStart Marketing",
+      "priority": "low",
+      "assignedTo": "Content Team"
+    }
+  ],
+  "upcomingDeadlines": [
+    {
+      "id": "wo-101",
+      "title": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand",
+      "dueDate": "2024-01-18T17:00:00Z",
+      "daysUntilDue": 3,
+      "status": "in_progress",
+      "progress": 65,
+      "priority": "high",
+      "assignedTeam": ["Sarah Chen", "PM Copilot"]
+    },
+    {
+      "id": "wo-178",
+      "title": "Third-party API Integration",
+      "projectTitle": "DataFlow Platform",
+      "dueDate": "2024-01-19T12:00:00Z",
+      "daysUntilDue": 4,
+      "status": "in_progress",
+      "progress": 80,
+      "priority": "high",
+      "assignedTeam": ["Marcus Johnson", "QA Agent"]
+    },
+    {
+      "id": "wo-312",
+      "title": "Monthly Reporting",
+      "projectTitle": "BuildRight Construction",
+      "dueDate": "2024-01-16T09:00:00Z",
+      "daysUntilDue": 1,
+      "status": "in_progress",
+      "progress": 90,
+      "priority": "medium",
+      "assignedTeam": ["You", "Copywriter"]
+    },
+    {
+      "id": "wo-205",
+      "title": "Q1 Marketing Campaign",
+      "projectTitle": "TechStart Marketing",
+      "dueDate": "2024-01-20T17:00:00Z",
+      "daysUntilDue": 5,
+      "status": "planning",
+      "progress": 35,
+      "priority": "medium",
+      "assignedTeam": ["Content Team", "Analyst"]
+    },
+    {
+      "id": "wo-401",
+      "title": "Project Proposal",
+      "projectTitle": "ShopLocal E-commerce",
+      "dueDate": "2024-01-22T17:00:00Z",
+      "daysUntilDue": 7,
+      "status": "draft",
+      "progress": 45,
+      "priority": "low",
+      "assignedTeam": ["You", "PM Copilot"]
+    }
+  ],
+  "activities": [
+    {
+      "id": "act-001",
+      "type": "task_completed",
+      "title": "Logo design finalized",
+      "description": "Sarah Chen marked 'Logo design variations' as complete",
+      "timestamp": "2024-01-15T10:45:00Z",
+      "user": "Sarah Chen",
+      "workOrderTitle": "Brand Identity Design",
+      "projectTitle": "Acme Corp Rebrand"
+    },
+    {
+      "id": "act-002",
+      "type": "approval_created",
+      "title": "New approval request",
+      "description": "PM Copilot submitted 'Website Redesign - Final Mockups' for your review",
+      "timestamp": "2024-01-15T09:30:00Z",
+      "user": "PM Copilot",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand"
+    },
+    {
+      "id": "act-003",
+      "type": "comment_added",
+      "title": "Client feedback received",
+      "description": "New comment on 'Q1 Marketing Campaign': 'Can we add TikTok to the channel mix?'",
+      "timestamp": "2024-01-15T08:15:00Z",
+      "user": "Client",
+      "workOrderTitle": "Q1 Marketing Campaign",
+      "projectTitle": "TechStart Marketing"
+    },
+    {
+      "id": "act-004",
+      "type": "deliverable_submitted",
+      "title": "Deliverable ready for review",
+      "description": "QA Agent submitted 'API Integration Documentation' deliverable",
+      "timestamp": "2024-01-15T11:15:00Z",
+      "user": "QA Agent",
+      "workOrderTitle": "Third-party API Integration",
+      "projectTitle": "DataFlow Platform"
+    },
+    {
+      "id": "act-005",
+      "type": "blocker_flagged",
+      "title": "New blocker reported",
+      "description": "Marcus Johnson flagged 'Database migration script' as blocked due to technical issue",
+      "timestamp": "2024-01-13T09:15:00Z",
+      "user": "Marcus Johnson",
+      "workOrderTitle": "Third-party API Integration",
+      "projectTitle": "DataFlow Platform"
+    },
+    {
+      "id": "act-006",
+      "type": "task_started",
+      "title": "Work started",
+      "description": "You started working on 'Finalize Q1 budget allocation'",
+      "timestamp": "2024-01-15T13:00:00Z",
+      "user": "You",
+      "workOrderTitle": "Q1 Marketing Campaign",
+      "projectTitle": "TechStart Marketing"
+    },
+    {
+      "id": "act-007",
+      "type": "time_logged",
+      "title": "Time entry added",
+      "description": "Sarah Chen logged 3.5 hours on 'Logo design variations'",
+      "timestamp": "2024-01-15T10:45:00Z",
+      "user": "Sarah Chen",
+      "workOrderTitle": "Brand Identity Design",
+      "projectTitle": "Acme Corp Rebrand"
+    },
+    {
+      "id": "act-008",
+      "type": "work_order_created",
+      "title": "New work order",
+      "description": "Dispatcher created 'User Testing Round 2' work order",
+      "timestamp": "2024-01-14T16:00:00Z",
+      "user": "Dispatcher",
+      "workOrderTitle": "User Testing Round 2",
+      "projectTitle": "DataFlow Platform"
+    }
+  ],
+  "dailySummary": {
+    "generatedAt": "2024-01-15T07:00:00Z",
+    "summary": "Good morning! You have 3 overdue items that need immediate attention, and 5 approvals waiting in your queue. The Website Redesign Phase 2 deadline is approaching in 3 days—consider reviewing those final mockups today. Two high-priority tasks (wireframe review and API testing) should be completed by end of day. Marcus's database migration is blocked and may need your input to unblock.",
+    "priorities": [
+      "Review and approve website mockups (due tomorrow)",
+      "Complete overdue wireframe review with Acme Corp",
+      "Address database migration blocker with DevOps",
+      "Finalize Q1 marketing budget today"
+    ],
+    "suggestedFocus": "Start with the overdue wireframe review—it's blocking Sarah's component library work. Then tackle the approval queue while you have momentum."
+  },
+  "metrics": {
+    "tasksCompletedToday": 2,
+    "tasksCompletedThisWeek": 8,
+    "approvalsPending": 5,
+    "hoursLoggedToday": 3.5,
+    "activeBlockers": 4
+  }
+}

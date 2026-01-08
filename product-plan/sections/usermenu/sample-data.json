@@ -1,0 +1,241 @@
+{
+  "_meta": {
+    "models": {
+      "user": "The current user's profile information including name, contact details, and preferences that apply across all organizations.",
+      "organizations": "Organizations the user belongs to, each with its own workspace, team, and subscription plan.",
+      "notificationPreferences": "User's global notification settings that control how they receive alerts across email, push, and in-app channels.",
+      "appearanceSettings": "User's interface customization preferences including theme, layout density, and default start page.",
+      "sessions": "Active login sessions across different devices and browsers where the user is currently signed in.",
+      "connectedApps": "Third-party services (like Google, Slack, etc.) that the user has authorized to access their account.",
+      "apiKeys": "Personal access tokens the user has generated for API access to their account.",
+      "plans": "Available subscription tiers with features and pricing for creating or upgrading organizations."
+    },
+    "relationships": [
+      "Each User belongs to multiple Organizations with different roles (Owner, Admin, Member)",
+      "User has one set of Notification Preferences that applies globally across all organizations",
+      "User has one set of Appearance Settings that applies globally across all organizations",
+      "User can have multiple active Sessions on different devices",
+      "User can connect multiple third-party apps via Connected Apps",
+      "User can create multiple API Keys for programmatic access"
+    ]
+  },
+  "user": {
+    "id": "usr-001",
+    "displayName": "Jane Doe",
+    "email": "jane@example.com",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
+    "phone": "+1 (555) 123-4567",
+    "timezone": "America/New_York",
+    "language": "en-US"
+  },
+  "organizations": [
+    {
+      "id": "org-001",
+      "name": "Acme Agency",
+      "slug": "acme-agency",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Acme",
+      "plan": "Pro",
+      "role": "Owner",
+      "memberCount": 12,
+      "lastActive": "2026-01-07T14:30:00Z",
+      "isCurrent": true
+    },
+    {
+      "id": "org-002",
+      "name": "Dev Studio LLC",
+      "slug": "dev-studio-llc",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Dev",
+      "plan": "Starter",
+      "role": "Admin",
+      "memberCount": 5,
+      "lastActive": "2026-01-06T09:15:00Z",
+      "isCurrent": false
+    },
+    {
+      "id": "org-003",
+      "name": "Personal Projects",
+      "slug": "personal-projects",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Personal",
+      "plan": "Free",
+      "role": "Owner",
+      "memberCount": 1,
+      "lastActive": "2026-01-05T16:45:00Z",
+      "isCurrent": false
+    }
+  ],
+  "notificationPreferences": {
+    "assignedToMe": {
+      "email": true,
+      "push": true,
+      "inApp": true
+    },
+    "mentioned": {
+      "email": true,
+      "push": true,
+      "inApp": true
+    },
+    "approvalRequested": {
+      "email": true,
+      "push": true,
+      "inApp": true
+    },
+    "taskDueSoon": {
+      "email": false,
+      "push": true,
+      "inApp": true
+    },
+    "projectUpdates": {
+      "email": false,
+      "push": false,
+      "inApp": true
+    },
+    "agentCompletedWork": {
+      "email": false,
+      "push": false,
+      "inApp": true
+    },
+    "weeklyDigest": {
+      "email": true,
+      "push": false,
+      "inApp": false
+    },
+    "quietHours": {
+      "enabled": true,
+      "startTime": "22:00",
+      "endTime": "08:00",
+      "timezone": "America/New_York"
+    }
+  },
+  "appearanceSettings": {
+    "theme": "system",
+    "density": "comfortable",
+    "sidebarDefault": "expanded",
+    "startPage": "today"
+  },
+  "sessions": [
+    {
+      "id": "sess-001",
+      "device": "MacBook Pro",
+      "browser": "Chrome 131",
+      "location": "New York, NY",
+      "ipAddress": "192.168.1.100",
+      "lastActive": "2026-01-07T14:30:00Z",
+      "isCurrent": true
+    },
+    {
+      "id": "sess-002",
+      "device": "iPhone 15 Pro",
+      "browser": "Safari (iOS)",
+      "location": "New York, NY",
+      "ipAddress": "192.168.1.105",
+      "lastActive": "2026-01-07T12:15:00Z",
+      "isCurrent": false
+    }
+  ],
+  "connectedApps": [
+    {
+      "id": "app-001",
+      "name": "Google Workspace",
+      "provider": "google",
+      "connectedAt": "2025-11-15T10:00:00Z",
+      "permissions": ["email", "calendar", "drive"],
+      "avatarUrl": "https://www.google.com/favicon.ico"
+    },
+    {
+      "id": "app-002",
+      "name": "Slack",
+      "provider": "slack",
+      "connectedAt": "2025-12-01T14:30:00Z",
+      "permissions": ["messages", "channels", "notifications"],
+      "avatarUrl": "https://slack.com/favicon.ico"
+    },
+    {
+      "id": "app-003",
+      "name": "GitHub",
+      "provider": "github",
+      "connectedAt": "2025-10-20T09:00:00Z",
+      "permissions": ["repos", "issues", "pull_requests"],
+      "avatarUrl": "https://github.com/favicon.ico"
+    }
+  ],
+  "apiKeys": [
+    {
+      "id": "key-001",
+      "name": "Production API",
+      "keyPreview": "labo_prod_***************xyz",
+      "createdAt": "2025-09-01T10:00:00Z",
+      "lastUsed": "2026-01-07T08:30:00Z",
+      "expiresAt": null
+    },
+    {
+      "id": "key-002",
+      "name": "Development Testing",
+      "keyPreview": "labo_dev_***************abc",
+      "createdAt": "2025-12-15T14:00:00Z",
+      "lastUsed": "2026-01-06T16:45:00Z",
+      "expiresAt": "2026-12-15T14:00:00Z"
+    }
+  ],
+  "plans": [
+    {
+      "id": "plan-free",
+      "name": "Free",
+      "price": 0,
+      "billingPeriod": "month",
+      "features": [
+        "1 team member",
+        "5 active projects",
+        "Basic AI agent (10 tasks/month)",
+        "Community support"
+      ],
+      "limits": {
+        "members": 1,
+        "projects": 5,
+        "aiTasksPerMonth": 10,
+        "storage": "1 GB"
+      }
+    },
+    {
+      "id": "plan-starter",
+      "name": "Starter",
+      "price": 29,
+      "billingPeriod": "month",
+      "features": [
+        "Up to 5 team members",
+        "Unlimited projects",
+        "Standard AI agents (100 tasks/month)",
+        "Email support",
+        "Basic integrations"
+      ],
+      "limits": {
+        "members": 5,
+        "projects": -1,
+        "aiTasksPerMonth": 100,
+        "storage": "50 GB"
+      },
+      "isPopular": false
+    },
+    {
+      "id": "plan-pro",
+      "name": "Pro",
+      "price": 99,
+      "billingPeriod": "month",
+      "features": [
+        "Unlimited team members",
+        "Unlimited projects",
+        "Advanced AI agents (500 tasks/month)",
+        "Priority support",
+        "All integrations",
+        "Custom SOPs and templates",
+        "Advanced reporting"
+      ],
+      "limits": {
+        "members": -1,
+        "projects": -1,
+        "aiTasksPerMonth": 500,
+        "storage": "500 GB"
+      },
+      "isPopular": true
+    }
+  ]
+}

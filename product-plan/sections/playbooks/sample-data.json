@@ -1,0 +1,755 @@
+{
+  "_meta": {
+    "models": {
+      "playbooks": "Reusable knowledge base items that guide how work gets done. Includes SOPs (step-by-step procedures), Checklists (task lists), Templates (pre-built structures), and Acceptance Criteria (definitions of 'done')."
+    },
+    "relationships": [
+      "Playbooks can be attached to Work Orders to provide guidance and structure",
+      "AI Agents reference Playbooks when executing work",
+      "Each Playbook tracks which Work Orders have used it via usedByWorkOrders"
+    ]
+  },
+  "playbooks": [
+    {
+      "id": "sop-001",
+      "type": "sop",
+      "name": "Client Onboarding Process",
+      "description": "Complete procedure for onboarding new clients from kickoff to first deliverable",
+      "triggerConditions": "When a new client signs a contract or project is won",
+      "steps": [
+        {
+          "id": "step-1",
+          "order": 1,
+          "title": "Schedule kickoff meeting",
+          "description": "Set up initial meeting with client stakeholders within 3 business days of contract signing",
+          "evidenceRequired": "calendar-invite",
+          "evidenceDescription": "Meeting invite with all stakeholders",
+          "assignedRole": "Project Manager"
+        },
+        {
+          "id": "step-2",
+          "order": 2,
+          "title": "Gather requirements",
+          "description": "Complete project brief template with client input during kickoff meeting",
+          "evidenceRequired": "document",
+          "evidenceDescription": "Completed project brief",
+          "assignedRole": "Project Manager"
+        },
+        {
+          "id": "step-3",
+          "order": 3,
+          "title": "Set up project workspace",
+          "description": "Create project in system, add team members, create initial work orders",
+          "evidenceRequired": "link",
+          "evidenceDescription": "Link to project workspace",
+          "assignedRole": "Project Manager"
+        },
+        {
+          "id": "step-4",
+          "order": 4,
+          "title": "Create project timeline",
+          "description": "Build milestone schedule with deliverable dates and client review points",
+          "evidenceRequired": "document",
+          "evidenceDescription": "Project timeline document",
+          "assignedRole": "Project Manager"
+        },
+        {
+          "id": "step-5",
+          "order": 5,
+          "title": "Send welcome package",
+          "description": "Email client with project access, timeline, team contacts, and next steps",
+          "evidenceRequired": "approval",
+          "evidenceDescription": "Client confirmation email",
+          "assignedRole": "Project Manager"
+        }
+      ],
+      "rolesInvolved": ["Project Manager", "Account Manager", "Team Lead"],
+      "estimatedTimeMinutes": 240,
+      "definitionOfDone": "Client has access to project workspace, timeline is approved, first work order is created and assigned",
+      "tags": ["onboarding", "client-management", "project-setup"],
+      "timesApplied": 47,
+      "lastUsed": "2024-01-15T14:30:00Z",
+      "createdBy": "usr-001",
+      "createdByName": "Sarah Chen",
+      "lastModified": "2024-01-10T09:15:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-123", "wo-145", "wo-198"]
+    },
+    {
+      "id": "sop-002",
+      "type": "sop",
+      "name": "Website Launch Procedure",
+      "description": "Step-by-step process for deploying a website from staging to production",
+      "triggerConditions": "When website development is complete and QA has passed",
+      "steps": [
+        {
+          "id": "step-1",
+          "order": 1,
+          "title": "Run final QA checks",
+          "description": "Complete QA checklist on staging environment, verify all functionality",
+          "evidenceRequired": "document",
+          "evidenceDescription": "Completed QA checklist with all items passed",
+          "assignedRole": "QA Lead"
+        },
+        {
+          "id": "step-2",
+          "order": 2,
+          "title": "Get client approval",
+          "description": "Send staging link to client for final review and sign-off",
+          "evidenceRequired": "approval",
+          "evidenceDescription": "Client approval email or comment",
+          "assignedRole": "Project Manager"
+        },
+        {
+          "id": "step-3",
+          "order": 3,
+          "title": "Backup production",
+          "description": "Create full backup of current production environment if replacing existing site",
+          "evidenceRequired": "link",
+          "evidenceDescription": "Backup confirmation or storage link",
+          "assignedRole": "Developer"
+        },
+        {
+          "id": "step-4",
+          "order": 4,
+          "title": "Deploy to production",
+          "description": "Push code to production server, verify DNS and SSL configuration",
+          "evidenceRequired": "link",
+          "evidenceDescription": "Live production URL",
+          "assignedRole": "Developer"
+        },
+        {
+          "id": "step-5",
+          "order": 5,
+          "title": "Run smoke tests",
+          "description": "Test critical paths on production: homepage, key forms, mobile responsiveness",
+          "evidenceRequired": "document",
+          "evidenceDescription": "Smoke test checklist completed",
+          "assignedRole": "QA Lead"
+        },
+        {
+          "id": "step-6",
+          "order": 6,
+          "title": "Monitor analytics setup",
+          "description": "Verify tracking codes firing correctly, confirm data in analytics dashboard",
+          "evidenceRequired": "screenshot",
+          "evidenceDescription": "Screenshot of analytics confirming data",
+          "assignedRole": "Developer"
+        },
+        {
+          "id": "step-7",
+          "order": 7,
+          "title": "Send launch notification",
+          "description": "Email client with live URL and next steps for monitoring and support",
+          "evidenceRequired": "approval",
+          "evidenceDescription": "Launch notification email sent",
+          "assignedRole": "Project Manager"
+        }
+      ],
+      "rolesInvolved": ["Developer", "QA Lead", "Project Manager"],
+      "estimatedTimeMinutes": 180,
+      "definitionOfDone": "Site is live on production URL, smoke tests pass, client is notified, analytics confirmed working",
+      "tags": ["deployment", "website", "launch", "qa"],
+      "timesApplied": 23,
+      "lastUsed": "2024-01-18T16:45:00Z",
+      "createdBy": "usr-003",
+      "createdByName": "Marcus Rodriguez",
+      "lastModified": "2023-12-20T11:30:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-167", "wo-201"]
+    },
+    {
+      "id": "sop-003",
+      "type": "sop",
+      "name": "Content Approval Workflow",
+      "description": "Process for reviewing and approving client-facing content before publication",
+      "triggerConditions": "When AI agent or team member creates content draft for client deliverable",
+      "steps": [
+        {
+          "id": "step-1",
+          "order": 1,
+          "title": "AI generates first draft",
+          "description": "Content AI agent creates initial draft based on brief and brand guidelines",
+          "evidenceRequired": "document",
+          "evidenceDescription": "Draft document",
+          "assignedRole": "Content AI Agent"
+        },
+        {
+          "id": "step-2",
+          "order": 2,
+          "title": "Internal review",
+          "description": "Content lead reviews for accuracy, tone, and brand alignment",
+          "evidenceRequired": "approval",
+          "evidenceDescription": "Internal approval with feedback",
+          "assignedRole": "Content Lead"
+        },
+        {
+          "id": "step-3",
+          "order": 3,
+          "title": "Incorporate feedback",
+          "description": "Make revisions based on internal review notes",
+          "evidenceRequired": "document",
+          "evidenceDescription": "Revised draft with changes tracked",
+          "assignedRole": "Content AI Agent"
+        },
+        {
+          "id": "step-4",
+          "order": 4,
+          "title": "Client review",
+          "description": "Send to client for feedback and approval",
+          "evidenceRequired": "approval",
+          "evidenceDescription": "Client approval or feedback",
+          "assignedRole": "Account Manager"
+        },
+        {
+          "id": "step-5",
+          "order": 5,
+          "title": "Final revisions",
+          "description": "Address client feedback and prepare final version",
+          "evidenceRequired": "document",
+          "evidenceDescription": "Final approved version",
+          "assignedRole": "Content Lead"
+        },
+        {
+          "id": "step-6",
+          "order": 6,
+          "title": "Mark as deliverable",
+          "description": "Move content to deliverables and update work order status",
+          "evidenceRequired": "link",
+          "evidenceDescription": "Link to completed deliverable",
+          "assignedRole": "Account Manager"
+        }
+      ],
+      "rolesInvolved": ["Content AI Agent", "Content Lead", "Account Manager"],
+      "estimatedTimeMinutes": 90,
+      "definitionOfDone": "Content is approved by both internal lead and client, marked as completed deliverable",
+      "tags": ["content", "approval", "ai-workflow", "deliverable"],
+      "timesApplied": 156,
+      "lastUsed": "2024-01-20T10:15:00Z",
+      "createdBy": "ai-agent-002",
+      "createdByName": "Process AI",
+      "lastModified": "2024-01-05T14:20:00Z",
+      "aiGenerated": true,
+      "usedByWorkOrders": ["wo-178", "wo-189", "wo-202", "wo-210"]
+    },
+    {
+      "id": "checklist-001",
+      "type": "checklist",
+      "name": "Pre-Launch QA Checklist",
+      "description": "Comprehensive quality assurance checks before any website or app goes live",
+      "items": [
+        {
+          "id": "item-1",
+          "label": "All pages load without errors",
+          "completed": false,
+          "assignedRole": "QA Lead",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-2",
+          "label": "Forms submit correctly and send notifications",
+          "completed": false,
+          "assignedRole": "QA Lead",
+          "evidenceRequired": true,
+          "evidenceDescription": "Test submission confirmation"
+        },
+        {
+          "id": "item-3",
+          "label": "Mobile responsive design works on iPhone and Android",
+          "completed": false,
+          "assignedRole": "QA Lead",
+          "evidenceRequired": true,
+          "evidenceDescription": "Mobile device screenshots"
+        },
+        {
+          "id": "item-4",
+          "label": "Browser testing completed (Chrome, Safari, Firefox, Edge)",
+          "completed": false,
+          "assignedRole": "QA Lead",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-5",
+          "label": "SEO meta tags present on all pages",
+          "completed": false,
+          "assignedRole": "Developer",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-6",
+          "label": "Analytics tracking installed and firing",
+          "completed": false,
+          "assignedRole": "Developer",
+          "evidenceRequired": true,
+          "evidenceDescription": "Analytics dashboard showing events"
+        },
+        {
+          "id": "item-7",
+          "label": "SSL certificate active and valid",
+          "completed": false,
+          "assignedRole": "Developer",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-8",
+          "label": "404 page designed and functional",
+          "completed": false,
+          "assignedRole": "QA Lead",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-9",
+          "label": "Performance: PageSpeed score 90+",
+          "completed": false,
+          "assignedRole": "Developer",
+          "evidenceRequired": true,
+          "evidenceDescription": "PageSpeed Insights screenshot"
+        },
+        {
+          "id": "item-10",
+          "label": "Accessibility: WCAG AA compliance verified",
+          "completed": false,
+          "assignedRole": "QA Lead",
+          "evidenceRequired": true,
+          "evidenceDescription": "Accessibility audit report"
+        }
+      ],
+      "tags": ["qa", "website", "launch", "testing"],
+      "timesApplied": 31,
+      "lastUsed": "2024-01-19T13:00:00Z",
+      "createdBy": "usr-004",
+      "createdByName": "Alex Kim",
+      "lastModified": "2023-12-15T16:45:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-145", "wo-201"]
+    },
+    {
+      "id": "checklist-002",
+      "type": "checklist",
+      "name": "New Project Kickoff Checklist",
+      "description": "Essential items to complete when starting any new client project",
+      "items": [
+        {
+          "id": "item-1",
+          "label": "Project created in system with correct client",
+          "completed": false,
+          "assignedRole": "Project Manager",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-2",
+          "label": "Team members added and notified",
+          "completed": false,
+          "assignedRole": "Project Manager",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-3",
+          "label": "Project brief completed with client",
+          "completed": false,
+          "assignedRole": "Project Manager",
+          "evidenceRequired": true,
+          "evidenceDescription": "Completed brief document"
+        },
+        {
+          "id": "item-4",
+          "label": "Timeline and milestones defined",
+          "completed": false,
+          "assignedRole": "Project Manager",
+          "evidenceRequired": true,
+          "evidenceDescription": "Project timeline"
+        },
+        {
+          "id": "item-5",
+          "label": "Communication channels set up (Slack, email)",
+          "completed": false,
+          "assignedRole": "Project Manager",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-6",
+          "label": "First 3 work orders created",
+          "completed": false,
+          "assignedRole": "Project Manager",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-7",
+          "label": "Client access and logins provided",
+          "completed": false,
+          "assignedRole": "Account Manager",
+          "evidenceRequired": false
+        }
+      ],
+      "tags": ["project-setup", "onboarding", "kickoff"],
+      "timesApplied": 42,
+      "lastUsed": "2024-01-17T09:30:00Z",
+      "createdBy": "usr-001",
+      "createdByName": "Sarah Chen",
+      "lastModified": "2023-11-28T10:00:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-123", "wo-198"]
+    },
+    {
+      "id": "checklist-003",
+      "type": "checklist",
+      "name": "Brand Asset Collection",
+      "description": "Checklist for gathering all necessary brand materials from a new client",
+      "items": [
+        {
+          "id": "item-1",
+          "label": "Logo files (SVG, PNG, high-res)",
+          "completed": false,
+          "assignedRole": "Designer",
+          "evidenceRequired": true,
+          "evidenceDescription": "Logo file package"
+        },
+        {
+          "id": "item-2",
+          "label": "Brand colors (hex codes)",
+          "completed": false,
+          "assignedRole": "Designer",
+          "evidenceRequired": true,
+          "evidenceDescription": "Color palette document"
+        },
+        {
+          "id": "item-3",
+          "label": "Typography (fonts and usage guidelines)",
+          "completed": false,
+          "assignedRole": "Designer",
+          "evidenceRequired": true,
+          "evidenceDescription": "Font files or font list"
+        },
+        {
+          "id": "item-4",
+          "label": "Brand guidelines document (if exists)",
+          "completed": false,
+          "assignedRole": "Designer",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-5",
+          "label": "Example designs or inspiration",
+          "completed": false,
+          "assignedRole": "Designer",
+          "evidenceRequired": false
+        },
+        {
+          "id": "item-6",
+          "label": "Photography/imagery assets",
+          "completed": false,
+          "assignedRole": "Designer",
+          "evidenceRequired": false
+        }
+      ],
+      "tags": ["design", "branding", "assets", "onboarding"],
+      "timesApplied": 38,
+      "lastUsed": "2024-01-16T14:15:00Z",
+      "createdBy": "usr-005",
+      "createdByName": "Taylor Brooks",
+      "lastModified": "2023-12-01T11:20:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-123", "wo-145"]
+    },
+    {
+      "id": "template-001",
+      "type": "template",
+      "templateType": "project",
+      "name": "Website Redesign Project",
+      "description": "Complete project template for a standard website redesign engagement",
+      "structure": {
+        "milestones": [
+          {
+            "name": "Discovery & Planning",
+            "durationDays": 10,
+            "workOrders": ["Kickoff Meeting", "Brand Asset Collection", "Content Audit", "Sitemap & Strategy"]
+          },
+          {
+            "name": "Design",
+            "durationDays": 15,
+            "workOrders": ["Homepage Design", "Interior Page Designs", "Mobile Responsive Design", "Client Review & Revisions"]
+          },
+          {
+            "name": "Development",
+            "durationDays": 20,
+            "workOrders": ["Frontend Development", "CMS Integration", "Forms & Functionality", "Browser Testing"]
+          },
+          {
+            "name": "Launch",
+            "durationDays": 5,
+            "workOrders": ["QA & Testing", "Client Training", "Staging Review", "Production Deployment"]
+          }
+        ],
+        "defaultTeamRoles": ["Project Manager", "Designer", "Developer", "QA Lead"],
+        "estimatedTotalDays": 50
+      },
+      "tags": ["website", "redesign", "project-template"],
+      "timesApplied": 18,
+      "lastUsed": "2024-01-12T15:00:00Z",
+      "createdBy": "usr-001",
+      "createdByName": "Sarah Chen",
+      "lastModified": "2023-10-15T13:00:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": []
+    },
+    {
+      "id": "template-002",
+      "type": "template",
+      "templateType": "work-order",
+      "name": "Landing Page Work Order",
+      "description": "Standard work order for creating a new landing page",
+      "structure": {
+        "prefilledScope": "Design and develop a new landing page optimized for conversion",
+        "attachedSOPs": ["sop-002"],
+        "attachedChecklists": ["checklist-001"],
+        "attachedAcceptanceCriteria": ["criteria-001", "criteria-003"],
+        "estimatedHours": 24,
+        "defaultTasks": [
+          "Write landing page copy",
+          "Design landing page mockup",
+          "Develop landing page",
+          "Set up analytics tracking",
+          "QA testing",
+          "Client review"
+        ]
+      },
+      "tags": ["landing-page", "work-order-template", "marketing"],
+      "timesApplied": 29,
+      "lastUsed": "2024-01-18T11:45:00Z",
+      "createdBy": "ai-agent-001",
+      "createdByName": "PM Copilot AI",
+      "lastModified": "2023-12-08T09:30:00Z",
+      "aiGenerated": true,
+      "usedByWorkOrders": []
+    },
+    {
+      "id": "template-003",
+      "type": "template",
+      "templateType": "document",
+      "name": "Project Status Report",
+      "description": "Weekly status report template for client communication",
+      "structure": {
+        "sections": [
+          {
+            "heading": "Executive Summary",
+            "description": "2-3 sentence overview of project status"
+          },
+          {
+            "heading": "Completed This Week",
+            "description": "Bullet list of completed work orders and deliverables"
+          },
+          {
+            "heading": "In Progress",
+            "description": "Current work orders with % completion"
+          },
+          {
+            "heading": "Coming Next Week",
+            "description": "Planned work for next reporting period"
+          },
+          {
+            "heading": "Blockers & Risks",
+            "description": "Any issues requiring client attention or decision"
+          },
+          {
+            "heading": "Timeline Status",
+            "description": "Are we on track for major milestones?"
+          }
+        ],
+        "outputFormat": "PDF or Google Doc"
+      },
+      "tags": ["reporting", "document-template", "client-communication"],
+      "timesApplied": 67,
+      "lastUsed": "2024-01-19T16:30:00Z",
+      "createdBy": "usr-006",
+      "createdByName": "Jordan Lee",
+      "lastModified": "2023-11-20T14:00:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": []
+    },
+    {
+      "id": "criteria-001",
+      "type": "acceptance_criteria",
+      "name": "Landing Page Performance Standards",
+      "description": "Required performance benchmarks for any landing page deliverable",
+      "criteria": [
+        {
+          "id": "crit-1",
+          "rule": "PageSpeed score must be 90 or higher on mobile",
+          "validationType": "automated",
+          "validationTool": "Google PageSpeed Insights"
+        },
+        {
+          "id": "crit-2",
+          "rule": "Page load time under 3 seconds on 4G connection",
+          "validationType": "automated",
+          "validationTool": "WebPageTest"
+        },
+        {
+          "id": "crit-3",
+          "rule": "All images optimized and using modern formats (WebP, AVIF)",
+          "validationType": "manual",
+          "validationTool": null
+        },
+        {
+          "id": "crit-4",
+          "rule": "Hero section visible without scrolling on desktop and mobile",
+          "validationType": "manual",
+          "validationTool": null
+        }
+      ],
+      "tags": ["performance", "landing-page", "quality-standards"],
+      "timesApplied": 45,
+      "lastUsed": "2024-01-18T12:00:00Z",
+      "createdBy": "usr-003",
+      "createdByName": "Marcus Rodriguez",
+      "lastModified": "2023-12-10T10:30:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-167", "wo-201"]
+    },
+    {
+      "id": "criteria-002",
+      "type": "acceptance_criteria",
+      "name": "Content Quality Standards",
+      "description": "Requirements for all client-facing written content",
+      "criteria": [
+        {
+          "id": "crit-1",
+          "rule": "Content passes brand voice checklist (tone, vocabulary, style)",
+          "validationType": "manual",
+          "validationTool": "Brand Voice Checklist"
+        },
+        {
+          "id": "crit-2",
+          "rule": "No spelling or grammar errors (verified by automated check)",
+          "validationType": "automated",
+          "validationTool": "Grammarly or similar"
+        },
+        {
+          "id": "crit-3",
+          "rule": "Readability score appropriate for target audience (Flesch-Kincaid grade level)",
+          "validationType": "automated",
+          "validationTool": "Hemingway Editor"
+        },
+        {
+          "id": "crit-4",
+          "rule": "All claims are factually accurate and sourced",
+          "validationType": "manual",
+          "validationTool": null
+        },
+        {
+          "id": "crit-5",
+          "rule": "SEO keywords incorporated naturally (no keyword stuffing)",
+          "validationType": "manual",
+          "validationTool": null
+        }
+      ],
+      "tags": ["content", "quality-standards", "copywriting"],
+      "timesApplied": 89,
+      "lastUsed": "2024-01-20T09:45:00Z",
+      "createdBy": "usr-007",
+      "createdByName": "Riley Martinez",
+      "lastModified": "2023-12-18T15:15:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-178", "wo-189", "wo-210"]
+    },
+    {
+      "id": "criteria-003",
+      "type": "acceptance_criteria",
+      "name": "Form Validation Requirements",
+      "description": "Standards for any web form deliverable",
+      "criteria": [
+        {
+          "id": "crit-1",
+          "rule": "All required fields clearly marked with asterisk or label",
+          "validationType": "manual",
+          "validationTool": null
+        },
+        {
+          "id": "crit-2",
+          "rule": "Field-level validation messages display inline",
+          "validationType": "manual",
+          "validationTool": null
+        },
+        {
+          "id": "crit-3",
+          "rule": "Email fields validate proper email format",
+          "validationType": "automated",
+          "validationTool": "Form testing suite"
+        },
+        {
+          "id": "crit-4",
+          "rule": "Phone fields accept various formats (with/without dashes, spaces)",
+          "validationType": "automated",
+          "validationTool": "Form testing suite"
+        },
+        {
+          "id": "crit-5",
+          "rule": "Success message displays after successful submission",
+          "validationType": "manual",
+          "validationTool": null
+        },
+        {
+          "id": "crit-6",
+          "rule": "Form data submits to correct endpoint and sends notification",
+          "validationType": "automated",
+          "validationTool": "Form testing suite"
+        }
+      ],
+      "tags": ["forms", "validation", "quality-standards", "ux"],
+      "timesApplied": 52,
+      "lastUsed": "2024-01-17T14:20:00Z",
+      "createdBy": "usr-004",
+      "createdByName": "Alex Kim",
+      "lastModified": "2023-12-05T11:45:00Z",
+      "aiGenerated": false,
+      "usedByWorkOrders": ["wo-145", "wo-167"]
+    }
+  ],
+  "workOrders": [
+    {
+      "id": "wo-123",
+      "title": "Acme Corp Website Redesign",
+      "projectName": "Acme Corp Q1"
+    },
+    {
+      "id": "wo-145",
+      "title": "TechStart Landing Page",
+      "projectName": "TechStart Marketing"
+    },
+    {
+      "id": "wo-167",
+      "title": "Product Demo Form",
+      "projectName": "GreenLeaf Product Launch"
+    },
+    {
+      "id": "wo-178",
+      "title": "Website Content Update",
+      "projectName": "Acme Corp Q1"
+    },
+    {
+      "id": "wo-189",
+      "title": "Blog Post Series",
+      "projectName": "TechStart Marketing"
+    },
+    {
+      "id": "wo-198",
+      "title": "BuildRight Project Kickoff",
+      "projectName": "BuildRight Website"
+    },
+    {
+      "id": "wo-201",
+      "title": "GreenLeaf Website Launch",
+      "projectName": "GreenLeaf Product Launch"
+    },
+    {
+      "id": "wo-202",
+      "title": "Email Campaign Copy",
+      "projectName": "TechStart Marketing"
+    },
+    {
+      "id": "wo-210",
+      "title": "Product Description Pages",
+      "projectName": "GreenLeaf Product Launch"
+    }
+  ]
+}

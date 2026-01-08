@@ -1,0 +1,925 @@
+{
+  "_meta": {
+    "models": {
+      "projects": "A collection of work being done for a party, containing multiple work orders. Represents the top-level container for related work.",
+      "workOrders": "A specific unit of work within a project that needs to be completed. Represents a trackable, structured piece of work with clear scope and deliverables.",
+      "tasks": "Individual action items that make up a work order. Represents the smallest unit of work that can be assigned and tracked.",
+      "deliverables": "Output or artifact that gets delivered to a party (documents, designs, reports, etc.). Represents the tangible outcome of completed work.",
+      "parties": "Someone inside or outside the organization (client, vendor, department, team member, or 'nobody'). Represents any entity that work is done for or with.",
+      "teamMembers": "A team member (human or AI agent) that can be assigned to parties, projects, work orders, or tasks. Represents workforce capacity and assignment.",
+      "communicationThreads": "Conversation history tied to a specific work item (project, work order, or task). Maintains context and prevents lost information.",
+      "messages": "Individual message within a communication thread. Represents a single communication entry from a user or agent.",
+      "documents": "Files, links, and evidence attached to work items. Represents supporting materials and artifacts throughout the work lifecycle."
+    },
+    "relationships": [
+      "Each Project belongs to a Party and contains multiple Work Orders",
+      "Each Work Order belongs to a Project and contains Tasks and Deliverables",
+      "Each Task belongs to a Work Order",
+      "Each Deliverable belongs to a Work Order",
+      "TeamMembers can be assigned to Projects, Work Orders, or Tasks",
+      "Communication Threads are attached to Projects or Work Orders",
+      "Messages belong to Communication Threads",
+      "Documents can be attached to Projects, Work Orders, Tasks, or Deliverables"
+    ]
+  },
+  "parties": [
+    {
+      "id": "party-001",
+      "name": "Acme Corp",
+      "type": "client",
+      "contactName": "Jennifer Martinez",
+      "contactEmail": "jennifer@acmecorp.com"
+    },
+    {
+      "id": "party-002",
+      "name": "TechStart Inc",
+      "type": "client",
+      "contactName": "Michael Chen",
+      "contactEmail": "michael@techstart.io"
+    },
+    {
+      "id": "party-003",
+      "name": "BuildRight Construction",
+      "type": "client",
+      "contactName": "Sarah Williams",
+      "contactEmail": "sarah@buildright.com"
+    },
+    {
+      "id": "party-004",
+      "name": "Internal - Marketing",
+      "type": "department",
+      "contactName": null,
+      "contactEmail": null
+    }
+  ],
+  "teamMembers": [
+    {
+      "id": "tm-001",
+      "name": "You",
+      "type": "human",
+      "role": "Project Manager",
+      "avatarUrl": null,
+      "skills": ["project_management", "client_relations"]
+    },
+    {
+      "id": "tm-002",
+      "name": "Sarah Chen",
+      "type": "human",
+      "role": "Designer",
+      "avatarUrl": null,
+      "skills": ["design", "branding"]
+    },
+    {
+      "id": "tm-003",
+      "name": "Marcus Johnson",
+      "type": "human",
+      "role": "Developer",
+      "avatarUrl": null,
+      "skills": ["development", "integration"]
+    },
+    {
+      "id": "tm-004",
+      "name": "PM Copilot",
+      "type": "ai_agent",
+      "role": "AI Agent - PM",
+      "avatarUrl": null,
+      "skills": ["project_planning", "task_breakdown", "estimation"]
+    },
+    {
+      "id": "tm-005",
+      "name": "Copywriter",
+      "type": "ai_agent",
+      "role": "AI Agent - Content",
+      "avatarUrl": null,
+      "skills": ["copywriting", "content_creation"]
+    },
+    {
+      "id": "tm-006",
+      "name": "QA Agent",
+      "type": "ai_agent",
+      "role": "AI Agent - QA",
+      "avatarUrl": null,
+      "skills": ["quality_assurance", "testing", "validation"]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-001",
+      "name": "Acme Corp Rebrand",
+      "description": "Complete brand refresh including logo, guidelines, and website redesign",
+      "partyId": "party-001",
+      "partyName": "Acme Corp",
+      "ownerId": "tm-001",
+      "ownerName": "You",
+      "status": "active",
+      "startDate": "2024-01-08",
+      "targetEndDate": "2024-03-15",
+      "budgetHours": 320,
+      "actualHours": 156.5,
+      "progress": 65,
+      "tags": ["design", "branding", "web"]
+    },
+    {
+      "id": "proj-002",
+      "name": "TechStart Marketing Campaign",
+      "description": "Q1 2024 marketing campaign across digital channels",
+      "partyId": "party-002",
+      "partyName": "TechStart Inc",
+      "ownerId": "tm-001",
+      "ownerName": "You",
+      "status": "active",
+      "startDate": "2024-01-02",
+      "targetEndDate": "2024-03-31",
+      "budgetHours": 180,
+      "actualHours": 62.0,
+      "progress": 35,
+      "tags": ["marketing", "content", "social"]
+    },
+    {
+      "id": "proj-003",
+      "name": "BuildRight Monthly Reporting",
+      "description": "Ongoing monthly status reports and project documentation",
+      "partyId": "party-003",
+      "partyName": "BuildRight Construction",
+      "ownerId": "tm-001",
+      "ownerName": "You",
+      "status": "active",
+      "startDate": "2023-11-01",
+      "targetEndDate": null,
+      "budgetHours": null,
+      "actualHours": 48.0,
+      "progress": 90,
+      "tags": ["reporting", "documentation"]
+    },
+    {
+      "id": "proj-004",
+      "name": "Internal Website Redesign",
+      "description": "Refresh company website with new content and improved UX",
+      "partyId": "party-004",
+      "partyName": "Internal - Marketing",
+      "ownerId": "tm-002",
+      "ownerName": "Sarah Chen",
+      "status": "on_hold",
+      "startDate": "2024-01-10",
+      "targetEndDate": "2024-04-30",
+      "budgetHours": 240,
+      "actualHours": 18.5,
+      "progress": 8,
+      "tags": ["web", "internal", "marketing"]
+    }
+  ],
+  "workOrders": [
+    {
+      "id": "wo-101",
+      "title": "Website Redesign Phase 2",
+      "description": "Design and implement new website based on approved brand guidelines",
+      "projectId": "proj-001",
+      "projectName": "Acme Corp Rebrand",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "in_review",
+      "priority": "high",
+      "dueDate": "2024-01-18",
+      "estimatedHours": 80,
+      "actualHours": 65.5,
+      "acceptanceCriteria": [
+        "All pages responsive on mobile, tablet, desktop",
+        "Follows brand guidelines exactly",
+        "Client approval on mockups before development"
+      ],
+      "sopAttached": true,
+      "sopName": "Website Design SOP",
+      "partyContactId": "party-001",
+      "createdBy": "tm-004",
+      "createdByName": "PM Copilot"
+    },
+    {
+      "id": "wo-102",
+      "title": "Brand Guidelines Update",
+      "description": "Finalize and document brand guidelines including logo usage, colors, typography",
+      "projectId": "proj-001",
+      "projectName": "Acme Corp Rebrand",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "approved",
+      "priority": "medium",
+      "dueDate": "2024-01-14",
+      "estimatedHours": 24,
+      "actualHours": 28.0,
+      "acceptanceCriteria": [
+        "Document includes all brand assets",
+        "Clear usage guidelines for internal and external teams",
+        "PDF and digital formats provided"
+      ],
+      "sopAttached": false,
+      "sopName": null,
+      "partyContactId": "party-001",
+      "createdBy": "tm-001",
+      "createdByName": "You"
+    },
+    {
+      "id": "wo-103",
+      "title": "Logo Design Variations",
+      "description": "Create logo variations for different use cases (horizontal, stacked, icon-only)",
+      "projectId": "proj-001",
+      "projectName": "Acme Corp Rebrand",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "delivered",
+      "priority": "high",
+      "dueDate": "2024-01-10",
+      "estimatedHours": 16,
+      "actualHours": 14.0,
+      "acceptanceCriteria": [
+        "Minimum 3 variations provided",
+        "Works in color and black & white",
+        "Vector formats provided"
+      ],
+      "sopAttached": false,
+      "sopName": null,
+      "partyContactId": "party-001",
+      "createdBy": "tm-001",
+      "createdByName": "You"
+    },
+    {
+      "id": "wo-205",
+      "title": "Q1 Marketing Campaign Strategy",
+      "description": "Develop comprehensive marketing strategy for Q1 including channels, budget, and timeline",
+      "projectId": "proj-002",
+      "projectName": "TechStart Marketing Campaign",
+      "assignedToId": "tm-001",
+      "assignedToName": "You",
+      "status": "active",
+      "priority": "high",
+      "dueDate": "2024-01-20",
+      "estimatedHours": 40,
+      "actualHours": 22.5,
+      "acceptanceCriteria": [
+        "Channel strategy defined",
+        "Budget allocation approved",
+        "Timeline with key milestones"
+      ],
+      "sopAttached": true,
+      "sopName": "Campaign Planning SOP",
+      "partyContactId": "party-002",
+      "createdBy": "tm-004",
+      "createdByName": "PM Copilot"
+    },
+    {
+      "id": "wo-206",
+      "title": "Social Media Content Calendar",
+      "description": "Create 3-month content calendar for LinkedIn, Twitter, and Instagram",
+      "projectId": "proj-002",
+      "projectName": "TechStart Marketing Campaign",
+      "assignedToId": "tm-005",
+      "assignedToName": "Copywriter",
+      "status": "draft",
+      "priority": "medium",
+      "dueDate": "2024-01-25",
+      "estimatedHours": 32,
+      "actualHours": 8.5,
+      "acceptanceCriteria": [
+        "90 posts scheduled across 3 platforms",
+        "Mix of content types (text, image, video)",
+        "Aligned with campaign messaging"
+      ],
+      "sopAttached": true,
+      "sopName": "Content Calendar Template",
+      "partyContactId": "party-002",
+      "createdBy": "tm-004",
+      "createdByName": "PM Copilot"
+    },
+    {
+      "id": "wo-207",
+      "title": "Landing Page Design",
+      "description": "Design high-converting landing page for Q1 campaign",
+      "projectId": "proj-002",
+      "projectName": "TechStart Marketing Campaign",
+      "assignedToId": null,
+      "assignedToName": "Unassigned",
+      "status": "draft",
+      "priority": "medium",
+      "dueDate": "2024-02-01",
+      "estimatedHours": 24,
+      "actualHours": 0,
+      "acceptanceCriteria": [
+        "Mobile-responsive design",
+        "Clear CTA and conversion funnel",
+        "A/B test variants included"
+      ],
+      "sopAttached": false,
+      "sopName": null,
+      "partyContactId": "party-002",
+      "createdBy": "tm-001",
+      "createdByName": "You"
+    },
+    {
+      "id": "wo-312",
+      "title": "December Status Report",
+      "description": "Compile and deliver monthly status report for December activities",
+      "projectId": "proj-003",
+      "projectName": "BuildRight Monthly Reporting",
+      "assignedToId": "tm-005",
+      "assignedToName": "Copywriter",
+      "status": "in_review",
+      "priority": "medium",
+      "dueDate": "2024-01-16",
+      "estimatedHours": 8,
+      "actualHours": 7.5,
+      "acceptanceCriteria": [
+        "All project milestones documented",
+        "Budget vs actual included",
+        "Formatted according to template"
+      ],
+      "sopAttached": true,
+      "sopName": "Monthly Reporting Template",
+      "partyContactId": "party-003",
+      "createdBy": "tm-004",
+      "createdByName": "PM Copilot"
+    },
+    {
+      "id": "wo-313",
+      "title": "Q1 Planning Documentation",
+      "description": "Document Q1 goals, milestones, and resource allocation",
+      "projectId": "proj-003",
+      "projectName": "BuildRight Monthly Reporting",
+      "assignedToId": "tm-001",
+      "assignedToName": "You",
+      "status": "active",
+      "priority": "low",
+      "dueDate": "2024-01-31",
+      "estimatedHours": 12,
+      "actualHours": 3.0,
+      "acceptanceCriteria": [
+        "Goals aligned with client objectives",
+        "Resource allocation approved",
+        "Risk assessment included"
+      ],
+      "sopAttached": false,
+      "sopName": null,
+      "partyContactId": "party-003",
+      "createdBy": "tm-001",
+      "createdByName": "You"
+    },
+    {
+      "id": "wo-401",
+      "title": "Homepage Wireframes",
+      "description": "Create wireframes for new homepage layout and structure",
+      "projectId": "proj-004",
+      "projectName": "Internal Website Redesign",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "draft",
+      "priority": "low",
+      "dueDate": "2024-02-15",
+      "estimatedHours": 16,
+      "actualHours": 4.5,
+      "acceptanceCriteria": [
+        "3 wireframe options presented",
+        "Mobile and desktop versions",
+        "Stakeholder feedback incorporated"
+      ],
+      "sopAttached": false,
+      "sopName": null,
+      "partyContactId": null,
+      "createdBy": "tm-002",
+      "createdByName": "Sarah Chen"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-101",
+      "title": "Design homepage hero section",
+      "description": "Create visual design for homepage hero with brand imagery",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectId": "proj-001",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "done",
+      "dueDate": "2024-01-12",
+      "estimatedHours": 8,
+      "actualHours": 9.5,
+      "checklistItems": [
+        { "id": "c1", "text": "Review brand guidelines", "completed": true },
+        { "id": "c2", "text": "Create 3 design options", "completed": true },
+        { "id": "c3", "text": "Get client feedback", "completed": true }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-102",
+      "title": "Build responsive navigation component",
+      "description": "Implement mobile-responsive navigation with dropdown menus",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectId": "proj-001",
+      "assignedToId": "tm-003",
+      "assignedToName": "Marcus Johnson",
+      "status": "in_progress",
+      "dueDate": "2024-01-16",
+      "estimatedHours": 12,
+      "actualHours": 8.0,
+      "checklistItems": [
+        { "id": "c1", "text": "Desktop navigation", "completed": true },
+        { "id": "c2", "text": "Mobile hamburger menu", "completed": true },
+        { "id": "c3", "text": "Accessibility testing", "completed": false }
+      ],
+      "dependencies": ["task-101"],
+      "isBlocked": false
+    },
+    {
+      "id": "task-103",
+      "title": "QA review of homepage",
+      "description": "Test homepage across browsers and devices, validate against acceptance criteria",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectId": "proj-001",
+      "assignedToId": "tm-006",
+      "assignedToName": "QA Agent",
+      "status": "in_progress",
+      "dueDate": "2024-01-17",
+      "estimatedHours": 6,
+      "actualHours": 2.5,
+      "checklistItems": [
+        { "id": "c1", "text": "Cross-browser testing", "completed": false },
+        { "id": "c2", "text": "Mobile device testing", "completed": false },
+        { "id": "c3", "text": "Accessibility audit", "completed": false }
+      ],
+      "dependencies": ["task-102"],
+      "isBlocked": false
+    },
+    {
+      "id": "task-104",
+      "title": "Export brand assets package",
+      "description": "Package all logo files, color swatches, and fonts for client delivery",
+      "workOrderId": "wo-102",
+      "workOrderTitle": "Brand Guidelines Update",
+      "projectId": "proj-001",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "done",
+      "dueDate": "2024-01-13",
+      "estimatedHours": 4,
+      "actualHours": 3.5,
+      "checklistItems": [
+        { "id": "c1", "text": "Export logo in all formats", "completed": true },
+        { "id": "c2", "text": "Create color palette files", "completed": true },
+        { "id": "c3", "text": "Package font files with license", "completed": true }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-105",
+      "title": "Write brand voice guidelines",
+      "description": "Document brand voice, tone, and messaging guidelines",
+      "workOrderId": "wo-102",
+      "workOrderTitle": "Brand Guidelines Update",
+      "projectId": "proj-001",
+      "assignedToId": "tm-005",
+      "assignedToName": "Copywriter",
+      "status": "done",
+      "dueDate": "2024-01-14",
+      "estimatedHours": 6,
+      "actualHours": 7.0,
+      "checklistItems": [
+        { "id": "c1", "text": "Define brand voice attributes", "completed": true },
+        { "id": "c2", "text": "Provide writing examples", "completed": true },
+        { "id": "c3", "text": "Create do's and don'ts list", "completed": true }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-201",
+      "title": "Research target audience segments",
+      "description": "Analyze audience data to identify key segments for Q1 campaign",
+      "workOrderId": "wo-205",
+      "workOrderTitle": "Q1 Marketing Campaign Strategy",
+      "projectId": "proj-002",
+      "assignedToId": "tm-001",
+      "assignedToName": "You",
+      "status": "done",
+      "dueDate": "2024-01-14",
+      "estimatedHours": 8,
+      "actualHours": 9.5,
+      "checklistItems": [
+        { "id": "c1", "text": "Review analytics data", "completed": true },
+        { "id": "c2", "text": "Create audience personas", "completed": true },
+        { "id": "c3", "text": "Document segment priorities", "completed": true }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-202",
+      "title": "Define channel strategy",
+      "description": "Determine which marketing channels to focus on and budget allocation",
+      "workOrderId": "wo-205",
+      "workOrderTitle": "Q1 Marketing Campaign Strategy",
+      "projectId": "proj-002",
+      "assignedToId": "tm-001",
+      "assignedToName": "You",
+      "status": "in_progress",
+      "dueDate": "2024-01-18",
+      "estimatedHours": 12,
+      "actualHours": 6.0,
+      "checklistItems": [
+        { "id": "c1", "text": "Evaluate channel performance", "completed": true },
+        { "id": "c2", "text": "Allocate budget by channel", "completed": false },
+        { "id": "c3", "text": "Get client approval", "completed": false }
+      ],
+      "dependencies": ["task-201"],
+      "isBlocked": false
+    },
+    {
+      "id": "task-203",
+      "title": "Draft LinkedIn posts for January",
+      "description": "Create 20 LinkedIn posts for January content calendar",
+      "workOrderId": "wo-206",
+      "workOrderTitle": "Social Media Content Calendar",
+      "projectId": "proj-002",
+      "assignedToId": "tm-005",
+      "assignedToName": "Copywriter",
+      "status": "in_progress",
+      "dueDate": "2024-01-22",
+      "estimatedHours": 10,
+      "actualHours": 4.5,
+      "checklistItems": [
+        { "id": "c1", "text": "Research trending topics", "completed": true },
+        { "id": "c2", "text": "Write post copy", "completed": false },
+        { "id": "c3", "text": "Select accompanying images", "completed": false }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-204",
+      "title": "Design social media templates",
+      "description": "Create branded templates for social media graphics",
+      "workOrderId": "wo-206",
+      "workOrderTitle": "Social Media Content Calendar",
+      "projectId": "proj-002",
+      "assignedToId": null,
+      "assignedToName": "Unassigned",
+      "status": "todo",
+      "dueDate": "2024-01-24",
+      "estimatedHours": 8,
+      "actualHours": 0,
+      "checklistItems": [
+        { "id": "c1", "text": "Create Instagram template", "completed": false },
+        { "id": "c2", "text": "Create LinkedIn template", "completed": false },
+        { "id": "c3", "text": "Create Twitter template", "completed": false }
+      ],
+      "dependencies": [],
+      "isBlocked": true
+    },
+    {
+      "id": "task-301",
+      "title": "Compile project metrics",
+      "description": "Gather all project metrics and KPIs for December report",
+      "workOrderId": "wo-312",
+      "workOrderTitle": "December Status Report",
+      "projectId": "proj-003",
+      "assignedToId": "tm-005",
+      "assignedToName": "Copywriter",
+      "status": "done",
+      "dueDate": "2024-01-15",
+      "estimatedHours": 4,
+      "actualHours": 3.5,
+      "checklistItems": [
+        { "id": "c1", "text": "Export time tracking data", "completed": true },
+        { "id": "c2", "text": "Calculate budget variance", "completed": true },
+        { "id": "c3", "text": "Document milestone completion", "completed": true }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-302",
+      "title": "Write executive summary",
+      "description": "Draft executive summary highlighting key achievements and issues",
+      "workOrderId": "wo-312",
+      "workOrderTitle": "December Status Report",
+      "projectId": "proj-003",
+      "assignedToId": "tm-005",
+      "assignedToName": "Copywriter",
+      "status": "in_progress",
+      "dueDate": "2024-01-16",
+      "estimatedHours": 4,
+      "actualHours": 4.0,
+      "checklistItems": [
+        { "id": "c1", "text": "Summarize achievements", "completed": true },
+        { "id": "c2", "text": "Highlight risks and issues", "completed": true },
+        { "id": "c3", "text": "Add recommendations", "completed": false }
+      ],
+      "dependencies": ["task-301"],
+      "isBlocked": false
+    },
+    {
+      "id": "task-303",
+      "title": "Define Q1 goals with client",
+      "description": "Schedule and conduct planning session with client to define Q1 objectives",
+      "workOrderId": "wo-313",
+      "workOrderTitle": "Q1 Planning Documentation",
+      "projectId": "proj-003",
+      "assignedToId": "tm-001",
+      "assignedToName": "You",
+      "status": "todo",
+      "dueDate": "2024-01-22",
+      "estimatedHours": 6,
+      "actualHours": 0,
+      "checklistItems": [
+        { "id": "c1", "text": "Schedule planning meeting", "completed": false },
+        { "id": "c2", "text": "Prepare agenda and materials", "completed": false },
+        { "id": "c3", "text": "Document agreed objectives", "completed": false }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-401",
+      "title": "Sketch initial wireframe concepts",
+      "description": "Create rough sketches exploring different homepage layouts",
+      "workOrderId": "wo-401",
+      "workOrderTitle": "Homepage Wireframes",
+      "projectId": "proj-004",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "in_progress",
+      "dueDate": "2024-02-10",
+      "estimatedHours": 6,
+      "actualHours": 4.5,
+      "checklistItems": [
+        { "id": "c1", "text": "Sketch 5 layout options", "completed": true },
+        { "id": "c2", "text": "Review with team", "completed": false },
+        { "id": "c3", "text": "Select top 3 to refine", "completed": false }
+      ],
+      "dependencies": [],
+      "isBlocked": false
+    },
+    {
+      "id": "task-402",
+      "title": "Create high-fidelity wireframes",
+      "description": "Develop detailed wireframes for approved concepts",
+      "workOrderId": "wo-401",
+      "workOrderTitle": "Homepage Wireframes",
+      "projectId": "proj-004",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "todo",
+      "dueDate": "2024-02-14",
+      "estimatedHours": 10,
+      "actualHours": 0,
+      "checklistItems": [
+        { "id": "c1", "text": "Build wireframes in Figma", "completed": false },
+        { "id": "c2", "text": "Add annotations", "completed": false },
+        { "id": "c3", "text": "Present to stakeholders", "completed": false }
+      ],
+      "dependencies": ["task-401"],
+      "isBlocked": false
+    }
+  ],
+  "deliverables": [
+    {
+      "id": "del-001",
+      "title": "Brand Guidelines Document",
+      "description": "Comprehensive PDF document covering logo usage, colors, typography, and brand voice",
+      "workOrderId": "wo-102",
+      "workOrderTitle": "Brand Guidelines Update",
+      "projectId": "proj-001",
+      "type": "document",
+      "status": "delivered",
+      "version": "2.0",
+      "createdDate": "2024-01-14",
+      "deliveredDate": "2024-01-14",
+      "fileUrl": "/files/acme-brand-guidelines-v2.pdf",
+      "acceptanceCriteria": [
+        "Document includes all brand assets",
+        "Clear usage guidelines for internal and external teams",
+        "PDF and digital formats provided"
+      ]
+    },
+    {
+      "id": "del-002",
+      "title": "Logo Asset Package",
+      "description": "Complete set of logo files in all formats (SVG, PNG, EPS) for various use cases",
+      "workOrderId": "wo-103",
+      "workOrderTitle": "Logo Design Variations",
+      "projectId": "proj-001",
+      "type": "design",
+      "status": "delivered",
+      "version": "1.0",
+      "createdDate": "2024-01-10",
+      "deliveredDate": "2024-01-10",
+      "fileUrl": "/files/acme-logo-package.zip",
+      "acceptanceCriteria": [
+        "Minimum 3 variations provided",
+        "Works in color and black & white",
+        "Vector formats provided"
+      ]
+    },
+    {
+      "id": "del-003",
+      "title": "Website Mockups - Homepage",
+      "description": "High-fidelity mockups of redesigned homepage in desktop and mobile views",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectId": "proj-001",
+      "type": "design",
+      "status": "in_review",
+      "version": "3.1",
+      "createdDate": "2024-01-15",
+      "deliveredDate": null,
+      "fileUrl": "/files/acme-homepage-mockups-v3.1.fig",
+      "acceptanceCriteria": [
+        "All pages responsive on mobile, tablet, desktop",
+        "Follows brand guidelines exactly",
+        "Client approval on mockups before development"
+      ]
+    },
+    {
+      "id": "del-004",
+      "title": "Q1 Campaign Strategy Document",
+      "description": "Comprehensive strategy document outlining channels, budget, timeline, and KPIs",
+      "workOrderId": "wo-205",
+      "workOrderTitle": "Q1 Marketing Campaign Strategy",
+      "projectId": "proj-002",
+      "type": "document",
+      "status": "draft",
+      "version": "0.8",
+      "createdDate": "2024-01-15",
+      "deliveredDate": null,
+      "fileUrl": "/files/techstart-q1-strategy-draft.docx",
+      "acceptanceCriteria": [
+        "Channel strategy defined",
+        "Budget allocation approved",
+        "Timeline with key milestones"
+      ]
+    },
+    {
+      "id": "del-005",
+      "title": "December Status Report",
+      "description": "Monthly project status report for BuildRight covering December activities",
+      "workOrderId": "wo-312",
+      "workOrderTitle": "December Status Report",
+      "projectId": "proj-003",
+      "type": "report",
+      "status": "in_review",
+      "version": "1.0",
+      "createdDate": "2024-01-16",
+      "deliveredDate": null,
+      "fileUrl": "/files/buildright-dec-report.pdf",
+      "acceptanceCriteria": [
+        "All project milestones documented",
+        "Budget vs actual included",
+        "Formatted according to template"
+      ]
+    },
+    {
+      "id": "del-006",
+      "title": "Social Media Content Calendar - Q1",
+      "description": "90-day content calendar with scheduled posts for LinkedIn, Twitter, and Instagram",
+      "workOrderId": "wo-206",
+      "workOrderTitle": "Social Media Content Calendar",
+      "projectId": "proj-002",
+      "type": "document",
+      "status": "draft",
+      "version": "0.3",
+      "createdDate": "2024-01-18",
+      "deliveredDate": null,
+      "fileUrl": "/files/techstart-q1-content-calendar.xlsx",
+      "acceptanceCriteria": [
+        "90 posts scheduled across 3 platforms",
+        "Mix of content types (text, image, video)",
+        "Aligned with campaign messaging"
+      ]
+    }
+  ],
+  "communicationThreads": [
+    {
+      "id": "thread-001",
+      "workItemType": "project",
+      "workItemId": "proj-001",
+      "workItemTitle": "Acme Corp Rebrand",
+      "messageCount": 8,
+      "lastActivity": "2024-01-15T14:30:00Z"
+    },
+    {
+      "id": "thread-002",
+      "workItemType": "workOrder",
+      "workItemId": "wo-101",
+      "workItemTitle": "Website Redesign Phase 2",
+      "messageCount": 12,
+      "lastActivity": "2024-01-15T16:45:00Z"
+    },
+    {
+      "id": "thread-003",
+      "workItemType": "workOrder",
+      "workItemId": "wo-205",
+      "workItemTitle": "Q1 Marketing Campaign Strategy",
+      "messageCount": 5,
+      "lastActivity": "2024-01-14T10:20:00Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-001",
+      "threadId": "thread-001",
+      "authorId": "tm-001",
+      "authorName": "You",
+      "authorType": "human",
+      "timestamp": "2024-01-15T14:30:00Z",
+      "content": "Jennifer from Acme just confirmed they love the logo variations. Moving forward with option 2.",
+      "type": "note"
+    },
+    {
+      "id": "msg-002",
+      "threadId": "thread-001",
+      "authorId": "tm-002",
+      "authorName": "Sarah Chen",
+      "authorType": "human",
+      "timestamp": "2024-01-15T14:35:00Z",
+      "content": "Great! I'll finalize the brand guidelines with option 2 and have them ready by EOD.",
+      "type": "note"
+    },
+    {
+      "id": "msg-003",
+      "threadId": "thread-002",
+      "authorId": "tm-004",
+      "authorName": "PM Copilot",
+      "authorType": "ai_agent",
+      "timestamp": "2024-01-15T16:45:00Z",
+      "content": "The homepage mockups are ready for client review. I've flagged this as needing approval before Marcus can start development. Should I send the review request to Jennifer?",
+      "type": "suggestion"
+    },
+    {
+      "id": "msg-004",
+      "threadId": "thread-002",
+      "authorId": "tm-001",
+      "authorName": "You",
+      "authorType": "human",
+      "timestamp": "2024-01-15T16:50:00Z",
+      "content": "Yes, please send the review request. Include the Figma link and ask for feedback by Wednesday.",
+      "type": "note"
+    },
+    {
+      "id": "msg-005",
+      "threadId": "thread-003",
+      "authorId": "tm-004",
+      "authorName": "PM Copilot",
+      "authorType": "ai_agent",
+      "timestamp": "2024-01-14T10:20:00Z",
+      "content": "Based on the audience research, I suggest focusing 60% of budget on LinkedIn, 25% on email, and 15% on paid search. Does this align with Michael's expectations?",
+      "type": "suggestion"
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc-001",
+      "name": "Client Brief - Acme Rebrand",
+      "type": "reference",
+      "fileUrl": "/files/acme-brief.pdf",
+      "attachedToType": "project",
+      "attachedToId": "proj-001",
+      "uploadedBy": "tm-001",
+      "uploadedDate": "2024-01-08",
+      "fileSize": "2.4 MB"
+    },
+    {
+      "id": "doc-002",
+      "name": "Homepage Wireframes v1",
+      "type": "artifact",
+      "fileUrl": "/files/homepage-wireframes-v1.fig",
+      "attachedToType": "workOrder",
+      "attachedToId": "wo-101",
+      "uploadedBy": "tm-002",
+      "uploadedDate": "2024-01-12",
+      "fileSize": "8.1 MB"
+    },
+    {
+      "id": "doc-003",
+      "name": "Competitor Analysis",
+      "type": "reference",
+      "fileUrl": "/files/competitor-analysis.xlsx",
+      "attachedToType": "workOrder",
+      "attachedToId": "wo-205",
+      "uploadedBy": "tm-001",
+      "uploadedDate": "2024-01-10",
+      "fileSize": "1.2 MB"
+    },
+    {
+      "id": "doc-004",
+      "name": "Browser Testing Results",
+      "type": "evidence",
+      "fileUrl": "/files/browser-testing.pdf",
+      "attachedToType": "task",
+      "attachedToId": "task-103",
+      "uploadedBy": "tm-006",
+      "uploadedDate": "2024-01-16",
+      "fileSize": "452 KB"
+    }
+  ]
+}

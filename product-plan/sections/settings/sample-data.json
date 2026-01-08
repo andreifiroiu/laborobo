@@ -1,0 +1,1028 @@
+{
+    "_meta":
+    {
+        "models":
+        {
+            "workspaceSettings": "Configuration for the workspace including name, timezone, defaults, and branding preferences.",
+            "teamMembers": "Human team members who work in the system with assigned roles and permissions.",
+            "aiAgents": "Virtual team members with specific skills that act as fractional employees with defined capabilities and permission boundaries.",
+            "agentConfigurations": "Per-agent settings including enabled status, run limits, budget caps, and permission boundaries.",
+            "agentActivityLogs": "Historical records of AI agent runs showing inputs, outputs, costs, approval status, and errors.",
+            "integrations": "Third-party service connections for email, calendar, communication, and accounting tools.",
+            "billingInfo": "Subscription plan details, usage metrics, and invoice history.",
+            "notificationPreferences": "Email and push notification settings organized by category.",
+            "auditLogEntries": "Complete activity history for compliance tracking showing all user and system actions.",
+            "dangerZone": "Transfer ownership, export data, delete organization"
+        },
+        "relationships":
+        [
+            "Workspace Settings apply globally to all team members and agents",
+            "Team Members are Users from the global data model with roles and permissions",
+            "AI Agents from the global data model have Agent Configurations that control their behavior",
+            "Agent Activity Logs track all runs performed by AI Agents",
+            "Integrations connect external services to the workspace",
+            "Billing Info tracks subscription usage and costs",
+            "Notification Preferences belong to individual Team Members",
+            "Audit Log Entries record actions by Team Members and AI Agents",
+            "Owner of the organization can transfer ownership, export data, or delete organization"
+        ]
+    },
+    "workspaceSettings":
+    {
+        "name": "Laborobo Workspace",
+        "timezone": "America/Los_Angeles",
+        "workWeekStart": "monday",
+        "defaultProjectStatus": "active",
+        "brandColor": "#4f46e5",
+        "logo": "/assets/workspace-logo.png",
+        "workingHoursStart": "09:00",
+        "workingHoursEnd": "17:00",
+        "dateFormat": "MM/DD/YYYY",
+        "currency": "USD",
+        "createdAt": "2023-06-15T10:00:00Z",
+        "updatedAt": "2024-02-20T14:30:00Z"
+    },
+    "teamMembers":
+    [
+        {
+            "id": "user-001",
+            "name": "Alex Rivera",
+            "email": "alex@laborobo.com",
+            "role": "admin",
+            "status": "active",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+            "permissions":
+            [
+                "manage_workspace",
+                "manage_team",
+                "manage_agents",
+                "view_billing",
+                "view_audit_log"
+            ],
+            "joinedAt": "2023-06-15T10:00:00Z",
+            "lastActiveAt": "2024-02-26T15:45:00Z"
+        },
+        {
+            "id": "user-002",
+            "name": "Jordan Kim",
+            "email": "jordan@laborobo.com",
+            "role": "manager",
+            "status": "active",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan",
+            "permissions":
+            [
+                "manage_projects",
+                "manage_work_orders",
+                "approve_deliverables",
+                "view_reports"
+            ],
+            "joinedAt": "2023-08-22T09:00:00Z",
+            "lastActiveAt": "2024-02-26T14:20:00Z"
+        },
+        {
+            "id": "user-003",
+            "name": "Casey Morgan",
+            "email": "casey@laborobo.com",
+            "role": "member",
+            "status": "active",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Casey",
+            "permissions":
+            [
+                "create_work_orders",
+                "complete_tasks",
+                "upload_deliverables"
+            ],
+            "joinedAt": "2023-09-10T11:30:00Z",
+            "lastActiveAt": "2024-02-26T13:10:00Z"
+        },
+        {
+            "id": "user-004",
+            "name": "Riley Chen",
+            "email": "riley@laborobo.com",
+            "role": "member",
+            "status": "active",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Riley",
+            "permissions":
+            [
+                "create_work_orders",
+                "complete_tasks",
+                "upload_deliverables"
+            ],
+            "joinedAt": "2023-10-05T10:00:00Z",
+            "lastActiveAt": "2024-02-26T12:30:00Z"
+        },
+        {
+            "id": "user-005",
+            "name": "Sam Patel",
+            "email": "sam@laborobo.com",
+            "role": "member",
+            "status": "active",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam",
+            "permissions":
+            [
+                "create_work_orders",
+                "complete_tasks",
+                "upload_deliverables"
+            ],
+            "joinedAt": "2023-11-12T14:00:00Z",
+            "lastActiveAt": "2024-02-26T11:45:00Z"
+        },
+        {
+            "id": "user-006",
+            "name": "Taylor Brooks",
+            "email": "taylor@laborobo.com",
+            "role": "viewer",
+            "status": "inactive",
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Taylor",
+            "permissions":
+            [
+                "view_projects",
+                "view_reports"
+            ],
+            "joinedAt": "2023-12-01T09:00:00Z",
+            "lastActiveAt": "2024-01-15T16:20:00Z"
+        }
+    ],
+    "aiAgents":
+    [
+        {
+            "id": "agent-001",
+            "name": "PM Copilot",
+            "type": "project-management",
+            "description": "Assists with project planning, status updates, and timeline management",
+            "status": "enabled",
+            "capabilities":
+            [
+                "draft_status_reports",
+                "suggest_timelines",
+                "identify_risks",
+                "generate_summaries"
+            ],
+            "createdAt": "2023-06-15T10:00:00Z"
+        },
+        {
+            "id": "agent-002",
+            "name": "Dispatcher Agent",
+            "type": "work-routing",
+            "description": "Routes work to appropriate team members based on skills and capacity",
+            "status": "enabled",
+            "capabilities":
+            [
+                "assign_tasks",
+                "balance_workload",
+                "match_skills",
+                "optimize_scheduling"
+            ],
+            "createdAt": "2023-06-15T10:00:00Z"
+        },
+        {
+            "id": "agent-003",
+            "name": "Copywriter Agent",
+            "type": "content-creation",
+            "description": "Creates marketing copy, documentation, and client communications",
+            "status": "enabled",
+            "capabilities":
+            [
+                "write_content",
+                "edit_drafts",
+                "generate_variations",
+                "adapt_tone"
+            ],
+            "createdAt": "2023-07-01T12:00:00Z"
+        },
+        {
+            "id": "agent-004",
+            "name": "QA Agent",
+            "type": "quality-assurance",
+            "description": "Reviews deliverables for quality, completeness, and adherence to standards",
+            "status": "enabled",
+            "capabilities":
+            [
+                "review_deliverables",
+                "check_checklists",
+                "verify_criteria",
+                "flag_issues"
+            ],
+            "createdAt": "2023-07-15T14:00:00Z"
+        },
+        {
+            "id": "agent-005",
+            "name": "Analyst Agent",
+            "type": "data-analysis",
+            "description": "Analyzes project data, identifies trends, and generates insights",
+            "status": "disabled",
+            "capabilities":
+            [
+                "analyze_metrics",
+                "detect_anomalies",
+                "forecast_trends",
+                "generate_reports"
+            ],
+            "createdAt": "2023-08-01T10:00:00Z"
+        }
+    ],
+    "agentConfigurations":
+    [
+        {
+            "agentId": "agent-001",
+            "enabled": true,
+            "dailyRunLimit": 50,
+            "weeklyRunLimit": 300,
+            "monthlyBudgetCap": 150.0,
+            "currentMonthSpend": 87.40,
+            "permissions":
+            {
+                "canCreateWorkOrders": false,
+                "canModifyTasks": false,
+                "canAccessClientData": true,
+                "canSendEmails": false,
+                "requiresApproval": true
+            },
+            "behaviorSettings":
+            {
+                "verbosityLevel": "detailed",
+                "creativityLevel": "balanced",
+                "riskTolerance": "low"
+            }
+        },
+        {
+            "agentId": "agent-002",
+            "enabled": true,
+            "dailyRunLimit": 200,
+            "weeklyRunLimit": 1000,
+            "monthlyBudgetCap": 500.0,
+            "currentMonthSpend": 312.40,
+            "permissions":
+            {
+                "canCreateWorkOrders": true,
+                "canModifyTasks": true,
+                "canAccessClientData": true,
+                "canSendEmails": false,
+                "requiresApproval": false
+            },
+            "behaviorSettings":
+            {
+                "verbosityLevel": "concise",
+                "creativityLevel": "low",
+                "riskTolerance": "medium"
+            }
+        },
+        {
+            "agentId": "agent-003",
+            "enabled": true,
+            "dailyRunLimit": 30,
+            "weeklyRunLimit": 150,
+            "monthlyBudgetCap": 200.0,
+            "currentMonthSpend": 203.50,
+            "permissions":
+            {
+                "canCreateWorkOrders": false,
+                "canModifyTasks": false,
+                "canAccessClientData": true,
+                "canSendEmails": false,
+                "requiresApproval": true
+            },
+            "behaviorSettings":
+            {
+                "verbosityLevel": "detailed",
+                "creativityLevel": "high",
+                "riskTolerance": "medium"
+            }
+        },
+        {
+            "agentId": "agent-004",
+            "enabled": true,
+            "dailyRunLimit": 40,
+            "weeklyRunLimit": 200,
+            "monthlyBudgetCap": 100.0,
+            "currentMonthSpend": 98.60,
+            "permissions":
+            {
+                "canCreateWorkOrders": false,
+                "canModifyTasks": false,
+                "canAccessClientData": true,
+                "canSendEmails": false,
+                "requiresApproval": false
+            },
+            "behaviorSettings":
+            {
+                "verbosityLevel": "detailed",
+                "creativityLevel": "low",
+                "riskTolerance": "low"
+            }
+        },
+        {
+            "agentId": "agent-005",
+            "enabled": false,
+            "dailyRunLimit": 20,
+            "weeklyRunLimit": 100,
+            "monthlyBudgetCap": 150.0,
+            "currentMonthSpend": 0.0,
+            "permissions":
+            {
+                "canCreateWorkOrders": false,
+                "canModifyTasks": false,
+                "canAccessClientData": true,
+                "canSendEmails": false,
+                "requiresApproval": true
+            },
+            "behaviorSettings":
+            {
+                "verbosityLevel": "detailed",
+                "creativityLevel": "balanced",
+                "riskTolerance": "low"
+            }
+        }
+    ],
+    "globalAISettings":
+    {
+        "totalMonthlyBudget": 2000.0,
+        "currentMonthSpend": 701.90,
+        "perProjectBudgetCap": 500.0,
+        "approvalRequirements":
+        {
+            "clientFacingContent": true,
+            "financialData": true,
+            "contractualChanges": true,
+            "workOrderCreation": false,
+            "taskAssignment": false
+        }
+    },
+    "agentActivityLogs":
+    [
+        {
+            "id": "log-001",
+            "agentId": "agent-001",
+            "agentName": "PM Copilot",
+            "runType": "status_report_generation",
+            "timestamp": "2024-02-26T09:15:00Z",
+            "input": "Generate weekly status report for Acme Corp Website Redesign project",
+            "output": "Weekly Status Report: Project is 65% complete, on track for March 15 deadline...",
+            "tokensUsed": 1250,
+            "cost": 0.0375,
+            "approvalStatus": "approved",
+            "approvedBy": "user-002",
+            "approvedAt": "2024-02-26T10:30:00Z",
+            "error": null
+        },
+        {
+            "id": "log-002",
+            "agentId": "agent-002",
+            "agentName": "Dispatcher Agent",
+            "runType": "task_assignment",
+            "timestamp": "2024-02-26T10:45:00Z",
+            "input": "Assign new design task for TechStart Mobile App to available designer",
+            "output": "Assigned task-289 to Jordan Kim (Designer, 48% capacity)",
+            "tokensUsed": 450,
+            "cost": 0.0135,
+            "approvalStatus": "auto_approved",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": null
+        },
+        {
+            "id": "log-003",
+            "agentId": "agent-003",
+            "agentName": "Copywriter Agent",
+            "runType": "content_creation",
+            "timestamp": "2024-02-26T11:20:00Z",
+            "input": "Write social media copy for Marketing Campaign Q1, Week 10",
+            "output": "Engaging social media posts highlighting Q1 achievements and upcoming events...",
+            "tokensUsed": 1800,
+            "cost": 0.054,
+            "approvalStatus": "approved",
+            "approvedBy": "user-004",
+            "approvedAt": "2024-02-26T13:15:00Z",
+            "error": null
+        },
+        {
+            "id": "log-004",
+            "agentId": "agent-004",
+            "agentName": "QA Agent",
+            "runType": "deliverable_review",
+            "timestamp": "2024-02-26T13:45:00Z",
+            "input": "Review homepage wireframes v2 for Acme Corp Website Redesign",
+            "output": "Review complete: 2 minor issues found (missing mobile breakpoint specs, unclear CTA button state)",
+            "tokensUsed": 920,
+            "cost": 0.0276,
+            "approvalStatus": "auto_approved",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": null
+        },
+        {
+            "id": "log-005",
+            "agentId": "agent-001",
+            "agentName": "PM Copilot",
+            "runType": "risk_identification",
+            "timestamp": "2024-02-26T14:30:00Z",
+            "input": "Analyze TechStart Mobile App project for potential risks",
+            "output": "3 risks identified: Behind schedule by 8 days, 3 blocked work orders, Burn rate at 1.8x estimate",
+            "tokensUsed": 1100,
+            "cost": 0.033,
+            "approvalStatus": "approved",
+            "approvedBy": "user-002",
+            "approvedAt": "2024-02-26T15:00:00Z",
+            "error": null
+        },
+        {
+            "id": "log-006",
+            "agentId": "agent-002",
+            "agentName": "Dispatcher Agent",
+            "runType": "workload_balancing",
+            "timestamp": "2024-02-25T09:00:00Z",
+            "input": "Rebalance workload across team, Jordan Kim is at 120% capacity",
+            "output": "Suggested reassignments: Move task-267 from Jordan to Casey (88% capacity)",
+            "tokensUsed": 680,
+            "cost": 0.0204,
+            "approvalStatus": "pending",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": null
+        },
+        {
+            "id": "log-007",
+            "agentId": "agent-003",
+            "agentName": "Copywriter Agent",
+            "runType": "content_creation",
+            "timestamp": "2024-02-25T10:30:00Z",
+            "input": "Write client update email for BuildRight Portal project",
+            "output": null,
+            "tokensUsed": 0,
+            "cost": 0.0,
+            "approvalStatus": "failed",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": "Insufficient context: Missing project status data"
+        },
+        {
+            "id": "log-008",
+            "agentId": "agent-004",
+            "agentName": "QA Agent",
+            "runType": "checklist_verification",
+            "timestamp": "2024-02-25T11:45:00Z",
+            "input": "Verify pre-launch checklist for GreenLeaf Brand Refresh",
+            "output": "Checklist 85% complete: 3 items pending (legal review, accessibility audit, final client approval)",
+            "tokensUsed": 750,
+            "cost": 0.0225,
+            "approvalStatus": "auto_approved",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": null
+        },
+        {
+            "id": "log-009",
+            "agentId": "agent-001",
+            "agentName": "PM Copilot",
+            "runType": "timeline_suggestion",
+            "timestamp": "2024-02-24T14:00:00Z",
+            "input": "Suggest revised timeline for BuildRight Portal given 6-day delay",
+            "output": "Proposed timeline adjustment: Extend deadline by 10 days to March 2, reallocate resources...",
+            "tokensUsed": 1350,
+            "cost": 0.0405,
+            "approvalStatus": "rejected",
+            "approvedBy": "user-002",
+            "approvedAt": "2024-02-24T16:30:00Z",
+            "error": null
+        },
+        {
+            "id": "log-010",
+            "agentId": "agent-002",
+            "agentName": "Dispatcher Agent",
+            "runType": "skill_matching",
+            "timestamp": "2024-02-24T15:30:00Z",
+            "input": "Find team member with React Native skills for TechStart Mobile App task",
+            "output": "Matched Casey Morgan (React Native: Advanced, 88% capacity available)",
+            "tokensUsed": 520,
+            "cost": 0.0156,
+            "approvalStatus": "auto_approved",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": null
+        },
+        {
+            "id": "log-011",
+            "agentId": "agent-003",
+            "agentName": "Copywriter Agent",
+            "runType": "content_editing",
+            "timestamp": "2024-02-23T09:15:00Z",
+            "input": "Edit and improve tone for client proposal - GreenLeaf Brand Refresh",
+            "output": "Revised proposal with warmer tone, clearer value propositions, and stronger CTAs",
+            "tokensUsed": 2100,
+            "cost": 0.063,
+            "approvalStatus": "approved",
+            "approvedBy": "user-002",
+            "approvedAt": "2024-02-23T11:00:00Z",
+            "error": null
+        },
+        {
+            "id": "log-012",
+            "agentId": "agent-004",
+            "agentName": "QA Agent",
+            "runType": "deliverable_review",
+            "timestamp": "2024-02-23T13:00:00Z",
+            "input": "Review database migration script for BuildRight Portal",
+            "output": "Review complete: Script passes all checks, no issues found",
+            "tokensUsed": 840,
+            "cost": 0.0252,
+            "approvalStatus": "auto_approved",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": null
+        },
+        {
+            "id": "log-013",
+            "agentId": "agent-001",
+            "agentName": "PM Copilot",
+            "runType": "status_report_generation",
+            "timestamp": "2024-02-22T16:00:00Z",
+            "input": "Generate end-of-week summary for all active projects",
+            "output": "Weekly Summary: 5 active projects, 3 on track, 1 at risk, 1 overdue. Key actions needed...",
+            "tokensUsed": 2200,
+            "cost": 0.066,
+            "approvalStatus": "approved",
+            "approvedBy": "user-001",
+            "approvedAt": "2024-02-22T17:30:00Z",
+            "error": null
+        },
+        {
+            "id": "log-014",
+            "agentId": "agent-002",
+            "agentName": "Dispatcher Agent",
+            "runType": "task_assignment",
+            "timestamp": "2024-02-22T10:00:00Z",
+            "input": "Assign urgent QA tasks for TechStart Mobile App",
+            "output": "Assigned 3 QA tasks to Sam Patel (QA Engineer, 105% capacity - flagged overload)",
+            "tokensUsed": 490,
+            "cost": 0.0147,
+            "approvalStatus": "auto_approved",
+            "approvedBy": null,
+            "approvedAt": null,
+            "error": null
+        },
+        {
+            "id": "log-015",
+            "agentId": "agent-003",
+            "agentName": "Copywriter Agent",
+            "runType": "content_creation",
+            "timestamp": "2024-02-21T14:30:00Z",
+            "input": "Write product feature descriptions for TechStart Mobile App marketing site",
+            "output": "Engaging feature descriptions highlighting core functionality, benefits, and differentiators",
+            "tokensUsed": 1900,
+            "cost": 0.057,
+            "approvalStatus": "approved",
+            "approvedBy": "user-004",
+            "approvedAt": "2024-02-21T16:00:00Z",
+            "error": null
+        }
+    ],
+    "integrations":
+    [
+        {
+            "id": "int-001",
+            "name": "Gmail",
+            "type": "email",
+            "description": "Send and receive emails, sync conversations",
+            "status": "connected",
+            "icon": "/assets/integrations/gmail.svg",
+            "connectedAt": "2023-06-15T10:00:00Z",
+            "connectedBy": "user-001",
+            "lastSyncAt": "2024-02-26T15:30:00Z",
+            "settings":
+            {
+                "autoSync": true,
+                "syncInterval": 5,
+                "emailSignature": true
+            }
+        },
+        {
+            "id": "int-002",
+            "name": "Google Calendar",
+            "type": "calendar",
+            "description": "Sync events, deadlines, and meetings",
+            "status": "connected",
+            "icon": "/assets/integrations/google-calendar.svg",
+            "connectedAt": "2023-06-15T10:00:00Z",
+            "connectedBy": "user-001",
+            "lastSyncAt": "2024-02-26T15:25:00Z",
+            "settings":
+            {
+                "autoSync": true,
+                "syncInterval": 15,
+                "createEventsForDeadlines": true
+            }
+        },
+        {
+            "id": "int-003",
+            "name": "Slack",
+            "type": "communication",
+            "description": "Send notifications and updates to Slack channels",
+            "status": "connected",
+            "icon": "/assets/integrations/slack.svg",
+            "connectedAt": "2023-07-20T14:00:00Z",
+            "connectedBy": "user-002",
+            "lastSyncAt": "2024-02-26T15:40:00Z",
+            "settings":
+            {
+                "defaultChannel": "#project-updates",
+                "notifyOnApprovals": true,
+                "notifyOnBlockers": true
+            }
+        },
+        {
+            "id": "int-004",
+            "name": "QuickBooks",
+            "type": "accounting",
+            "description": "Sync invoices, expenses, and financial data",
+            "status": "disconnected",
+            "icon": "/assets/integrations/quickbooks.svg",
+            "connectedAt": null,
+            "connectedBy": null,
+            "lastSyncAt": null,
+            "settings": null
+        },
+        {
+            "id": "int-005",
+            "name": "Stripe",
+            "type": "payments",
+            "description": "Process payments and track billing",
+            "status": "disconnected",
+            "icon": "/assets/integrations/stripe.svg",
+            "connectedAt": null,
+            "connectedBy": null,
+            "lastSyncAt": null,
+            "settings": null
+        },
+        {
+            "id": "int-006",
+            "name": "Zapier",
+            "type": "automation",
+            "description": "Connect to 5000+ apps via Zapier workflows",
+            "status": "disconnected",
+            "icon": "/assets/integrations/zapier.svg",
+            "connectedAt": null,
+            "connectedBy": null,
+            "lastSyncAt": null,
+            "settings": null
+        }
+    ],
+    "billingInfo":
+    {
+        "plan": "Professional",
+        "status": "active",
+        "billingCycle": "monthly",
+        "price": 299.0,
+        "nextBillingDate": "2024-03-15T00:00:00Z",
+        "currentPeriodStart": "2024-02-15T00:00:00Z",
+        "currentPeriodEnd": "2024-03-15T00:00:00Z",
+        "usage":
+        {
+            "teamMembers":
+            {
+                "included": 10,
+                "current": 6,
+                "overage": 0,
+                "overageCost": 0.0
+            },
+            "aiAgents":
+            {
+                "included": 5,
+                "current": 5,
+                "overage": 0,
+                "overageCost": 0.0
+            },
+            "storage":
+            {
+                "included": 100,
+                "current": 42,
+                "unit": "GB",
+                "overage": 0,
+                "overageCost": 0.0
+            },
+            "aiTokens":
+            {
+                "included": 1000000,
+                "current": 487000,
+                "overage": 0,
+                "overageCost": 0.0
+            }
+        },
+        "paymentMethod":
+        {
+            "type": "card",
+            "last4": "4242",
+            "brand": "Visa",
+            "expiryMonth": 12,
+            "expiryYear": 2026
+        }
+    },
+    "invoices":
+    [
+        {
+            "id": "inv-2024-02",
+            "invoiceNumber": "INV-2024-02",
+            "date": "2024-02-15T00:00:00Z",
+            "dueDate": "2024-03-01T00:00:00Z",
+            "amount": 299.0,
+            "status": "paid",
+            "paidAt": "2024-02-15T10:30:00Z",
+            "downloadUrl": "/api/invoices/inv-2024-02/download"
+        },
+        {
+            "id": "inv-2024-01",
+            "invoiceNumber": "INV-2024-01",
+            "date": "2024-01-15T00:00:00Z",
+            "dueDate": "2024-02-01T00:00:00Z",
+            "amount": 299.0,
+            "status": "paid",
+            "paidAt": "2024-01-15T11:00:00Z",
+            "downloadUrl": "/api/invoices/inv-2024-01/download"
+        },
+        {
+            "id": "inv-2023-12",
+            "invoiceNumber": "INV-2023-12",
+            "date": "2023-12-15T00:00:00Z",
+            "dueDate": "2024-01-01T00:00:00Z",
+            "amount": 299.0,
+            "status": "paid",
+            "paidAt": "2023-12-15T09:45:00Z",
+            "downloadUrl": "/api/invoices/inv-2023-12/download"
+        }
+    ],
+    "notificationPreferences":
+    {
+        "email":
+        {
+            "projectUpdates": true,
+            "taskAssignments": true,
+            "approvalRequests": true,
+            "blockers": true,
+            "deadlines": true,
+            "weeklyDigest": true,
+            "agentActivity": false
+        },
+        "push":
+        {
+            "projectUpdates": false,
+            "taskAssignments": true,
+            "approvalRequests": true,
+            "blockers": true,
+            "deadlines": true,
+            "weeklyDigest": false,
+            "agentActivity": false
+        },
+        "slack":
+        {
+            "projectUpdates": true,
+            "taskAssignments": false,
+            "approvalRequests": true,
+            "blockers": true,
+            "deadlines": true,
+            "weeklyDigest": false,
+            "agentActivity": true
+        }
+    },
+    "auditLogEntries":
+    [
+        {
+            "id": "audit-001",
+            "timestamp": "2024-02-26T15:45:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "updated_workspace_settings",
+            "target": "workspace",
+            "targetId": "workspace-001",
+            "details": "Changed timezone from UTC to America/Los_Angeles",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-002",
+            "timestamp": "2024-02-26T14:30:00Z",
+            "actor": "user-002",
+            "actorName": "Jordan Kim",
+            "actorType": "user",
+            "action": "approved_agent_output",
+            "target": "agent_log",
+            "targetId": "log-005",
+            "details": "Approved risk analysis from PM Copilot for TechStart Mobile App",
+            "ipAddress": "192.168.1.105"
+        },
+        {
+            "id": "audit-003",
+            "timestamp": "2024-02-26T13:15:00Z",
+            "actor": "user-004",
+            "actorName": "Riley Chen",
+            "actorType": "user",
+            "action": "approved_agent_output",
+            "target": "agent_log",
+            "targetId": "log-003",
+            "details": "Approved social media copy from Copywriter Agent",
+            "ipAddress": "192.168.1.108"
+        },
+        {
+            "id": "audit-004",
+            "timestamp": "2024-02-26T11:20:00Z",
+            "actor": "agent-003",
+            "actorName": "Copywriter Agent",
+            "actorType": "agent",
+            "action": "generated_content",
+            "target": "agent_run",
+            "targetId": "log-003",
+            "details": "Generated social media copy for Marketing Campaign Q1",
+            "ipAddress": "system"
+        },
+        {
+            "id": "audit-005",
+            "timestamp": "2024-02-26T10:45:00Z",
+            "actor": "agent-002",
+            "actorName": "Dispatcher Agent",
+            "actorType": "agent",
+            "action": "assigned_task",
+            "target": "task",
+            "targetId": "task-289",
+            "details": "Assigned design task to Jordan Kim",
+            "ipAddress": "system"
+        },
+        {
+            "id": "audit-006",
+            "timestamp": "2024-02-26T09:15:00Z",
+            "actor": "agent-001",
+            "actorName": "PM Copilot",
+            "actorType": "agent",
+            "action": "generated_report",
+            "target": "agent_run",
+            "targetId": "log-001",
+            "details": "Generated weekly status report for Acme Corp Website Redesign",
+            "ipAddress": "system"
+        },
+        {
+            "id": "audit-007",
+            "timestamp": "2024-02-25T16:00:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "disabled_agent",
+            "target": "agent",
+            "targetId": "agent-005",
+            "details": "Disabled Analyst Agent due to budget constraints",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-008",
+            "timestamp": "2024-02-25T14:30:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "updated_agent_config",
+            "target": "agent_config",
+            "targetId": "agent-001",
+            "details": "Increased PM Copilot monthly budget cap from $100 to $150",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-009",
+            "timestamp": "2024-02-24T16:30:00Z",
+            "actor": "user-002",
+            "actorName": "Jordan Kim",
+            "actorType": "user",
+            "action": "rejected_agent_output",
+            "target": "agent_log",
+            "targetId": "log-009",
+            "details": "Rejected timeline suggestion from PM Copilot",
+            "ipAddress": "192.168.1.105"
+        },
+        {
+            "id": "audit-010",
+            "timestamp": "2024-02-23T15:00:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "connected_integration",
+            "target": "integration",
+            "targetId": "int-003",
+            "details": "Connected Slack integration",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-011",
+            "timestamp": "2024-02-23T11:00:00Z",
+            "actor": "user-002",
+            "actorName": "Jordan Kim",
+            "actorType": "user",
+            "action": "approved_agent_output",
+            "target": "agent_log",
+            "targetId": "log-011",
+            "details": "Approved revised proposal from Copywriter Agent",
+            "ipAddress": "192.168.1.105"
+        },
+        {
+            "id": "audit-012",
+            "timestamp": "2024-02-22T17:30:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "approved_agent_output",
+            "target": "agent_log",
+            "targetId": "log-013",
+            "details": "Approved weekly summary from PM Copilot",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-013",
+            "timestamp": "2024-02-21T10:00:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "invited_user",
+            "target": "user",
+            "targetId": "user-006",
+            "details": "Invited Taylor Brooks as viewer",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-014",
+            "timestamp": "2024-02-20T14:30:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "updated_user_role",
+            "target": "user",
+            "targetId": "user-002",
+            "details": "Changed Jordan Kim role from member to manager",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-015",
+            "timestamp": "2024-02-15T10:30:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "paid_invoice",
+            "target": "invoice",
+            "targetId": "inv-2024-02",
+            "details": "Paid invoice INV-2024-02 ($299.00)",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-016",
+            "timestamp": "2024-02-10T09:00:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "updated_notification_preferences",
+            "target": "notification_prefs",
+            "targetId": "user-001",
+            "details": "Disabled email notifications for agent activity",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-017",
+            "timestamp": "2024-02-05T14:00:00Z",
+            "actor": "user-002",
+            "actorName": "Jordan Kim",
+            "actorType": "user",
+            "action": "updated_agent_config",
+            "target": "agent_config",
+            "targetId": "agent-002",
+            "details": "Increased Dispatcher Agent daily run limit from 150 to 200",
+            "ipAddress": "192.168.1.105"
+        },
+        {
+            "id": "audit-018",
+            "timestamp": "2024-01-28T11:00:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "updated_global_ai_budget",
+            "target": "global_ai_settings",
+            "targetId": "global-001",
+            "details": "Increased total monthly AI budget from $1500 to $2000",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-019",
+            "timestamp": "2024-01-20T16:00:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "deactivated_user",
+            "target": "user",
+            "targetId": "user-006",
+            "details": "Deactivated Taylor Brooks",
+            "ipAddress": "192.168.1.100"
+        },
+        {
+            "id": "audit-020",
+            "timestamp": "2024-01-15T11:00:00Z",
+            "actor": "user-001",
+            "actorName": "Alex Rivera",
+            "actorType": "user",
+            "action": "paid_invoice",
+            "target": "invoice",
+            "targetId": "inv-2024-01",
+            "details": "Paid invoice INV-2024-01 ($299.00)",
+            "ipAddress": "192.168.1.100"
+        }
+    ]
+}

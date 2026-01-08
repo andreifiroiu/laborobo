@@ -1,0 +1,366 @@
+{
+  "_meta": {
+    "models": {
+      "inboxItems": "Individual items in the inbox queue that need human review or decision. Each item represents something waiting for your attention - agent-generated drafts, approval requests, flagged issues, or mentions in discussions.",
+      "teamMembers": "Team members (human or AI agent) that can be assigned to parties, projects, work orders, or tasks. Represents workforce capacity and assignment.",
+      "projects": "A collection of work being done for a party, containing multiple work orders. Represents the top-level container for related work.",
+      "workOrders": "A specific unit of work within a project that needs to be completed. Represents a trackable, structured piece of work with clear scope and deliverables."
+    },
+    "relationships": [
+      "Each Inbox Item is created by a Team Member (human or AI agent)",
+      "Inbox Items link to related Work Orders or Projects for context",
+      "Agent-generated Inbox Items include AI confidence scores",
+      "Inbox Items are categorized by type: agent_draft, approval, flag, or mention"
+    ]
+  },
+  "inboxItems": [
+    {
+      "id": "inbox-001",
+      "type": "agent_draft",
+      "title": "Task Breakdown: Homepage Redesign Implementation",
+      "contentPreview": "I've broken down the homepage redesign into 8 actionable tasks with estimated hours and dependencies...",
+      "fullContent": "# Task Breakdown: Homepage Redesign Implementation\n\nBased on the work order requirements, here's the detailed task breakdown:\n\n## Tasks\n1. **Create wireframes** (4h) - Design low-fidelity layouts\n2. **Design mockups** (8h) - High-fidelity designs in Figma\n3. **Implement header** (6h) - Responsive navigation component\n4. **Implement hero section** (4h) - Landing hero with CTA\n5. **Implement features grid** (5h) - Feature showcase section\n6. **Implement testimonials** (3h) - Customer testimonial carousel\n7. **Implement footer** (2h) - Footer with links and social\n8. **QA and polish** (4h) - Cross-browser testing and refinement\n\n**Total estimate:** 36 hours\n**Dependencies:** Tasks 1-2 must complete before 3-8\n**Notes:** All components should be mobile-first and use the design system tokens.",
+      "sourceId": "agent-002",
+      "sourceName": "PM Copilot",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-001",
+      "relatedWorkOrderTitle": "Acme Corp Homepage Redesign",
+      "relatedProjectId": "proj-001",
+      "relatedProjectName": "Acme Corp Rebrand",
+      "urgency": "high",
+      "aiConfidence": "high",
+      "qaValidation": "passed",
+      "createdAt": "2024-01-05T09:30:00Z",
+      "waitingHours": 6
+    },
+    {
+      "id": "inbox-002",
+      "type": "approval",
+      "title": "Deliverable Ready: Brand Guidelines Document v2.0",
+      "contentPreview": "The updated brand guidelines document is ready for your final approval before delivery to the client...",
+      "fullContent": "# Brand Guidelines Document v2.0\n\n**Status:** Ready for Approval\n**Deliverable ID:** del-001\n**Client:** Acme Corp\n\n## Changes from v1.0\n- Added photography style guidelines\n- Updated color palette with accessibility improvements\n- Included voice & tone examples\n- Added social media templates\n\n## Next Steps\nOnce approved, this will be delivered to the client and marked as complete. The client has been notified to expect delivery this week.\n\n## Files\n- brand-guidelines-v2.pdf (4.2 MB)\n- brand-assets.zip (12.8 MB)",
+      "sourceId": "agent-004",
+      "sourceName": "Copywriter AI",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-002",
+      "relatedWorkOrderTitle": "Brand Guidelines Development",
+      "relatedProjectId": "proj-001",
+      "relatedProjectName": "Acme Corp Rebrand",
+      "urgency": "urgent",
+      "aiConfidence": "high",
+      "qaValidation": "passed",
+      "createdAt": "2024-01-04T14:20:00Z",
+      "waitingHours": 43
+    },
+    {
+      "id": "inbox-003",
+      "type": "flag",
+      "title": "Risk: Missing Acceptance Criteria",
+      "contentPreview": "Work order 'Marketing Automation Setup' has no acceptance criteria defined. This could lead to scope creep...",
+      "fullContent": "# Risk Identified: Missing Acceptance Criteria\n\n**Work Order:** Marketing Automation Setup\n**Severity:** Medium\n**Identified by:** QA Agent\n\n## Issue\nThis work order was started without clearly defined acceptance criteria. The team has completed 60% of the estimated work, but there's no clear definition of \"done.\"\n\n## Risks\n- Scope creep and endless revisions\n- Client dissatisfaction due to misaligned expectations\n- Unable to determine when work is complete\n- QA Agent cannot validate deliverables\n\n## Recommendation\nPause work and schedule a requirements clarification call with the client. Document acceptance criteria before proceeding further.\n\n## Affected Items\n- Work Order: wo-003\n- Assigned to: Sarah Chen\n- Client: TechStart Inc",
+      "sourceId": "agent-006",
+      "sourceName": "QA Agent",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-003",
+      "relatedWorkOrderTitle": "Marketing Automation Setup",
+      "relatedProjectId": "proj-002",
+      "relatedProjectName": "TechStart Marketing",
+      "urgency": "high",
+      "aiConfidence": "high",
+      "qaValidation": null,
+      "createdAt": "2024-01-05T11:15:00Z",
+      "waitingHours": 4
+    },
+    {
+      "id": "inbox-004",
+      "type": "agent_draft",
+      "title": "Email Draft: Project Kickoff - BuildRight Q1 Reporting",
+      "contentPreview": "Draft email to send to the BuildRight team announcing the project kickoff and outlining next steps...",
+      "fullContent": "**To:** mike@buildright.com\n**Subject:** Project Kickoff: Q1 Reporting Dashboard\n\n---\n\nHi Mike,\n\nI'm excited to officially kick off the Q1 Reporting Dashboard project! Here's what you can expect over the next few weeks:\n\n**Timeline:**\n- Week 1: Discovery & requirements gathering\n- Week 2-3: Design & development\n- Week 4: Testing & deployment\n\n**What we need from you:**\n- Access to your current reporting system\n- List of key metrics to track\n- Stakeholder availability for a requirements call (30 min)\n\n**Next Steps:**\nI'll send a calendar invite for our requirements call this Thursday at 2pm. In the meantime, feel free to reply with any questions or specific requests.\n\nLooking forward to working together!\n\nBest,\n[Your Name]",
+      "sourceId": "agent-001",
+      "sourceName": "Dispatcher",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-007",
+      "relatedWorkOrderTitle": "Q1 Reporting Dashboard",
+      "relatedProjectId": "proj-003",
+      "relatedProjectName": "BuildRight Reporting",
+      "urgency": "normal",
+      "aiConfidence": "medium",
+      "qaValidation": null,
+      "createdAt": "2024-01-05T13:45:00Z",
+      "waitingHours": 2
+    },
+    {
+      "id": "inbox-005",
+      "type": "mention",
+      "title": "@You in 'Brand Strategy Discussion'",
+      "contentPreview": "@alex I need your sign-off on the revised brand positioning before we can move forward with the creative concepts...",
+      "fullContent": "**Thread:** Brand Strategy Discussion\n**Work Order:** Brand Guidelines Development\n**From:** Sarah Chen (Human)\n**Posted:** 2 hours ago\n\n---\n\n@alex I need your sign-off on the revised brand positioning before we can move forward with the creative concepts. The client approved the direction, but I want to make sure you're aligned before we invest time in execution.\n\nKey changes from the original:\n- Shifted from 'innovative' to 'reliable' as primary brand attribute\n- Updated tagline to emphasize trust over disruption\n- Refined target audience to focus on mid-market B2B\n\nCan you review the attached strategy doc and let me know if you have any concerns? We're blocked until we get your input.\n\n[Attachment: brand-positioning-v3.pdf]",
+      "sourceId": "tm-002",
+      "sourceName": "Sarah Chen",
+      "sourceType": "human",
+      "relatedWorkOrderId": "wo-002",
+      "relatedWorkOrderTitle": "Brand Guidelines Development",
+      "relatedProjectId": "proj-001",
+      "relatedProjectName": "Acme Corp Rebrand",
+      "urgency": "high",
+      "aiConfidence": null,
+      "qaValidation": null,
+      "createdAt": "2024-01-05T13:30:00Z",
+      "waitingHours": 2
+    },
+    {
+      "id": "inbox-006",
+      "type": "approval",
+      "title": "Time Estimate: Content Writing for Landing Pages",
+      "contentPreview": "I've estimated 24 hours for the landing page content writing. Please review and approve so I can proceed...",
+      "fullContent": "# Time Estimate Request\n\n**Work Order:** Website Content Development\n**Task:** Landing Page Copywriting\n**Estimated by:** Copywriter AI\n\n## Breakdown\n- Homepage (6h) - Hero, features, CTAs\n- About page (4h) - Company story, team bios\n- Services page (8h) - 4 service descriptions with benefits\n- Contact page (2h) - Contact form copy, office info\n- SEO optimization (4h) - Meta descriptions, keywords\n\n**Total:** 24 hours\n**Confidence:** High (based on similar past projects)\n**Dependencies:** Brand guidelines must be approved first\n\n## Notes\nThis estimate assumes one round of client revisions is included. Additional revision rounds would add 3-4 hours each.",
+      "sourceId": "agent-004",
+      "sourceName": "Copywriter AI",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-008",
+      "relatedWorkOrderTitle": "Website Content Development",
+      "relatedProjectId": "proj-004",
+      "relatedProjectName": "Internal Website Refresh",
+      "urgency": "normal",
+      "aiConfidence": "high",
+      "qaValidation": "passed",
+      "createdAt": "2024-01-04T16:00:00Z",
+      "waitingHours": 24
+    },
+    {
+      "id": "inbox-007",
+      "type": "flag",
+      "title": "Missing Information: Client Logo Files",
+      "contentPreview": "Cannot proceed with design mockups - client logo files are missing from the project assets...",
+      "fullContent": "# Missing Information\n\n**Work Order:** Homepage Redesign Implementation\n**Blocked Item:** Design mockups task\n**Flagged by:** Designer AI\n\n## Issue\nI need the client's logo files (SVG and PNG formats) to create the design mockups, but they're not in the project assets folder.\n\n## Impact\n- Design mockups task is blocked\n- 2-day delay if not resolved quickly\n- Downstream development tasks will be affected\n\n## What I've Checked\n- Project assets folder: Empty\n- Previous work order attachments: No logo files\n- Brand guidelines document: Only shows logo examples, no source files\n\n## Action Needed\nRequest logo files from the client (Acme Corp contact: jane@acmecorp.com) in these formats:\n- SVG (vector)\n- PNG (transparent, high-res)\n- Color and monochrome versions",
+      "sourceId": "agent-003",
+      "sourceName": "Designer AI",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-001",
+      "relatedWorkOrderTitle": "Acme Corp Homepage Redesign",
+      "relatedProjectId": "proj-001",
+      "relatedProjectName": "Acme Corp Rebrand",
+      "urgency": "urgent",
+      "aiConfidence": "high",
+      "qaValidation": null,
+      "createdAt": "2024-01-05T10:00:00Z",
+      "waitingHours": 5
+    },
+    {
+      "id": "inbox-008",
+      "type": "agent_draft",
+      "title": "Weekly Status Report: TechStart Marketing Projects",
+      "contentPreview": "Summary of progress across all TechStart projects this week, including completed work, blockers, and upcoming milestones...",
+      "fullContent": "# Weekly Status Report\n**Client:** TechStart Inc\n**Week of:** January 1-5, 2024\n**Prepared by:** PM Copilot\n\n## Projects Overview\n\n### Marketing Automation Setup (60% complete)\n- Completed: Email workflow configuration\n- In progress: Lead scoring setup\n- Blocked: Missing acceptance criteria (flagged separately)\n- Next week: Integration testing\n\n### Social Media Campaign (On track)\n- Completed: Content calendar for Q1\n- In progress: Creative asset production\n- Next week: Campaign launch preparation\n\n## Key Metrics\n- Hours logged this week: 32h\n- Budget consumed: 45% (on track)\n- Upcoming milestones: 2 deliverables due next week\n\n## Risks & Issues\n- ⚠️ Marketing Automation: Missing acceptance criteria\n- ✅ Social Media: No blockers\n\n## Recommendations\n- Schedule client call to clarify automation requirements\n- Plan Q2 project kickoff meeting",
+      "sourceId": "agent-002",
+      "sourceName": "PM Copilot",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": null,
+      "relatedWorkOrderTitle": null,
+      "relatedProjectId": "proj-002",
+      "relatedProjectName": "TechStart Marketing",
+      "urgency": "normal",
+      "aiConfidence": "high",
+      "qaValidation": "passed",
+      "createdAt": "2024-01-05T08:00:00Z",
+      "waitingHours": 7
+    },
+    {
+      "id": "inbox-009",
+      "type": "mention",
+      "title": "@You in 'Budget Discussion'",
+      "contentPreview": "@alex Can you approve the additional 8 hours for the reporting dashboard? The scope expanded after client feedback...",
+      "fullContent": "**Thread:** Budget Discussion\n**Work Order:** Q1 Reporting Dashboard\n**From:** Mike Johnson (Human)\n**Posted:** 1 hour ago\n\n---\n\n@alex Can you approve the additional 8 hours for the reporting dashboard?\n\nThe client came back with feedback that essentially doubles the number of reports they want. Original scope was 4 reports, they now want 8.\n\nOptions:\n1. Approve the extra hours (brings total to 48h)\n2. Push back and deliver the original 4 reports\n3. Negotiate a change order with the client for additional budget\n\nI think option 3 is fairest since this is a significant scope increase, but I wanted your input before I reach out to them.\n\nWhat do you think?",
+      "sourceId": "tm-003",
+      "sourceName": "Mike Johnson",
+      "sourceType": "human",
+      "relatedWorkOrderId": "wo-007",
+      "relatedWorkOrderTitle": "Q1 Reporting Dashboard",
+      "relatedProjectId": "proj-003",
+      "relatedProjectName": "BuildRight Reporting",
+      "urgency": "high",
+      "aiConfidence": null,
+      "qaValidation": null,
+      "createdAt": "2024-01-05T14:15:00Z",
+      "waitingHours": 1
+    },
+    {
+      "id": "inbox-010",
+      "type": "agent_draft",
+      "title": "SOP Suggestion: Website Launch Checklist",
+      "contentPreview": "Based on our recent website projects, I've created a reusable launch checklist to ensure nothing gets missed...",
+      "fullContent": "# Standard Operating Procedure: Website Launch Checklist\n\n**Created by:** QA Agent\n**Purpose:** Ensure consistent, thorough website launches with zero missed steps\n\n## Pre-Launch (1 week before)\n- [ ] All content approved by client\n- [ ] SSL certificate installed and verified\n- [ ] Backup of old site created\n- [ ] DNS records documented\n- [ ] Analytics and tracking codes installed\n- [ ] Forms tested (contact, newsletter, etc.)\n- [ ] Cross-browser testing complete (Chrome, Firefox, Safari, Edge)\n- [ ] Mobile responsiveness verified\n- [ ] Page speed optimization complete\n- [ ] SEO meta tags verified\n\n## Launch Day\n- [ ] Deploy to production at agreed time\n- [ ] Update DNS records\n- [ ] Verify all pages load correctly\n- [ ] Test all forms in production\n- [ ] Verify analytics tracking\n- [ ] Update sitemap.xml\n- [ ] Submit to Google Search Console\n\n## Post-Launch (first 48h)\n- [ ] Monitor error logs\n- [ ] Check analytics data\n- [ ] Respond to any client feedback\n- [ ] Create post-launch report\n\n**Recommendation:** Apply this SOP to all website launch work orders going forward.",
+      "sourceId": "agent-006",
+      "sourceName": "QA Agent",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": null,
+      "relatedWorkOrderTitle": null,
+      "relatedProjectId": null,
+      "relatedProjectName": null,
+      "urgency": "normal",
+      "aiConfidence": "medium",
+      "qaValidation": null,
+      "createdAt": "2024-01-05T07:30:00Z",
+      "waitingHours": 8
+    },
+    {
+      "id": "inbox-011",
+      "type": "approval",
+      "title": "Change Request: Add Mobile App to Scope",
+      "contentPreview": "Client has requested adding a companion mobile app to the project. This requires budget and timeline adjustment...",
+      "fullContent": "# Change Request\n\n**Project:** BuildRight Reporting\n**Requested by:** Client (BuildRight team)\n**Change type:** Scope expansion\n\n## Request Details\nClient wants to add a mobile app (iOS and Android) that mirrors the web dashboard functionality. They want users to check reports on the go.\n\n## Impact Assessment\n\n### Additional Work\n- Mobile app design (16h)\n- iOS development (40h)\n- Android development (40h)\n- API modifications (12h)\n- Testing & QA (16h)\n- App store submission (8h)\n\n**Total additional hours:** 132h\n**Additional cost:** ~$13,200\n**Timeline impact:** +4 weeks\n\n## Recommendation\nThis is a significant scope increase. I recommend:\n1. Treating this as a separate Phase 2 project\n2. Completing the web dashboard first (original scope)\n3. Gathering detailed mobile requirements before starting\n4. Creating a separate proposal with clear deliverables\n\n**Action needed:** Approve/reject this approach and authorize me to communicate with the client.",
+      "sourceId": "agent-002",
+      "sourceName": "PM Copilot",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-007",
+      "relatedWorkOrderTitle": "Q1 Reporting Dashboard",
+      "relatedProjectId": "proj-003",
+      "relatedProjectName": "BuildRight Reporting",
+      "urgency": "normal",
+      "aiConfidence": "high",
+      "qaValidation": "passed",
+      "createdAt": "2024-01-03T15:30:00Z",
+      "waitingHours": 48
+    },
+    {
+      "id": "inbox-012",
+      "type": "flag",
+      "title": "Low Confidence: Task Breakdown Accuracy",
+      "contentPreview": "I've created a task breakdown for the e-commerce integration, but my confidence is low due to limited context...",
+      "fullContent": "# Low Confidence Warning\n\n**Work Order:** E-commerce Integration\n**Task:** Task breakdown\n**Created by:** PM Copilot\n**Confidence level:** Low\n\n## Why Low Confidence?\n\nI've created a task breakdown based on the work order description, but I'm missing key information:\n\n1. **Unknown integration platform** - Work order doesn't specify which e-commerce system (Shopify, WooCommerce, custom?)\n2. **Unclear requirements** - No acceptance criteria defined\n3. **Missing technical constraints** - No info about existing systems or APIs\n4. **Limited historical data** - No similar projects in history to reference\n\n## What I Created (with caveats)\n\nI've made a generic task breakdown with placeholder estimates, but it should NOT be used without clarification:\n\n- Integration setup (8-16h) *highly variable*\n- Product sync (4-12h) *depends on catalog size*\n- Order processing (6-10h) *depends on complexity*\n- Testing (4-8h) *minimum estimate*\n\n## Recommendation\nSchedule a requirements gathering call with the client to clarify:\n- Which platform they're using\n- Data volume and complexity\n- Integration points needed\n- Performance requirements\n\nOnce we have this info, I can provide a high-confidence breakdown.",
+      "sourceId": "agent-002",
+      "sourceName": "PM Copilot",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-009",
+      "relatedWorkOrderTitle": "E-commerce Integration",
+      "relatedProjectId": "proj-004",
+      "relatedProjectName": "Internal Website Refresh",
+      "urgency": "normal",
+      "aiConfidence": "low",
+      "qaValidation": null,
+      "createdAt": "2024-01-05T12:00:00Z",
+      "waitingHours": 3
+    }
+  ],
+  "teamMembers": [
+    {
+      "id": "agent-001",
+      "name": "Dispatcher",
+      "type": "ai_agent",
+      "role": "Request Intake & Routing",
+      "avatarUrl": null,
+      "skills": ["request analysis", "work order creation", "team assignment"]
+    },
+    {
+      "id": "agent-002",
+      "name": "PM Copilot",
+      "type": "ai_agent",
+      "role": "Project Management",
+      "avatarUrl": null,
+      "skills": ["task breakdown", "estimation", "status reporting", "risk management"]
+    },
+    {
+      "id": "agent-003",
+      "name": "Designer AI",
+      "type": "ai_agent",
+      "role": "Design",
+      "avatarUrl": null,
+      "skills": ["UI design", "mockups", "wireframes", "design systems"]
+    },
+    {
+      "id": "agent-004",
+      "name": "Copywriter AI",
+      "type": "ai_agent",
+      "role": "Content Writing",
+      "avatarUrl": null,
+      "skills": ["copywriting", "SEO", "brand voice", "editing"]
+    },
+    {
+      "id": "agent-006",
+      "name": "QA Agent",
+      "type": "ai_agent",
+      "role": "Quality Assurance",
+      "avatarUrl": null,
+      "skills": ["validation", "risk detection", "SOP creation", "testing"]
+    },
+    {
+      "id": "tm-001",
+      "name": "Alex Rodriguez",
+      "type": "human",
+      "role": "Creative Director",
+      "avatarUrl": null,
+      "skills": ["strategy", "design review", "client relations"]
+    },
+    {
+      "id": "tm-002",
+      "name": "Sarah Chen",
+      "type": "human",
+      "role": "Senior Designer",
+      "avatarUrl": null,
+      "skills": ["brand design", "UI/UX", "illustration"]
+    },
+    {
+      "id": "tm-003",
+      "name": "Mike Johnson",
+      "type": "human",
+      "role": "Developer",
+      "avatarUrl": null,
+      "skills": ["frontend", "React", "API integration"]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-001",
+      "name": "Acme Corp Rebrand",
+      "description": "Complete brand refresh including new visual identity, guidelines, and website"
+    },
+    {
+      "id": "proj-002",
+      "name": "TechStart Marketing",
+      "description": "Marketing automation setup and social media campaigns"
+    },
+    {
+      "id": "proj-003",
+      "name": "BuildRight Reporting",
+      "description": "Custom reporting dashboard for project tracking"
+    },
+    {
+      "id": "proj-004",
+      "name": "Internal Website Refresh",
+      "description": "Update company website with new content and e-commerce"
+    }
+  ],
+  "workOrders": [
+    {
+      "id": "wo-001",
+      "title": "Acme Corp Homepage Redesign",
+      "projectId": "proj-001"
+    },
+    {
+      "id": "wo-002",
+      "title": "Brand Guidelines Development",
+      "projectId": "proj-001"
+    },
+    {
+      "id": "wo-003",
+      "title": "Marketing Automation Setup",
+      "projectId": "proj-002"
+    },
+    {
+      "id": "wo-007",
+      "title": "Q1 Reporting Dashboard",
+      "projectId": "proj-003"
+    },
+    {
+      "id": "wo-008",
+      "title": "Website Content Development",
+      "projectId": "proj-004"
+    },
+    {
+      "id": "wo-009",
+      "title": "E-commerce Integration",
+      "projectId": "proj-004"
+    }
+  ]
+}

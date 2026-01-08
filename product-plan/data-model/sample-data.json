@@ -1,0 +1,424 @@
+{
+  "_description": "Sample data for Laborobo - representative examples of all entity types to support component development and testing",
+  "_note": "This consolidated file contains sample data from all sections. Use this as a reference for component props and state management.",
+
+  "parties": [
+    {
+      "id": "party-001",
+      "name": "Acme Corporation",
+      "type": "client",
+      "status": "active",
+      "primaryContactId": "contact-001",
+      "primaryContactName": "Sarah Chen",
+      "email": "hello@acmecorp.com",
+      "phone": "(555) 123-4567",
+      "website": "https://acmecorp.com",
+      "address": "123 Market St, San Francisco, CA 94102",
+      "notes": "Enterprise client since 2023. Quarterly retainer for web development and marketing support.",
+      "tags": ["enterprise", "retainer", "web-dev"],
+      "linkedContactIds": ["contact-001", "contact-002"],
+      "linkedProjectIds": ["proj-001", "proj-002"],
+      "createdAt": "2023-03-15T10:00:00Z",
+      "lastActivity": "2024-01-18T14:30:00Z"
+    },
+    {
+      "id": "party-002",
+      "name": "TechStart Inc",
+      "type": "client",
+      "status": "active",
+      "primaryContactId": "contact-003",
+      "primaryContactName": "Marcus Rodriguez",
+      "email": "contact@techstart.io",
+      "phone": "(555) 234-5678",
+      "website": "https://techstart.io",
+      "address": "456 Innovation Blvd, Austin, TX 78701",
+      "notes": "Startup client, fast-paced environment. Working on MVP launch.",
+      "tags": ["startup", "mvp", "product-design"],
+      "linkedContactIds": ["contact-003"],
+      "linkedProjectIds": ["proj-003"],
+      "createdAt": "2023-09-20T08:00:00Z",
+      "lastActivity": "2024-01-17T16:45:00Z"
+    }
+  ],
+
+  "contacts": [
+    {
+      "id": "contact-001",
+      "name": "Sarah Chen",
+      "email": "sarah@acmecorp.com",
+      "phone": "(555) 123-4501",
+      "partyId": "party-001",
+      "partyName": "Acme Corporation",
+      "title": "Head of Marketing",
+      "role": "Primary Contact",
+      "engagementType": "approver",
+      "communicationPreference": "email",
+      "timezone": "America/Los_Angeles",
+      "notes": "Prefers morning meetings. Very detail-oriented.",
+      "status": "active",
+      "tags": ["decision-maker", "technical"],
+      "createdAt": "2023-03-15T10:30:00Z"
+    },
+    {
+      "id": "contact-002",
+      "name": "Michael Thompson",
+      "email": "michael.t@acmecorp.com",
+      "phone": "(555) 123-4502",
+      "partyId": "party-001",
+      "partyName": "Acme Corporation",
+      "title": "Finance Director",
+      "role": "Billing Contact",
+      "engagementType": "billing",
+      "communicationPreference": "email",
+      "timezone": "America/Los_Angeles",
+      "notes": "Requires invoices by 1st of month.",
+      "status": "active",
+      "tags": ["finance"],
+      "createdAt": "2023-03-20T14:00:00Z"
+    }
+  ],
+
+  "projects": [
+    {
+      "id": "proj-001",
+      "name": "Acme Corp Rebrand",
+      "description": "Complete brand refresh including logo, guidelines, and website redesign",
+      "partyId": "party-001",
+      "partyName": "Acme Corp",
+      "ownerId": "tm-001",
+      "ownerName": "You",
+      "status": "active",
+      "startDate": "2024-01-08",
+      "targetEndDate": "2024-03-15",
+      "budgetHours": 320,
+      "actualHours": 156.5,
+      "progress": 65,
+      "tags": ["design", "branding", "web"]
+    },
+    {
+      "id": "proj-002",
+      "name": "TechStart Marketing Campaign",
+      "description": "Q1 2024 marketing campaign across digital channels",
+      "partyId": "party-002",
+      "partyName": "TechStart Inc",
+      "ownerId": "tm-001",
+      "ownerName": "You",
+      "status": "active",
+      "startDate": "2024-01-02",
+      "targetEndDate": "2024-03-31",
+      "budgetHours": 180,
+      "actualHours": 62.0,
+      "progress": 35,
+      "tags": ["marketing", "content", "social"]
+    }
+  ],
+
+  "workOrders": [
+    {
+      "id": "wo-101",
+      "title": "Website Redesign Phase 2",
+      "description": "Design and implement new website based on approved brand guidelines",
+      "projectId": "proj-001",
+      "projectName": "Acme Corp Rebrand",
+      "assignedToId": "tm-002",
+      "assignedToName": "Sarah Chen",
+      "status": "in_review",
+      "priority": "high",
+      "dueDate": "2024-01-18",
+      "estimatedHours": 80,
+      "actualHours": 65.5,
+      "acceptanceCriteria": [
+        "All pages responsive on mobile, tablet, desktop",
+        "Follows brand guidelines exactly",
+        "Client approval on mockups before development"
+      ],
+      "sopAttached": true,
+      "sopName": "Website Design SOP",
+      "partyContactId": "party-001",
+      "createdBy": "tm-004",
+      "createdByName": "PM Copilot"
+    }
+  ],
+
+  "tasks": [
+    {
+      "id": "task-001",
+      "title": "Review wireframes with client",
+      "description": "Schedule and conduct wireframe review meeting with Acme Corp stakeholders",
+      "status": "todo",
+      "priority": "high",
+      "dueDate": "2024-01-15T15:00:00Z",
+      "isOverdue": true,
+      "assignedTo": "You",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand",
+      "estimatedHours": 2
+    }
+  ],
+
+  "teamMembers": [
+    {
+      "id": "tm-001",
+      "name": "You",
+      "email": "you@company.com",
+      "type": "human",
+      "role": "Project Manager",
+      "avatar": "",
+      "avatarUrl": null,
+      "status": "active",
+      "skills": [
+        { "name": "project_management", "proficiency": 3 },
+        { "name": "client_relations", "proficiency": 3 }
+      ],
+      "capacityHoursPerWeek": 40,
+      "currentWorkloadHours": 32,
+      "timezone": "America/Los_Angeles",
+      "joinedAt": "2023-01-15T00:00:00Z",
+      "assignedProjectIds": ["proj-001", "proj-002"],
+      "tags": ["pm", "lead"]
+    },
+    {
+      "id": "tm-004",
+      "name": "PM Copilot",
+      "email": "",
+      "type": "ai_agent",
+      "role": "AI Agent - PM",
+      "avatar": "",
+      "avatarUrl": null,
+      "status": "active",
+      "skills": ["project_planning", "task_breakdown", "estimation"],
+      "capacityHoursPerWeek": 0,
+      "timezone": "UTC",
+      "joinedAt": "2024-01-01T00:00:00Z",
+      "assignedProjectIds": [],
+      "tags": ["ai", "automation"]
+    }
+  ],
+
+  "deliverables": [
+    {
+      "id": "del-001",
+      "title": "Brand Guidelines Document",
+      "description": "Comprehensive PDF document covering logo usage, colors, typography, and brand voice",
+      "workOrderId": "wo-102",
+      "workOrderTitle": "Brand Guidelines Update",
+      "projectId": "proj-001",
+      "type": "document",
+      "status": "delivered",
+      "version": "2.0",
+      "createdDate": "2024-01-14",
+      "deliveredDate": "2024-01-14",
+      "fileUrl": "/files/acme-brand-guidelines-v2.pdf",
+      "acceptanceCriteria": [
+        "Document includes all brand assets",
+        "Clear usage guidelines for internal and external teams",
+        "PDF and digital formats provided"
+      ]
+    }
+  ],
+
+  "approvals": [
+    {
+      "id": "apr-001",
+      "type": "deliverable",
+      "title": "Website Redesign - Final Mockups",
+      "description": "PM Copilot has compiled final mockups for the Acme Corp website redesign based on client feedback from previous rounds.",
+      "createdBy": "PM Copilot",
+      "createdAt": "2024-01-15T09:30:00Z",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand",
+      "priority": "high",
+      "dueDate": "2024-01-16T17:00:00Z"
+    }
+  ],
+
+  "blockers": [
+    {
+      "id": "block-001",
+      "type": "task",
+      "title": "Design system component library setup",
+      "reason": "waiting_on_external",
+      "blockerDetails": "Waiting on design team to finalize color tokens and spacing scale",
+      "blockedSince": "2024-01-12T10:00:00Z",
+      "workOrderId": "wo-101",
+      "workOrderTitle": "Website Redesign Phase 2",
+      "projectTitle": "Acme Corp Rebrand",
+      "priority": "high",
+      "assignedTo": "Sarah Chen"
+    }
+  ],
+
+  "inboxItems": [
+    {
+      "id": "inbox-001",
+      "type": "agent_draft",
+      "title": "Task Breakdown: Homepage Redesign Implementation",
+      "contentPreview": "I've broken down the homepage redesign into 8 actionable tasks with estimated hours and dependencies...",
+      "fullContent": "# Task Breakdown: Homepage Redesign Implementation\n\nBased on the work order requirements, here's the detailed task breakdown:\n\n## Tasks\n1. **Create wireframes** (4h) - Design low-fidelity layouts\n2. **Design mockups** (8h) - High-fidelity designs in Figma\n3. **Implement header** (6h) - Responsive navigation component\n\n**Total estimate:** 36 hours",
+      "sourceId": "agent-002",
+      "sourceName": "PM Copilot",
+      "sourceType": "ai_agent",
+      "relatedWorkOrderId": "wo-001",
+      "relatedWorkOrderTitle": "Acme Corp Homepage Redesign",
+      "relatedProjectId": "proj-001",
+      "relatedProjectName": "Acme Corp Rebrand",
+      "urgency": "high",
+      "aiConfidence": "high",
+      "qaValidation": "passed",
+      "createdAt": "2024-01-05T09:30:00Z",
+      "waitingHours": 6
+    }
+  ],
+
+  "dailySummary": {
+    "generatedAt": "2024-01-15T07:00:00Z",
+    "summary": "Good morning! You have 3 overdue items that need immediate attention, and 5 approvals waiting in your queue. The Website Redesign Phase 2 deadline is approaching in 3 days—consider reviewing those final mockups today.",
+    "priorities": [
+      "Review and approve website mockups (due tomorrow)",
+      "Complete overdue wireframe review with Acme Corp",
+      "Address database migration blocker with DevOps",
+      "Finalize Q1 marketing budget today"
+    ],
+    "suggestedFocus": "Start with the overdue wireframe review—it's blocking Sarah's component library work. Then tackle the approval queue while you have momentum."
+  },
+
+  "metrics": {
+    "tasksCompletedToday": 2,
+    "tasksCompletedThisWeek": 8,
+    "approvalsPending": 5,
+    "hoursLoggedToday": 3.5,
+    "activeBlockers": 4
+  },
+
+  "user": {
+    "id": "usr-001",
+    "displayName": "Jane Doe",
+    "email": "jane@example.com",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
+    "phone": "+1 (555) 123-4567",
+    "timezone": "America/New_York",
+    "language": "en-US"
+  },
+
+  "organizations": [
+    {
+      "id": "org-001",
+      "name": "Acme Agency",
+      "slug": "acme-agency",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Acme",
+      "plan": "Pro",
+      "role": "Owner",
+      "memberCount": 12,
+      "lastActive": "2026-01-07T14:30:00Z",
+      "isCurrent": true
+    },
+    {
+      "id": "org-002",
+      "name": "Dev Studio LLC",
+      "slug": "dev-studio-llc",
+      "avatarUrl": "https://api.dicebear.com/7.x/initials/svg?seed=Dev",
+      "plan": "Starter",
+      "role": "Admin",
+      "memberCount": 5,
+      "lastActive": "2026-01-05T10:15:00Z",
+      "isCurrent": false
+    }
+  ],
+
+  "workspaceSettings": {
+    "name": "Laborobo Workspace",
+    "timezone": "America/Los_Angeles",
+    "workWeekStart": "monday",
+    "defaultProjectStatus": "active",
+    "brandColor": "#4f46e5",
+    "logo": "/assets/workspace-logo.png",
+    "workingHoursStart": "09:00",
+    "workingHoursEnd": "17:00",
+    "dateFormat": "MM/DD/YYYY",
+    "currency": "USD",
+    "createdAt": "2023-06-15T10:00:00Z",
+    "updatedAt": "2024-02-20T14:30:00Z"
+  },
+
+  "aiAgents": [
+    {
+      "id": "agent-001",
+      "name": "PM Copilot",
+      "type": "project-management",
+      "description": "Assists with project planning, task breakdowns, and estimation",
+      "status": "enabled",
+      "capabilities": ["task_breakdown", "estimation", "scheduling", "reporting"],
+      "createdAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "agent-002",
+      "name": "Copywriter AI",
+      "type": "content-creation",
+      "description": "Generates marketing copy, documentation, and client communications",
+      "status": "enabled",
+      "capabilities": ["content_writing", "editing", "localization"],
+      "createdAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+
+  "integrations": [
+    {
+      "id": "int-001",
+      "name": "Google Workspace",
+      "type": "email",
+      "description": "Connect Gmail and Google Calendar",
+      "status": "connected",
+      "icon": "/icons/google.svg",
+      "connectedAt": "2024-01-10T12:00:00Z",
+      "connectedBy": "usr-001",
+      "lastSyncAt": "2024-01-18T08:30:00Z",
+      "settings": {
+        "syncCalendar": true,
+        "syncContacts": false
+      }
+    },
+    {
+      "id": "int-002",
+      "name": "Slack",
+      "type": "communication",
+      "description": "Send notifications to Slack channels",
+      "status": "disconnected",
+      "icon": "/icons/slack.svg",
+      "connectedAt": null,
+      "connectedBy": null,
+      "lastSyncAt": null,
+      "settings": null
+    }
+  ],
+
+  "reports": {
+    "projectStatus": [
+      {
+        "id": "psr-001",
+        "projectId": "proj-001",
+        "projectName": "Acme Corp Website Redesign",
+        "partyName": "Acme Corp",
+        "status": "on-track",
+        "healthScore": 92,
+        "completionPercentage": 65,
+        "dueDate": "2024-03-15",
+        "daysUntilDue": 18,
+        "workOrdersTotal": 8,
+        "workOrdersCompleted": 5,
+        "workOrdersInProgress": 3,
+        "tasksTotal": 42,
+        "tasksCompleted": 28,
+        "deliverablesTotal": 6,
+        "deliverablesApproved": 4,
+        "budgetAllocated": 45000,
+        "budgetSpent": 28500,
+        "hoursEstimated": 320,
+        "hoursLogged": 198,
+        "trend": "improving",
+        "lastUpdated": "2024-01-18T09:00:00Z"
+      }
+    ]
+  }
+}
