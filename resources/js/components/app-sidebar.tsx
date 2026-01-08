@@ -1,6 +1,7 @@
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import { OrganizationSwitcher } from '@/components/organization-switcher';
 import {
     Sidebar,
     SidebarContent,
@@ -10,46 +11,77 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { Home, Briefcase, Inbox, BookOpen, Users, BarChart3, Settings, Folder } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Today',
+        href: '/today',
+        icon: Home,
+    },
+    {
+        title: 'Work',
+        href: '/work',
+        icon: Briefcase,
+    },
+    {
+        title: 'Inbox',
+        href: '/inbox',
+        icon: Inbox,
+    },
+    {
+        title: 'Playbooks',
+        href: '/playbooks',
+        icon: BookOpen,
+    },
+    {
+        title: 'Directory',
+        href: '/directory',
+        icon: Users,
+    },
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: BarChart3,
+    },
+    {
+        title: 'Settings',
+        href: '/settings',
+        icon: Settings,
     },
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
         title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        href: 'https://laborobo.dev/docs',
+        icon: Folder,
     },
 ];
 
 export function AppSidebar() {
+    const { currentOrganization, organizations } = usePage<SharedData>().props;
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href="/today" prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+                <OrganizationSwitcher
+                    currentOrganization={currentOrganization}
+                    organizations={organizations}
+                    className="mt-2"
+                />
             </SidebarHeader>
 
             <SidebarContent>

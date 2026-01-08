@@ -43,9 +43,42 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    ...$request->user()->toArray(),
+                    'timezone' => $request->user()->timezone ?? 'UTC',
+                    'language' => $request->user()->language ?? 'en',
+                ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+
+            // Mock organization data (Milestone 2 will make this real)
+            'currentOrganization' => $request->user() ? [
+                'id' => 1,
+                'name' => $request->user()->name . "'s Organization",
+                'slug' => 'default',
+                'user_id' => $request->user()->id,
+                'created_at' => now()->toISOString(),
+                'updated_at' => now()->toISOString(),
+            ] : null,
+
+            'organizations' => $request->user() ? [
+                [
+                    'id' => 1,
+                    'name' => $request->user()->name . "'s Organization",
+                    'slug' => 'default',
+                    'user_id' => $request->user()->id,
+                    'created_at' => now()->toISOString(),
+                    'updated_at' => now()->toISOString(),
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'Demo Organization',
+                    'slug' => 'demo',
+                    'user_id' => $request->user()->id,
+                    'created_at' => now()->toISOString(),
+                    'updated_at' => now()->toISOString(),
+                ],
+            ] : [],
         ];
     }
 }
