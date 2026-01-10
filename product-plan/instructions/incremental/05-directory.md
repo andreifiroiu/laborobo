@@ -1,10 +1,13 @@
-# Laborobo - Section Implementation Prompt Template
+## Define Section Variables
 
-Use this template when implementing sections incrementally (one at a time).
+- **SECTION_NAME** = "Directory"
+- **SECTION_ID** = "directory"
+- **NN** = "05"
 
 ---
 
 I need you to implement the **[SECTION NAME]** section of Laborobo, an AI-powered work orchestration platform.
+
 
 ## Context
 
@@ -16,9 +19,32 @@ I'm building Laborobo incrementally, one section at a time. The foundation (proj
 
 ## This Section: [SECTION NAME]
 
-**Purpose**: [Brief description of what this section does]
+**Purpose**: The central hub for managing all people and entities involved in work. Tracks Parties (clients, vendors, partners, departments), Contacts (individuals at each party), and Team members (internal users with skills and capacity). Provides context for work assignment and relationship management without requiring full CRM.
 
-**User Flows**: [Key workflows users complete in this section]
+## User Flows
+- **Browse directory** - User switches between tabs (Parties, Contacts, Team) to view organized lists
+- **Search and filter** - User searches across names, emails, and notes; filters by type (Client, Vendor, Partner, etc.), status (Active/Inactive), and tags
+- **View details** - User clicks an entry to open side panel showing full details, related items, projects, and communication history
+- **Create/edit entry** - User opens side panel form to add new party/contact/team member or edit existing information
+- **View related items** - From a Party, user sees linked contacts, projects, comms history; from a Contact, user sees party association and engagement history
+- **Manage team skills** - User views and edits team member skill inventory with proficiency levels and capacity tracking
+- **Track capacity** - User sees current workload vs available capacity for team members
+
+## UI Requirements
+- Tab navigation for three sections: Parties, Contacts, Team
+- List view with cards/rows showing: name, type/role, status, primary contact (for parties), and key metadata
+- Side panel/drawer for viewing details (slides in from right, keeps list visible)
+- Side panel form for creating and editing entries (reuses same drawer)
+- Full-text search across names, emails, and notes
+- Filter dropdowns for type, status, and clickable tag filters
+- Party detail view shows: linked contacts, related projects, comms history, documents
+- Contact detail view shows: party association, role, engagement type, communication preferences
+- Team member view shows: skills inventory with proficiency levels (1-3), capacity (hours/week), current workload
+- Status indicators for Active/Inactive
+- Tag system for categorization
+- Empty states per tab with "Add first [type]" prompts
+
+
 
 **Files Provided**:
 - `sections/[section-id]/README.md` - Complete specification
@@ -177,49 +203,3 @@ I'm providing:
 
 Please answer the clarifying questions above, then I'll provide the files and we can begin implementing the **[SECTION NAME]** section!
 
----
-
-## Template Instructions
-
-When using this template:
-
-1. Replace `[SECTION NAME]` with the section name (e.g., "Today", "Work", "Inbox")
-2. Replace `[section-id]` with the lowercase section ID (e.g., "today", "work", "inbox")
-3. Replace `[NN]` with the milestone number (e.g., "03", "04", "05")
-4. Fill in the purpose and user flows for the specific section
-5. Update the "What to Implement" list with section-specific details
-6. Adjust "What Success Looks Like" for the section's key features
-
-## Section-Specific Details
-
-### Today (Milestone 3)
-- Purpose: Daily command center showing what needs attention now
-- Key Features: Daily summary, approvals queue, tasks due, blockers, deadlines, activity feed
-
-### Work (Milestone 4)
-- Purpose: Organize work from parties through projects to deliverables
-- Key Features: Project tree, work orders, tasks with checklists, deliverables, time tracking
-
-### Inbox (Milestone 5)
-- Purpose: Review and approve AI-generated drafts
-- Key Features: Tabbed interface, approval queue, detail panel, bulk actions
-
-### Playbooks (Milestone 6)
-- Purpose: Library of reusable SOPs, checklists, templates
-- Key Features: Four tabs by type, CRUD operations, version history, usage tracking
-
-### Directory (Milestone 7)
-- Purpose: Manage external parties and internal team
-- Key Features: Three tabs (parties/contacts/team), detail views, skill management
-
-### Reports (Milestone 8)
-- Purpose: Analytics dashboard for projects, workload, budgets
-- Key Features: Multiple report types, charts, AI insights, export
-
-### Settings (Milestone 9)
-- Purpose: Configure workspace, team, AI agents, integrations
-- Key Features: Multi-tab settings, team management, agent config, billing
-
-### User Menu (Milestone 10)
-- Purpose: User profile and organization management
-- Key Features: Profile editing, org switching, preferences, security settings
