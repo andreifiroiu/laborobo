@@ -1,0 +1,5 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome back, {{name}}!",
+  "quote_of_the_day": "Quote of the day"
+}

@@ -7,6 +7,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { type Organization } from '@/types/laborobo';
+import { router, Link } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 
 interface OrganizationSwitcherProps {
@@ -21,9 +22,14 @@ export function OrganizationSwitcher({
     className,
 }: OrganizationSwitcherProps) {
     const switchOrganization = (orgId: number) => {
-        // Milestone 2 will implement actual organization switching
-        // For now, just log
-        console.log('Switching to organization:', orgId);
+        router.post(
+            `/settings/teams/${orgId}/switch`,
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+            }
+        );
     };
 
     return (
@@ -66,9 +72,11 @@ export function OrganizationSwitcher({
                     </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create organization
+                <DropdownMenuItem asChild>
+                    <Link href="/settings/teams">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create organization
+                    </Link>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

@@ -1,0 +1,49 @@
+{
+  "title": "Settings",
+  "description": "Manage your profile and account settings",
+  "nav": {
+    "profile": "Profile",
+    "password": "Password",
+    "two_factor": "Two-Factor Auth",
+    "appearance": "Appearance",
+    "language": "Language"
+  },
+  "profile": {
+    "title": "Profile information",
+    "description": "Update your name and email address",
+    "name_label": "Name",
+    "email_label": "Email address",
+    "save": "Save",
+    "saved": "Saved"
+  },
+  "password": {
+    "title": "Update password",
+    "description": "Ensure your account is using a long, random password to stay secure",
+    "current_password_label": "Current password",
+    "new_password_label": "New password",
+    "confirm_password_label": "Confirm password",
+    "update": "Update password"
+  },
+  "appearance": {
+    "title": "Appearance settings",
+    "description": "Update your account's appearance settings",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
+  },
+  "language": {
+    "title": "Language preference",
+    "description": "Select your preferred language for the application",
+    "label": "Language",
+    "updated": "Language updated successfully",
+    "languages": {
+      "en": "English",
+      "es": "Español",
+      "fr": "Français",
+      "de": "Deutsch",
+      "ro": "Română"
+    }
+  }
+}

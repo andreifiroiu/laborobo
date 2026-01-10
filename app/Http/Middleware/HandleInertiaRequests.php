@@ -42,6 +42,8 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'locale' => app()->getLocale(),
+            'availableLocales' => config('app.available_locales'),
             'auth' => [
                 'user' => $request->user() ? [
                     ...$request->user()->toArray(),
@@ -51,34 +53,26 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
 
-            // Mock organization data (Milestone 2 will make this real)
-            'currentOrganization' => $request->user() ? [
-                'id' => 1,
-                'name' => $request->user()->name . "'s Organization",
-                'slug' => 'default',
-                'user_id' => $request->user()->id,
-                'created_at' => now()->toISOString(),
-                'updated_at' => now()->toISOString(),
+            // Real organization/team data
+            'currentOrganization' => $request->user() && $request->user()->current_team_id ? [
+                'id' => $request->user()->currentTeam->id,
+                'name' => $request->user()->currentTeam->name,
+                'slug' => $request->user()->currentTeam->slug ?? 'team-' . $request->user()->currentTeam->id,
+                'user_id' => $request->user()->currentTeam->user_id,
+                'created_at' => $request->user()->currentTeam->created_at->toISOString(),
+                'updated_at' => $request->user()->currentTeam->updated_at->toISOString(),
             ] : null,
 
-            'organizations' => $request->user() ? [
-                [
-                    'id' => 1,
-                    'name' => $request->user()->name . "'s Organization",
-                    'slug' => 'default',
-                    'user_id' => $request->user()->id,
-                    'created_at' => now()->toISOString(),
-                    'updated_at' => now()->toISOString(),
-                ],
-                [
-                    'id' => 2,
-                    'name' => 'Demo Organization',
-                    'slug' => 'demo',
-                    'user_id' => $request->user()->id,
-                    'created_at' => now()->toISOString(),
-                    'updated_at' => now()->toISOString(),
-                ],
-            ] : [],
+            'organizations' => $request->user() ? $request->user()->allTeams()->map(function ($team) {
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'slug' => $team->slug ?? 'team-' . $team->id,
+                    'user_id' => $team->user_id,
+                    'created_at' => $team->created_at->toISOString(),
+                    'updated_at' => $team->updated_at->toISOString(),
+                ];
+            })->toArray() : [],
         ];
     }
 }

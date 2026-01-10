@@ -1,0 +1,17 @@
+{
+  "app_name": "LaboRobo",
+  "welcome": "Bine ați venit",
+  "loading": "Se încarcă...",
+  "error": "Eroare",
+  "success": "Succes",
+  "save": "Salvează",
+  "cancel": "Anulează",
+  "delete": "Șterge",
+  "edit": "Editează",
+  "back": "Înapoi",
+  "confirm": "Confirmă",
+  "actions": "Acțiuni",
+  "search": "Căutare",
+  "filter": "Filtrează",
+  "close": "Închide"
+}

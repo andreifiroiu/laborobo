@@ -40,7 +40,7 @@ return [
     */
     'models' => [
         'user' => App\Models\User::class,
-        'team' => Jurager\Teams\Models\Team::class,
+        'team' => App\Models\Team::class,
         'ability' => Jurager\Teams\Models\Ability::class,
         'permission' => Jurager\Teams\Models\Permission::class,
         'group' => Jurager\Teams\Models\Group::class,

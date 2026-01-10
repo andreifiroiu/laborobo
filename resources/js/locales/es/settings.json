@@ -1,0 +1,49 @@
+{
+  "title": "Configuración",
+  "description": "Gestiona tu perfil y configuración de cuenta",
+  "nav": {
+    "profile": "Perfil",
+    "password": "Contraseña",
+    "two_factor": "Autenticación de dos factores",
+    "appearance": "Apariencia",
+    "language": "Idioma"
+  },
+  "profile": {
+    "title": "Información del perfil",
+    "description": "Actualiza tu nombre y dirección de correo electrónico",
+    "name_label": "Nombre",
+    "email_label": "Correo electrónico",
+    "save": "Guardar",
+    "saved": "Guardado"
+  },
+  "password": {
+    "title": "Actualizar contraseña",
+    "description": "Asegúrate de que tu cuenta esté usando una contraseña larga y aleatoria para mantenerla segura",
+    "current_password_label": "Contraseña actual",
+    "new_password_label": "Nueva contraseña",
+    "confirm_password_label": "Confirmar contraseña",
+    "update": "Actualizar contraseña"
+  },
+  "appearance": {
+    "title": "Configuración de apariencia",
+    "description": "Actualiza la configuración de apariencia de tu cuenta",
+    "theme": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    }
+  },
+  "language": {
+    "title": "Preferencia de idioma",
+    "description": "Selecciona tu idioma preferido para la aplicación",
+    "label": "Idioma",
+    "updated": "Idioma actualizado exitosamente",
+    "languages": {
+      "en": "English",
+      "es": "Español",
+      "fr": "Français",
+      "de": "Deutsch",
+      "ro": "Română"
+    }
+  }
+}

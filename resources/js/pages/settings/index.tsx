@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { User, Lock, Palette, Shield } from 'lucide-react';
+import { User, Lock, Palette, Shield, Users } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Settings', href: '/settings' },
@@ -31,6 +31,12 @@ const settingsSections = [
         description: 'Add an extra layer of security to your account',
         href: '/settings/two-factor',
         icon: Shield,
+    },
+    {
+        title: 'Teams',
+        description: 'Manage your teams and collaborate with others',
+        href: '/settings/teams',
+        icon: Users,
     },
 ];
 

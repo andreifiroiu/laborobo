@@ -13,9 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('today');
     })->name('today');
 
-    Route::get('work', function () {
-        return Inertia::render('work/index');
-    })->name('work');
+    // Work routes are in routes/work.php
 
     Route::get('inbox', function () {
         return Inertia::render('inbox/index');
@@ -44,3 +42,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+require __DIR__.'/work.php';

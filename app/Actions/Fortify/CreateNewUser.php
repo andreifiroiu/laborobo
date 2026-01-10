@@ -30,10 +30,20 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
         ]);
+
+        // Create default team
+        $team = $user->createTeam([
+            'name' => $input['name'] . "'s Team",
+        ]);
+
+        // Set as current team
+        $user->update(['current_team_id' => $team->id]);
+
+        return $user;
     }
 }

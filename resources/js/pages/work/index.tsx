@@ -1,29 +1,477 @@
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { useState } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Search } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import InputError from '@/components/input-error';
+import {
+    ViewTabs,
+    QuickAddBar,
+    ProjectTreeItem,
+    MyWorkView,
+    KanbanView,
+    CalendarView,
+    ArchiveView,
+} from '@/components/work';
+import type { WorkPageProps, WorkView, QuickAddData, Project, Party } from '@/types/work';
+import type { BreadcrumbItem } from '@/types';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Work', href: '/work' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Work', href: '/work' }];
 
-export default function Work() {
+export default function Work({
+    projects,
+    workOrders,
+    tasks,
+    deliverables,
+    parties,
+    teamMembers,
+    communicationThreads,
+    currentView,
+    currentUserId,
+}: WorkPageProps) {
+    const [view, setView] = useState<WorkView>(currentView);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false);
+    const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
+    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false);
+    const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
+
+    const projectForm = useForm({
+        name: '',
+        party_id: '',
+        description: '',
+    });
+
+    const workOrderForm = useForm({
+        title: '',
+        project_id: '',
+        description: '',
+        priority: 'medium' as const,
+    });
+
+    const taskForm = useForm({
+        title: '',
+        work_order_id: '',
+        description: '',
+    });
+
+    const handleViewChange = (newView: WorkView) => {
+        setView(newView);
+        router.patch('/work/preferences', { work_view: newView }, { preserveState: true });
+    };
+
+    const handleQuickAdd = (data: QuickAddData) => {
+        if (data.type === 'project') {
+            projectForm.setData('name', data.title);
+            setCreateProjectDialogOpen(true);
+        }
+    };
+
+    const handleCreateWorkOrder = (projectId: string) => {
+        setSelectedProjectId(projectId);
+        workOrderForm.setData('project_id', projectId);
+        setCreateWorkOrderDialogOpen(true);
+    };
+
+    const handleCreateTask = (workOrderId: string) => {
+        setSelectedWorkOrderId(workOrderId);
+        taskForm.setData('work_order_id', workOrderId);
+        setCreateTaskDialogOpen(true);
+    };
+
+    const handleCreateWorkOrderFromKanban = (status: string) => {
+        workOrderForm.reset();
+        setCreateWorkOrderDialogOpen(true);
+    };
+
+    const handleCreateProject = (e: React.FormEvent) => {
+        e.preventDefault();
+        projectForm.post('/work/projects', {
+            preserveScroll: true,
+            onSuccess: () => {
+                projectForm.reset();
+                setCreateProjectDialogOpen(false);
+            },
+        });
+    };
+
+    const handleSubmitWorkOrder = (e: React.FormEvent) => {
+        e.preventDefault();
+        workOrderForm.post('/work/work-orders', {
+            preserveScroll: true,
+            onSuccess: () => {
+                workOrderForm.reset();
+                setCreateWorkOrderDialogOpen(false);
+                setSelectedProjectId(null);
+            },
+        });
+    };
+
+    const handleSubmitTask = (e: React.FormEvent) => {
+        e.preventDefault();
+        taskForm.post('/work/tasks', {
+            preserveScroll: true,
+            onSuccess: () => {
+                taskForm.reset();
+                setCreateTaskDialogOpen(false);
+                setSelectedWorkOrderId(null);
+            },
+        });
+    };
+
+    // Filter projects based on search
+    const filteredProjects = searchQuery
+        ? projects.filter(
+              (p) =>
+                  p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+          )
+        : projects;
+
+    const activeProjects = filteredProjects.filter((p) => p.status === 'active' || p.status === 'on_hold');
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Work" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold">Work</h1>
+
+            <div className="flex h-full flex-1 flex-col">
+                {/* Header */}
+                <div className="px-6 py-6 border-b border-sidebar-border/70 dark:border-sidebar-border">
+                    <h1 className="text-2xl font-bold text-foreground mb-2">Work</h1>
+                    <p className="text-muted-foreground">
+                        Manage projects, work orders, tasks, and deliverables
+                    </p>
                 </div>
-                <div className="relative min-h-[60vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    <div className="relative z-10 flex h-full items-center justify-center">
-                        <p className="text-muted-foreground">
-                            Work content coming in future milestones
-                        </p>
-                    </div>
+
+                {/* View Tabs */}
+                <ViewTabs currentView={view} onViewChange={handleViewChange} />
+
+                {/* Main Content */}
+                <div className="flex-1 overflow-auto p-6">
+                    {/* Search Bar (for relevant views) */}
+                    {(view === 'all_projects' || view === 'my_work') && (
+                        <div className="mb-6 flex items-center gap-4">
+                            <div className="flex-1 relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search projects, work orders, tasks..."
+                                    className="pl-10"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* All Projects View */}
+                    {view === 'all_projects' && (
+                        <div className="bg-card border border-border rounded-xl overflow-hidden">
+                            <QuickAddBar onQuickAdd={handleQuickAdd} />
+
+                            <div className="divide-y divide-border">
+                                {activeProjects.length === 0 ? (
+                                    <div className="p-12 text-center">
+                                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                                            <Search className="w-8 h-8 text-muted-foreground" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-foreground mb-2">
+                                            {searchQuery ? 'No projects found' : 'No active projects'}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground mb-6">
+                                            {searchQuery
+                                                ? 'Try adjusting your search query'
+                                                : 'Get started by creating your first project'}
+                                        </p>
+                                        {!searchQuery && (
+                                            <Button onClick={() => setCreateProjectDialogOpen(true)}>
+                                                Create First Project
+                                            </Button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    activeProjects.map((project) => (
+                                        <ProjectTreeItem
+                                            key={project.id}
+                                            project={project}
+                                            workOrders={workOrders}
+                                            tasks={tasks}
+                                            onCreateWorkOrder={handleCreateWorkOrder}
+                                            onCreateTask={handleCreateTask}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* My Work View */}
+                    {view === 'my_work' && (
+                        <MyWorkView
+                            workOrders={workOrders}
+                            tasks={tasks}
+                            currentUserId={currentUserId}
+                        />
+                    )}
+
+                    {/* By Status (Kanban) View */}
+                    {view === 'by_status' && (
+                        <KanbanView
+                            workOrders={workOrders}
+                            onCreateWorkOrder={handleCreateWorkOrderFromKanban}
+                        />
+                    )}
+
+                    {/* Calendar View */}
+                    {view === 'calendar' && (
+                        <CalendarView projects={projects} workOrders={workOrders} />
+                    )}
+
+                    {/* Archive View */}
+                    {view === 'archive' && (
+                        <ArchiveView projects={projects} workOrders={workOrders} tasks={tasks} />
+                    )}
                 </div>
             </div>
+
+            {/* Create Project Dialog */}
+            <Dialog open={createProjectDialogOpen} onOpenChange={setCreateProjectDialogOpen}>
+                <DialogContent>
+                    <form onSubmit={handleCreateProject}>
+                        <DialogHeader>
+                            <DialogTitle>Create New Project</DialogTitle>
+                            <DialogDescription>
+                                Create a new project to organize your work orders and tasks.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="project-name">Project Name</Label>
+                                <Input
+                                    id="project-name"
+                                    value={projectForm.data.name}
+                                    onChange={(e) => projectForm.setData('name', e.target.value)}
+                                    placeholder="My Project"
+                                />
+                                <InputError message={projectForm.errors.name} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="project-party">Client / Party</Label>
+                                <Select
+                                    value={projectForm.data.party_id}
+                                    onValueChange={(value) => projectForm.setData('party_id', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a party" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {parties.map((party) => (
+                                            <SelectItem key={party.id} value={party.id}>
+                                                {party.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={projectForm.errors.party_id} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="project-description">Description (optional)</Label>
+                                <Input
+                                    id="project-description"
+                                    value={projectForm.data.description}
+                                    onChange={(e) => projectForm.setData('description', e.target.value)}
+                                    placeholder="Brief description of the project"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setCreateProjectDialogOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={projectForm.processing}>
+                                Create Project
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Work Order Dialog */}
+            <Dialog open={createWorkOrderDialogOpen} onOpenChange={setCreateWorkOrderDialogOpen}>
+                <DialogContent>
+                    <form onSubmit={handleSubmitWorkOrder}>
+                        <DialogHeader>
+                            <DialogTitle>Create Work Order</DialogTitle>
+                            <DialogDescription>
+                                Create a new work order to track specific deliverables.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="wo-title">Title</Label>
+                                <Input
+                                    id="wo-title"
+                                    value={workOrderForm.data.title}
+                                    onChange={(e) => workOrderForm.setData('title', e.target.value)}
+                                    placeholder="Work order title"
+                                />
+                                <InputError message={workOrderForm.errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="wo-project">Project</Label>
+                                <Select
+                                    value={workOrderForm.data.project_id}
+                                    onValueChange={(value) => workOrderForm.setData('project_id', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a project" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {projects
+                                            .filter((p) => p.status === 'active' || p.status === 'on_hold')
+                                            .map((project) => (
+                                                <SelectItem key={project.id} value={project.id}>
+                                                    {project.name}
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={workOrderForm.errors.project_id} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="wo-priority">Priority</Label>
+                                <Select
+                                    value={workOrderForm.data.priority}
+                                    onValueChange={(value) =>
+                                        workOrderForm.setData('priority', value as any)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="wo-description">Description (optional)</Label>
+                                <Input
+                                    id="wo-description"
+                                    value={workOrderForm.data.description}
+                                    onChange={(e) => workOrderForm.setData('description', e.target.value)}
+                                    placeholder="Brief description"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setCreateWorkOrderDialogOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={workOrderForm.processing}>
+                                Create Work Order
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Task Dialog */}
+            <Dialog open={createTaskDialogOpen} onOpenChange={setCreateTaskDialogOpen}>
+                <DialogContent>
+                    <form onSubmit={handleSubmitTask}>
+                        <DialogHeader>
+                            <DialogTitle>Create Task</DialogTitle>
+                            <DialogDescription>
+                                Create a new task for tracking individual action items.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="task-title">Title</Label>
+                                <Input
+                                    id="task-title"
+                                    value={taskForm.data.title}
+                                    onChange={(e) => taskForm.setData('title', e.target.value)}
+                                    placeholder="Task title"
+                                />
+                                <InputError message={taskForm.errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="task-wo">Work Order</Label>
+                                <Select
+                                    value={taskForm.data.work_order_id}
+                                    onValueChange={(value) => taskForm.setData('work_order_id', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a work order" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {workOrders
+                                            .filter((wo) => wo.status !== 'delivered')
+                                            .map((wo) => (
+                                                <SelectItem key={wo.id} value={wo.id}>
+                                                    {wo.title}
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={taskForm.errors.work_order_id} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="task-description">Description (optional)</Label>
+                                <Input
+                                    id="task-description"
+                                    value={taskForm.data.description}
+                                    onChange={(e) => taskForm.setData('description', e.target.value)}
+                                    placeholder="Brief description"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setCreateTaskDialogOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={taskForm.processing}>
+                                Create Task
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

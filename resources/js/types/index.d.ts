@@ -30,6 +30,8 @@ export interface SharedData {
     sidebarOpen: boolean;
     currentOrganization: Organization;
     organizations: Organization[];
+    locale: string;
+    availableLocales: string[];
     [key: string]: unknown;
 }
 

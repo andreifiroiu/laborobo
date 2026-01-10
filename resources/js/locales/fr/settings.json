@@ -1,0 +1,49 @@
+{
+  "title": "Paramètres",
+  "description": "Gérez votre profil et les paramètres de votre compte",
+  "nav": {
+    "profile": "Profil",
+    "password": "Mot de passe",
+    "two_factor": "Authentification à deux facteurs",
+    "appearance": "Apparence",
+    "language": "Langue"
+  },
+  "profile": {
+    "title": "Informations du profil",
+    "description": "Mettez à jour votre nom et votre adresse e-mail",
+    "name_label": "Nom",
+    "email_label": "Adresse e-mail",
+    "save": "Enregistrer",
+    "saved": "Enregistré"
+  },
+  "password": {
+    "title": "Mettre à jour le mot de passe",
+    "description": "Assurez-vous que votre compte utilise un mot de passe long et aléatoire pour rester sécurisé",
+    "current_password_label": "Mot de passe actuel",
+    "new_password_label": "Nouveau mot de passe",
+    "confirm_password_label": "Confirmer le mot de passe",
+    "update": "Mettre à jour le mot de passe"
+  },
+  "appearance": {
+    "title": "Paramètres d'apparence",
+    "description": "Mettez à jour les paramètres d'apparence de votre compte",
+    "theme": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    }
+  },
+  "language": {
+    "title": "Préférence de langue",
+    "description": "Sélectionnez votre langue préférée pour l'application",
+    "label": "Langue",
+    "updated": "Langue mise à jour avec succès",
+    "languages": {
+      "en": "English",
+      "es": "Español",
+      "fr": "Français",
+      "de": "Deutsch",
+      "ro": "Română"
+    }
+  }
+}

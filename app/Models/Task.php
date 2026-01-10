@@ -1,0 +1,124 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\TaskStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Task extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'team_id',
+        'work_order_id',
+        'project_id',
+        'assigned_to_id',
+        'title',
+        'description',
+        'status',
+        'due_date',
+        'estimated_hours',
+        'actual_hours',
+        'checklist_items',
+        'dependencies',
+        'is_blocked',
+    ];
+
+    protected $casts = [
+        'status' => TaskStatus::class,
+        'due_date' => 'date',
+        'estimated_hours' => 'decimal:2',
+        'actual_hours' => 'decimal:2',
+        'checklist_items' => 'array',
+        'dependencies' => 'array',
+        'is_blocked' => 'boolean',
+    ];
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to_id');
+    }
+
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class, 'documentable');
+    }
+
+    public function scopeForTeam($query, int $teamId)
+    {
+        return $query->where('team_id', $teamId);
+    }
+
+    public function scopeAssignedTo($query, int $userId)
+    {
+        return $query->where('assigned_to_id', $userId);
+    }
+
+    public function scopeWithStatus($query, TaskStatus $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    public function getChecklistProgressAttribute(): array
+    {
+        $items = $this->checklist_items ?? [];
+        $total = count($items);
+        $completed = collect($items)->where('completed', true)->count();
+
+        return [
+            'total' => $total,
+            'completed' => $completed,
+            'percentage' => $total > 0 ? round(($completed / $total) * 100) : 0,
+        ];
+    }
+
+    public function toggleChecklistItem(string $itemId, bool $completed): void
+    {
+        $items = $this->checklist_items ?? [];
+
+        foreach ($items as $index => $item) {
+            if ($item['id'] === $itemId) {
+                $items[$index]['completed'] = $completed;
+                break;
+            }
+        }
+
+        $this->checklist_items = $items;
+        $this->save();
+    }
+
+    public function recalculateActualHours(): void
+    {
+        $this->actual_hours = $this->timeEntries()->sum('hours');
+        $this->save();
+
+        // Also update parent work order
+        $this->workOrder->recalculateActualHours();
+    }
+}

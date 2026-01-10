@@ -1,0 +1,17 @@
+{
+  "app_name": "LaboRobo",
+  "welcome": "Willkommen",
+  "loading": "Wird geladen...",
+  "error": "Fehler",
+  "success": "Erfolg",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "delete": "Löschen",
+  "edit": "Bearbeiten",
+  "back": "Zurück",
+  "confirm": "Bestätigen",
+  "actions": "Aktionen",
+  "search": "Suchen",
+  "filter": "Filtern",
+  "close": "Schließen"
+}
