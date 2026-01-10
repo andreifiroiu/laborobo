@@ -86,8 +86,9 @@ export default function WorkOrderDetail({
 
     const taskForm = useForm({
         title: '',
-        work_order_id: workOrder.id,
+        workOrderId: workOrder.id,
         description: '',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     });
 
     const handleUpdateWorkOrder = (e: React.FormEvent) => {
@@ -570,6 +571,15 @@ export default function WorkOrderDetail({
                                     placeholder="Task title"
                                 />
                                 <InputError message={taskForm.errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Due Date</Label>
+                                <Input
+                                    type="date"
+                                    value={taskForm.data.dueDate}
+                                    onChange={(e) => taskForm.setData('dueDate', e.target.value)}
+                                />
+                                <InputError message={taskForm.errors.dueDate} />
                             </div>
                             <div className="grid gap-2">
                                 <Label>Description</Label>

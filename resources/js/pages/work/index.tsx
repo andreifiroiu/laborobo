@@ -56,21 +56,24 @@ export default function Work({
 
     const projectForm = useForm({
         name: '',
-        party_id: '',
+        partyId: '',
+        startDate: new Date().toISOString().split('T')[0],
         description: '',
     });
 
     const workOrderForm = useForm({
         title: '',
-        project_id: '',
+        projectId: '',
         description: '',
         priority: 'medium' as const,
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week from now
     });
 
     const taskForm = useForm({
         title: '',
-        work_order_id: '',
+        workOrderId: '',
         description: '',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week from now
     });
 
     const handleViewChange = (newView: WorkView) => {
@@ -87,13 +90,13 @@ export default function Work({
 
     const handleCreateWorkOrder = (projectId: string) => {
         setSelectedProjectId(projectId);
-        workOrderForm.setData('project_id', projectId);
+        workOrderForm.setData('projectId', projectId);
         setCreateWorkOrderDialogOpen(true);
     };
 
     const handleCreateTask = (workOrderId: string) => {
         setSelectedWorkOrderId(workOrderId);
-        taskForm.setData('work_order_id', workOrderId);
+        taskForm.setData('workOrderId', workOrderId);
         setCreateTaskDialogOpen(true);
     };
 
@@ -276,8 +279,8 @@ export default function Work({
                             <div className="grid gap-2">
                                 <Label htmlFor="project-party">Client / Party</Label>
                                 <Select
-                                    value={projectForm.data.party_id}
-                                    onValueChange={(value) => projectForm.setData('party_id', value)}
+                                    value={projectForm.data.partyId}
+                                    onValueChange={(value) => projectForm.setData('partyId', value)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a party" />
@@ -290,7 +293,17 @@ export default function Work({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <InputError message={projectForm.errors.party_id} />
+                                <InputError message={projectForm.errors.partyId} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="project-start-date">Start Date</Label>
+                                <Input
+                                    id="project-start-date"
+                                    type="date"
+                                    value={projectForm.data.startDate}
+                                    onChange={(e) => projectForm.setData('startDate', e.target.value)}
+                                />
+                                <InputError message={projectForm.errors.startDate} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="project-description">Description (optional)</Label>
@@ -300,6 +313,7 @@ export default function Work({
                                     onChange={(e) => projectForm.setData('description', e.target.value)}
                                     placeholder="Brief description of the project"
                                 />
+                                <InputError message={projectForm.errors.description} />
                             </div>
                         </div>
                         <DialogFooter>
@@ -342,8 +356,8 @@ export default function Work({
                             <div className="grid gap-2">
                                 <Label htmlFor="wo-project">Project</Label>
                                 <Select
-                                    value={workOrderForm.data.project_id}
-                                    onValueChange={(value) => workOrderForm.setData('project_id', value)}
+                                    value={workOrderForm.data.projectId}
+                                    onValueChange={(value) => workOrderForm.setData('projectId', value)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a project" />
@@ -358,7 +372,7 @@ export default function Work({
                                             ))}
                                     </SelectContent>
                                 </Select>
-                                <InputError message={workOrderForm.errors.project_id} />
+                                <InputError message={workOrderForm.errors.projectId} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="wo-priority">Priority</Label>
@@ -378,6 +392,17 @@ export default function Work({
                                         <SelectItem value="urgent">Urgent</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <InputError message={workOrderForm.errors.priority} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="wo-due-date">Due Date</Label>
+                                <Input
+                                    id="wo-due-date"
+                                    type="date"
+                                    value={workOrderForm.data.dueDate}
+                                    onChange={(e) => workOrderForm.setData('dueDate', e.target.value)}
+                                />
+                                <InputError message={workOrderForm.errors.dueDate} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="wo-description">Description (optional)</Label>
@@ -387,6 +412,7 @@ export default function Work({
                                     onChange={(e) => workOrderForm.setData('description', e.target.value)}
                                     placeholder="Brief description"
                                 />
+                                <InputError message={workOrderForm.errors.description} />
                             </div>
                         </div>
                         <DialogFooter>
@@ -429,8 +455,8 @@ export default function Work({
                             <div className="grid gap-2">
                                 <Label htmlFor="task-wo">Work Order</Label>
                                 <Select
-                                    value={taskForm.data.work_order_id}
-                                    onValueChange={(value) => taskForm.setData('work_order_id', value)}
+                                    value={taskForm.data.workOrderId}
+                                    onValueChange={(value) => taskForm.setData('workOrderId', value)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a work order" />
@@ -445,7 +471,17 @@ export default function Work({
                                             ))}
                                     </SelectContent>
                                 </Select>
-                                <InputError message={taskForm.errors.work_order_id} />
+                                <InputError message={taskForm.errors.workOrderId} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="task-due-date">Due Date</Label>
+                                <Input
+                                    id="task-due-date"
+                                    type="date"
+                                    value={taskForm.data.dueDate}
+                                    onChange={(e) => taskForm.setData('dueDate', e.target.value)}
+                                />
+                                <InputError message={taskForm.errors.dueDate} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="task-description">Description (optional)</Label>
@@ -455,6 +491,7 @@ export default function Work({
                                     onChange={(e) => taskForm.setData('description', e.target.value)}
                                     placeholder="Brief description"
                                 />
+                                <InputError message={taskForm.errors.description} />
                             </div>
                         </div>
                         <DialogFooter>

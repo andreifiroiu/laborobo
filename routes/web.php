@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DirectoryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -23,9 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('playbooks/index');
     })->name('playbooks');
 
-    Route::get('directory', function () {
-        return Inertia::render('directory/index');
-    })->name('directory');
+    Route::get('directory', [DirectoryController::class, 'index'])->name('directory');
 
     Route::get('reports', function () {
         return Inertia::render('reports/index');
@@ -43,3 +42,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/work.php';
+require __DIR__.'/directory.php';

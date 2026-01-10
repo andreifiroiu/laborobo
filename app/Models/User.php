@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Jurager\Teams\Traits\HasTeams;
@@ -26,6 +27,9 @@ class User extends Authenticatable
         'timezone',
         'language',
         'current_team_id',
+        'role',
+        'capacity_hours_per_week',
+        'current_workload_hours',
     ];
 
     /**
@@ -104,5 +108,21 @@ class User extends Authenticatable
         // Users should call $team->addUser($otherUser, 'member') for non-owners
 
         return $team;
+    }
+
+    /**
+     * Get the user's skills.
+     */
+    public function skills(): HasMany
+    {
+        return $this->hasMany(UserSkill::class);
+    }
+
+    /**
+     * Get the user's available capacity in hours per week.
+     */
+    public function getAvailableCapacity(): int
+    {
+        return ($this->capacity_hours_per_week ?? 40) - ($this->current_workload_hours ?? 0);
     }
 }

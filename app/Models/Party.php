@@ -19,10 +19,21 @@ class Party extends Model
         'type',
         'contact_name',
         'contact_email',
+        'email',
+        'phone',
+        'website',
+        'address',
+        'notes',
+        'tags',
+        'status',
+        'primary_contact_id',
+        'last_activity',
     ];
 
     protected $casts = [
         'type' => PartyType::class,
+        'tags' => 'array',
+        'last_activity' => 'datetime',
     ];
 
     public function team(): BelongsTo
@@ -33,6 +44,16 @@ class Party extends Model
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    public function primaryContact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'primary_contact_id');
     }
 
     public function scopeForTeam($query, int $teamId)
