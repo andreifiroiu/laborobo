@@ -1,46 +1,95 @@
 <?php
 
+use App\Http\Controllers\Settings\AIAgentsController;
 use App\Http\Controllers\Settings\LanguageController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TeamController;
 use App\Http\Controllers\Settings\TeamMemberController;
 use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
+use App\Http\Controllers\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::middleware('auth')->group(function () {
-    Route::redirect('settings', '/settings/profile');
+    // ========================================================================
+    // Account Routes (User Settings)
+    // ========================================================================
+    Route::prefix('account')->group(function () {
+        Route::redirect('/', '/account/profile');
 
-    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('account.profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('account.profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('account.profile.destroy');
 
-    Route::get('settings/password', [PasswordController::class, 'edit'])->name('user-password.edit');
+        Route::get('/password', [PasswordController::class, 'edit'])->name('account.password.edit');
+        Route::put('/password', [PasswordController::class, 'update'])
+            ->middleware('throttle:6,1')
+            ->name('account.password.update');
 
-    Route::put('settings/password', [PasswordController::class, 'update'])
+        Route::get('/appearance', function () {
+            return Inertia::render('account/appearance');
+        })->name('account.appearance.edit');
+
+        Route::get('/language', [LanguageController::class, 'edit'])->name('account.language.edit');
+        Route::patch('/language', [LanguageController::class, 'update'])->name('account.language.update');
+
+        Route::get('/two-factor', [TwoFactorAuthenticationController::class, 'show'])
+            ->name('account.two-factor.show');
+
+        // Account Teams (for switching organizations)
+        Route::get('/teams', [TeamController::class, 'index'])->name('account.teams.index');
+        Route::post('/teams', [TeamController::class, 'store'])->name('account.teams.store');
+        Route::patch('/teams/{team}', [TeamController::class, 'update'])->name('account.teams.update');
+        Route::delete('/teams/{team}', [TeamController::class, 'destroy'])->name('account.teams.destroy');
+        Route::post('/teams/{team}/switch', [TeamController::class, 'switch'])->name('account.teams.switch');
+    });
+
+    // ========================================================================
+    // Workspace Settings (Admin)
+    // ========================================================================
+    Route::get('/settings', [WorkspaceSettingsController::class, 'index'])->name('settings.index');
+    Route::patch('/settings/workspace', [WorkspaceSettingsController::class, 'updateWorkspace'])->name('settings.workspace.update');
+    Route::patch('/settings/global-ai', [WorkspaceSettingsController::class, 'updateGlobalAI'])->name('settings.global-ai.update');
+
+    // AI Agents
+    Route::post('/settings/ai-agents/{agent}/toggle', [AIAgentsController::class, 'toggleAgent'])->name('settings.ai-agents.toggle');
+    Route::patch('/settings/ai-agents/{agent}/config', [AIAgentsController::class, 'updateConfig'])->name('settings.ai-agents.config.update');
+    Route::post('/settings/ai-agents/activity/{log}/approve', [AIAgentsController::class, 'approveOutput'])->name('settings.ai-agents.activity.approve');
+    Route::post('/settings/ai-agents/activity/{log}/reject', [AIAgentsController::class, 'rejectOutput'])->name('settings.ai-agents.activity.reject');
+
+    // ========================================================================
+    // Legacy Routes (Backward Compatibility - Redirect to Account)
+    // ========================================================================
+    Route::redirect('settings/profile', '/account/profile');
+    Route::redirect('settings/password', '/account/password');
+    Route::redirect('settings/appearance', '/account/appearance');
+    Route::redirect('settings/language', '/account/language');
+    Route::redirect('settings/two-factor', '/account/two-factor');
+    Route::redirect('settings/teams', '/account/teams');
+
+    // Keep old named routes for backward compatibility (will be removed later)
+    Route::get('_legacy/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('_legacy/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('_legacy/settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('_legacy/settings/password', [PasswordController::class, 'edit'])->name('user-password.edit');
+    Route::put('_legacy/settings/password', [PasswordController::class, 'update'])
         ->middleware('throttle:6,1')
         ->name('user-password.update');
-
-    Route::get('settings/appearance', function () {
-        return Inertia::render('settings/appearance');
+    Route::get('_legacy/settings/appearance', function () {
+        return Inertia::render('account/appearance');
     })->name('appearance.edit');
+    Route::get('_legacy/settings/language', [LanguageController::class, 'edit'])->name('language.edit');
+    Route::patch('_legacy/settings/language', [LanguageController::class, 'update'])->name('language.update');
+    Route::get('_legacy/settings/two-factor', [TwoFactorAuthenticationController::class, 'show'])->name('two-factor.show');
+    Route::get('_legacy/settings/teams', [TeamController::class, 'index'])->name('teams.index');
+    Route::post('_legacy/settings/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::patch('_legacy/settings/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+    Route::delete('_legacy/settings/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
+    Route::post('_legacy/settings/teams/{team}/switch', [TeamController::class, 'switch'])->name('teams.switch');
 
-    Route::get('settings/language', [LanguageController::class, 'edit'])->name('language.edit');
-    Route::patch('settings/language', [LanguageController::class, 'update'])->name('language.update');
-
-    Route::get('settings/two-factor', [TwoFactorAuthenticationController::class, 'show'])
-        ->name('two-factor.show');
-
-    // Team management
-    Route::get('settings/teams', [TeamController::class, 'index'])->name('teams.index');
-    Route::post('settings/teams', [TeamController::class, 'store'])->name('teams.store');
-    Route::patch('settings/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
-    Route::delete('settings/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
-    Route::post('settings/teams/{team}/switch', [TeamController::class, 'switch'])->name('teams.switch');
-
-    // Team members
-    Route::get('settings/teams/{team}/members', [TeamMemberController::class, 'index'])->name('teams.members.index');
-    Route::post('settings/teams/{team}/members', [TeamMemberController::class, 'store'])->name('teams.members.store');
-    Route::delete('settings/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
+    // Team members (legacy)
+    Route::get('_legacy/settings/teams/{team}/members', [TeamMemberController::class, 'index'])->name('teams.members.index');
+    Route::post('_legacy/settings/teams/{team}/members', [TeamMemberController::class, 'store'])->name('teams.members.store');
+    Route::delete('_legacy/settings/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
 });

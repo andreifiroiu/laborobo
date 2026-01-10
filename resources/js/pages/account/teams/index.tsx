@@ -27,7 +27,7 @@ import { Check, Plus, Trash2 } from 'lucide-react';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Teams', href: '/settings/teams' },
+    { title: 'Teams', href: '/account/teams' },
 ];
 
 interface Team {
@@ -57,7 +57,7 @@ export default function TeamsIndex({ teams, currentTeamId }: Props) {
 
     const handleCreateTeam = (e: React.FormEvent) => {
         e.preventDefault();
-        createForm.post('/settings/teams', {
+        createForm.post('/account/teams', {
             preserveScroll: true,
             onSuccess: () => {
                 createForm.reset();
@@ -68,7 +68,7 @@ export default function TeamsIndex({ teams, currentTeamId }: Props) {
 
     const handleSwitchTeam = (teamId: number) => {
         router.post(
-            `/settings/teams/${teamId}/switch`,
+            `/account/teams/${teamId}/switch`,
             {},
             {
                 preserveState: true,
@@ -80,7 +80,7 @@ export default function TeamsIndex({ teams, currentTeamId }: Props) {
     const handleDeleteTeam = () => {
         if (!teamToDelete) return;
 
-        router.delete(`/settings/teams/${teamToDelete.id}`, {
+        router.delete(`/account/teams/${teamToDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setDeleteDialogOpen(false);

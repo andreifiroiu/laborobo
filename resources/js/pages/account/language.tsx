@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Language settings',
-        href: '/settings/language',
+        href: '/account/language',
     },
 ];
 

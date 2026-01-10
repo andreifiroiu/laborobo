@@ -17,4 +17,9 @@ class Team extends BaseTeam
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function workspaceSettings()
+    {
+        return $this->hasOne(WorkspaceSettings::class);
+    }
 }
