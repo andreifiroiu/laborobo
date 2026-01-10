@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\OtlpLogChannel;
 use App\Logging\TraceContextProcessor;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
@@ -119,6 +120,23 @@ return [
             'driver' => 'errorlog',
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | OpenTelemetry OTLP Log Channel
+        |--------------------------------------------------------------------------
+        |
+        | This channel exports logs via OTLP to your observability backend
+        | (Jaeger, Grafana Tempo, etc.) for correlation with traces.
+        | Add 'otlp' to LOG_STACK to enable: LOG_STACK=single,otlp
+        |
+        */
+
+        'otlp' => [
+            'driver' => 'custom',
+            'via' => OtlpLogChannel::class,
+            'level' => env('LOG_LEVEL', 'debug'),
         ],
 
         'null' => [
