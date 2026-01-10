@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DirectoryController;
+use App\Http\Controllers\PlaybooksController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -20,9 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('inbox/index');
     })->name('inbox');
 
-    Route::get('playbooks', function () {
-        return Inertia::render('playbooks/index');
-    })->name('playbooks');
+    Route::get('playbooks', [PlaybooksController::class, 'index'])->name('playbooks');
 
     Route::get('directory', [DirectoryController::class, 'index'])->name('directory');
 
@@ -43,3 +42,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 require __DIR__.'/settings.php';
 require __DIR__.'/work.php';
 require __DIR__.'/directory.php';
+require __DIR__.'/playbooks.php';
