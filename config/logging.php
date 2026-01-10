@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\TraceContextProcessor;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -63,6 +64,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+            'processors' => [TraceContextProcessor::class],
         ],
 
         'daily' => [
@@ -71,6 +73,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'processors' => [TraceContextProcessor::class],
         ],
 
         'slack' => [
@@ -91,7 +94,7 @@ return [
                 'port' => env('PAPERTRAIL_PORT'),
                 'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
             ],
-            'processors' => [PsrLogMessageProcessor::class],
+            'processors' => [PsrLogMessageProcessor::class, TraceContextProcessor::class],
         ],
 
         'stderr' => [
@@ -102,7 +105,7 @@ return [
                 'stream' => 'php://stderr',
             ],
             'formatter' => env('LOG_STDERR_FORMATTER'),
-            'processors' => [PsrLogMessageProcessor::class],
+            'processors' => [PsrLogMessageProcessor::class, TraceContextProcessor::class],
         ],
 
         'syslog' => [
