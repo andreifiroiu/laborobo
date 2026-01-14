@@ -7,7 +7,7 @@ This document defines the complete technical stack for Laborobo, an AI-powered w
 - **Application Framework:** Laravel 12
 - **Language/Runtime:** PHP 8.3+
 - **Package Manager:** Composer
-- **Authentication:** Laravel Sanctum (for SPA authentication with Inertia)
+- **Authentication:** Fortify
 - **Authorization:** Laravel policies and gates
 
 ## Frontend
@@ -30,7 +30,7 @@ This document defines the complete technical stack for Laborobo, an AI-powered w
 
 - **AI Integration:** neuron-ai package (existing Laravel package for AI functionality)
 - **AI Agent Framework:** Custom-built agent orchestration system with Tool Gateway architecture
-- **LLM Provider:** TBD (likely OpenAI GPT-4 or Anthropic Claude for agent reasoning)
+- **LLM Provider:** Mainly Anthropic Claude, but other providers such as OpenAI will be also integrated
 
 ## Testing & Quality
 

@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Settings\AIAgentsController;
+use App\Http\Controllers\Settings\AuditLogController;
+use App\Http\Controllers\Settings\IntegrationsController;
 use App\Http\Controllers\Settings\LanguageController;
+use App\Http\Controllers\Settings\NotificationsController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TeamController;
@@ -57,6 +60,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/settings/ai-agents/{agent}/config', [AIAgentsController::class, 'updateConfig'])->name('settings.ai-agents.config.update');
     Route::post('/settings/ai-agents/activity/{log}/approve', [AIAgentsController::class, 'approveOutput'])->name('settings.ai-agents.activity.approve');
     Route::post('/settings/ai-agents/activity/{log}/reject', [AIAgentsController::class, 'rejectOutput'])->name('settings.ai-agents.activity.reject');
+
+    // Notifications
+    Route::patch('/settings/notifications', [NotificationsController::class, 'update'])->name('settings.notifications.update');
+
+    // Audit Log
+    Route::get('/settings/audit-log/export', [AuditLogController::class, 'export'])->name('settings.audit-log.export');
+
+    // Integrations
+    Route::post('/settings/integrations/{integration}/connect', [IntegrationsController::class, 'connect'])->name('settings.integrations.connect');
+    Route::post('/settings/integrations/{integration}/disconnect', [IntegrationsController::class, 'disconnect'])->name('settings.integrations.disconnect');
 
     // ========================================================================
     // Legacy Routes (Backward Compatibility - Redirect to Account)

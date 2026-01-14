@@ -1,5 +1,5 @@
 # Product Roadmap
-1. [ ] Core Work Graph Models — Create database schema and Eloquent models for Parties, Projects, Work Orders, Tasks, and Deliverables with proper relationships, validation rules, and basic CRUD operations. `M`
+1. [x] Core Work Graph Models — Create database schema and Eloquent models for Parties, Projects, Work Orders, Tasks, and Deliverables with proper relationships, validation rules, and basic CRUD operations. `M`
 
 2. [ ] Work Order Intake UI — Build forms and interfaces for creating work orders manually, including fields for title, description, scope, success criteria, budget estimates, and assignment to team members. `M`
 

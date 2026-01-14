@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { AuditLogEntry } from '@/../product/sections/settings/types'
+import type { AuditLogEntry } from '../types'
 
 interface AuditLogSectionProps {
   entries: AuditLogEntry[]

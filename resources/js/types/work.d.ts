@@ -208,10 +208,14 @@ export interface WorkOrderDetailProps {
     deliverables: Array<{
         id: string;
         title: string;
+        description: string | null;
         type: string;
         status: string;
         version: string;
+        createdDate: string;
+        deliveredDate: string | null;
         fileUrl: string | null;
+        acceptanceCriteria: string[];
     }>;
     documents: Document[];
     communicationThread: {

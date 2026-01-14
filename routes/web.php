@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\PlaybooksController;
+use App\Http\Controllers\TodayController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -11,15 +12,10 @@ Route::redirect('/', '/today')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Main navigation routes
-    Route::get('today', function () {
-        return Inertia::render('today');
-    })->name('today');
+    Route::get('today', [TodayController::class, 'index'])->name('today');
 
     // Work routes are in routes/work.php
-
-    Route::get('inbox', function () {
-        return Inertia::render('inbox/index');
-    })->name('inbox');
+    // Inbox routes are in routes/inbox.php
 
     Route::get('playbooks', [PlaybooksController::class, 'index'])->name('playbooks');
 
@@ -41,5 +37,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/work.php';
+require __DIR__.'/inbox.php';
 require __DIR__.'/directory.php';
 require __DIR__.'/playbooks.php';

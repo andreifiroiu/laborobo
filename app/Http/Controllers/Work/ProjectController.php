@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Work;
 
+use App\Enums\DocumentType;
 use App\Enums\ProjectStatus;
 use App\Http\Controllers\Controller;
 use App\Models\CommunicationThread;
@@ -14,6 +15,7 @@ use App\Models\Task;
 use App\Models\WorkOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -171,5 +173,71 @@ class ProjectController extends Controller
         $project->update(['status' => ProjectStatus::Active]);
 
         return back();
+    }
+
+    public function uploadFile(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('update', $project);
+
+        $validated = $request->validate([
+            'file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        $user = $request->user();
+        $file = $validated['file'];
+        $fileName = $file->getClientOriginalName();
+        $fileSize = $file->getSize();
+
+        // Store file in projects directory
+        $path = $file->store("projects/{$project->id}", 'public');
+        $fileUrl = Storage::disk('public')->url($path);
+
+        // Create document record
+        Document::create([
+            'team_id' => $project->team_id,
+            'uploaded_by_id' => $user->id,
+            'documentable_type' => Project::class,
+            'documentable_id' => $project->id,
+            'name' => $fileName,
+            'type' => DocumentType::Reference,
+            'file_url' => $fileUrl,
+            'file_size' => $this->formatFileSize($fileSize),
+        ]);
+
+        return back();
+    }
+
+    public function deleteFile(Request $request, Project $project, Document $document): RedirectResponse
+    {
+        $this->authorize('update', $project);
+
+        // Verify document belongs to this project
+        if ($document->documentable_type !== Project::class || $document->documentable_id !== $project->id) {
+            abort(403);
+        }
+
+        // Delete file from storage
+        $path = str_replace(Storage::disk('public')->url(''), '', $document->file_url);
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        $document->delete();
+
+        return back();
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $unitIndex = 0;
+        $size = $bytes;
+
+        while ($size >= 1024 && $unitIndex < count($units) - 1) {
+            $size /= 1024;
+            $unitIndex++;
+        }
+
+        return round($size, 1) . ' ' . $units[$unitIndex];
     }
 }

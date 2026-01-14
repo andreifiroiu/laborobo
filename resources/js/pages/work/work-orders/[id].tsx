@@ -11,6 +11,8 @@ import {
     Edit,
     Trash2,
     CheckCircle2,
+    ExternalLink,
+    X,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -18,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import {
     Dialog,
     DialogContent,
@@ -65,6 +68,12 @@ export default function WorkOrderDetail({
 }: WorkOrderDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false);
+    const [createDeliverableDialogOpen, setCreateDeliverableDialogOpen] = useState(false);
+    const [editDeliverableDialogOpen, setEditDeliverableDialogOpen] = useState(false);
+    const [deleteDeliverableDialogOpen, setDeleteDeliverableDialogOpen] = useState(false);
+    const [selectedDeliverable, setSelectedDeliverable] = useState<typeof deliverables[0] | null>(null);
+    const [newCriterion, setNewCriterion] = useState('');
+    const [editCriterion, setEditCriterion] = useState('');
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
     const [newMessage, setNewMessage] = useState('');
 
@@ -91,6 +100,25 @@ export default function WorkOrderDetail({
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     });
 
+    const deliverableForm = useForm({
+        title: '',
+        workOrderId: workOrder.id,
+        description: '',
+        type: 'document' as const,
+        fileUrl: '',
+        acceptanceCriteria: [] as string[],
+    });
+
+    const editDeliverableForm = useForm({
+        title: '',
+        description: '',
+        type: 'document' as const,
+        status: 'draft' as const,
+        version: '1.0',
+        fileUrl: '',
+        acceptanceCriteria: [] as string[],
+    });
+
     const handleUpdateWorkOrder = (e: React.FormEvent) => {
         e.preventDefault();
         editForm.patch(`/work/work-orders/${workOrder.id}`, {
@@ -108,6 +136,96 @@ export default function WorkOrderDetail({
                 setCreateTaskDialogOpen(false);
             },
         });
+    };
+
+    const handleCreateDeliverable = (e: React.FormEvent) => {
+        e.preventDefault();
+        deliverableForm.post('/work/deliverables', {
+            preserveScroll: true,
+            onSuccess: () => {
+                deliverableForm.reset();
+                setNewCriterion('');
+                setCreateDeliverableDialogOpen(false);
+            },
+        });
+    };
+
+    const handleEditDeliverable = (deliverable: typeof deliverables[0]) => {
+        setSelectedDeliverable(deliverable);
+        editDeliverableForm.setData({
+            title: deliverable.title,
+            description: deliverable.description || '',
+            type: deliverable.type as 'document' | 'design' | 'report' | 'code' | 'other',
+            status: deliverable.status as 'draft' | 'in_review' | 'approved' | 'delivered',
+            version: deliverable.version,
+            fileUrl: deliverable.fileUrl || '',
+            acceptanceCriteria: deliverable.acceptanceCriteria || [],
+        });
+        setEditDeliverableDialogOpen(true);
+    };
+
+    const handleUpdateDeliverable = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedDeliverable) return;
+        editDeliverableForm.patch(`/work/deliverables/${selectedDeliverable.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setEditDeliverableDialogOpen(false);
+                setSelectedDeliverable(null);
+                setEditCriterion('');
+            },
+        });
+    };
+
+    const handleDeleteDeliverable = () => {
+        if (!selectedDeliverable) return;
+        router.delete(`/work/deliverables/${selectedDeliverable.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setDeleteDeliverableDialogOpen(false);
+                setSelectedDeliverable(null);
+            },
+        });
+    };
+
+    const handleDeliverableStatusChange = (deliverableId: string, newStatus: string) => {
+        router.patch(`/work/deliverables/${deliverableId}`, { status: newStatus });
+    };
+
+    // Acceptance criteria helpers for create form
+    const addCriterion = () => {
+        if (newCriterion.trim()) {
+            deliverableForm.setData('acceptanceCriteria', [
+                ...deliverableForm.data.acceptanceCriteria,
+                newCriterion.trim(),
+            ]);
+            setNewCriterion('');
+        }
+    };
+
+    const removeCriterion = (index: number) => {
+        deliverableForm.setData(
+            'acceptanceCriteria',
+            deliverableForm.data.acceptanceCriteria.filter((_, i) => i !== index)
+        );
+    };
+
+    // Acceptance criteria helpers for edit form
+    const addEditCriterion = () => {
+        if (editCriterion.trim()) {
+            editDeliverableForm.setData('acceptanceCriteria', [
+                ...editDeliverableForm.data.acceptanceCriteria,
+                editCriterion.trim(),
+            ]);
+            setEditCriterion('');
+        }
+    };
+
+    const removeEditCriterion = (index: number) => {
+        editDeliverableForm.setData(
+            'acceptanceCriteria',
+            editDeliverableForm.data.acceptanceCriteria.filter((_, i) => i !== index)
+        );
     };
 
     const handleStatusChange = (status: string) => {
@@ -402,7 +520,7 @@ export default function WorkOrderDetail({
                         <div>
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-bold text-foreground">Deliverables</h2>
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" onClick={() => setCreateDeliverableDialogOpen(true)}>
                                     <Plus className="h-4 w-4 mr-2" />
                                     Add
                                 </Button>
@@ -418,25 +536,109 @@ export default function WorkOrderDetail({
                                     {deliverables.map((d) => (
                                         <div
                                             key={d.id}
-                                            className="p-4 bg-card border border-border rounded-lg"
+                                            className="p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors"
                                         >
                                             <div className="flex items-start justify-between">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="font-medium">{d.title}</span>
-                                                        <Badge variant="outline">{d.status}</Badge>
+                                                <Link
+                                                    href={`/work/deliverables/${d.id}`}
+                                                    className="flex-1 min-w-0"
+                                                >
+                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                        <span className="font-medium truncate">{d.title}</span>
+                                                        <StatusBadge status={d.status} type="deliverable" />
                                                     </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {d.type} • v{d.version}
+                                                    <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                                                        <span className="capitalize">{d.type}</span>
+                                                        <span>•</span>
+                                                        <span>v{d.version}</span>
+                                                        <span>•</span>
+                                                        <span>Created {new Date(d.createdDate).toLocaleDateString()}</span>
+                                                        {d.deliveredDate && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span className="text-emerald-600 dark:text-emerald-400">
+                                                                    Delivered {new Date(d.deliveredDate).toLocaleDateString()}
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                        {d.acceptanceCriteria.length > 0 && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span>{d.acceptanceCriteria.length} criteria</span>
+                                                            </>
+                                                        )}
                                                     </div>
+                                                </Link>
+                                                <div className="flex items-center gap-1 ml-2">
+                                                    {/* Status workflow buttons */}
+                                                    {d.status === 'draft' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleDeliverableStatusChange(d.id, 'in_review');
+                                                            }}
+                                                        >
+                                                            Submit
+                                                        </Button>
+                                                    )}
+                                                    {d.status === 'in_review' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleDeliverableStatusChange(d.id, 'approved');
+                                                            }}
+                                                        >
+                                                            Approve
+                                                        </Button>
+                                                    )}
+                                                    {d.status === 'approved' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleDeliverableStatusChange(d.id, 'delivered');
+                                                            }}
+                                                        >
+                                                            Deliver
+                                                        </Button>
+                                                    )}
+                                                    {d.fileUrl && (
+                                                        <Button variant="ghost" size="icon" asChild>
+                                                            <a href={d.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                                <ExternalLink className="h-4 w-4" />
+                                                            </a>
+                                                        </Button>
+                                                    )}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" onClick={(e) => e.preventDefault()}>
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem onClick={() => handleEditDeliverable(d)}>
+                                                                <Edit className="h-4 w-4 mr-2" />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem
+                                                                onClick={() => {
+                                                                    setSelectedDeliverable(d);
+                                                                    setDeleteDeliverableDialogOpen(true);
+                                                                }}
+                                                                className="text-destructive"
+                                                            >
+                                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                                Delete
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
                                                 </div>
-                                                {d.fileUrl && (
-                                                    <Button variant="ghost" size="sm" asChild>
-                                                        <a href={d.fileUrl} target="_blank" rel="noreferrer">
-                                                            View
-                                                        </a>
-                                                    </Button>
-                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -603,6 +805,289 @@ export default function WorkOrderDetail({
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Deliverable Dialog */}
+            <Dialog open={createDeliverableDialogOpen} onOpenChange={setCreateDeliverableDialogOpen}>
+                <DialogContent className="max-w-lg">
+                    <form onSubmit={handleCreateDeliverable}>
+                        <DialogHeader>
+                            <DialogTitle>Add Deliverable</DialogTitle>
+                            <DialogDescription>
+                                Add a new deliverable to this work order
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                            <div className="grid gap-2">
+                                <Label>Title *</Label>
+                                <Input
+                                    value={deliverableForm.data.title}
+                                    onChange={(e) => deliverableForm.setData('title', e.target.value)}
+                                    placeholder="Deliverable title"
+                                />
+                                <InputError message={deliverableForm.errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Type *</Label>
+                                <Select
+                                    value={deliverableForm.data.type}
+                                    onValueChange={(value) =>
+                                        deliverableForm.setData('type', value as any)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="document">Document</SelectItem>
+                                        <SelectItem value="design">Design</SelectItem>
+                                        <SelectItem value="report">Report</SelectItem>
+                                        <SelectItem value="code">Code</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Description</Label>
+                                <Textarea
+                                    value={deliverableForm.data.description}
+                                    onChange={(e) =>
+                                        deliverableForm.setData('description', e.target.value)
+                                    }
+                                    placeholder="Brief description of the deliverable"
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>File URL</Label>
+                                <Input
+                                    type="url"
+                                    value={deliverableForm.data.fileUrl}
+                                    onChange={(e) => deliverableForm.setData('fileUrl', e.target.value)}
+                                    placeholder="https://..."
+                                />
+                                <InputError message={deliverableForm.errors.fileUrl} />
+                            </div>
+
+                            {/* Acceptance Criteria */}
+                            <div className="grid gap-2">
+                                <Label>Acceptance Criteria</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={newCriterion}
+                                        onChange={(e) => setNewCriterion(e.target.value)}
+                                        placeholder="Add acceptance criterion"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addCriterion();
+                                            }
+                                        }}
+                                    />
+                                    <Button type="button" variant="outline" onClick={addCriterion}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                {deliverableForm.data.acceptanceCriteria.length > 0 && (
+                                    <ul className="space-y-2 mt-2">
+                                        {deliverableForm.data.acceptanceCriteria.map((criterion, index) => (
+                                            <li
+                                                key={index}
+                                                className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
+                                            >
+                                                <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                <span className="flex-1">{criterion}</span>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6"
+                                                    onClick={() => removeCriterion(index)}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setCreateDeliverableDialogOpen(false);
+                                    deliverableForm.reset();
+                                    setNewCriterion('');
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={deliverableForm.processing}>
+                                Add
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Deliverable Dialog */}
+            <Dialog open={editDeliverableDialogOpen} onOpenChange={setEditDeliverableDialogOpen}>
+                <DialogContent className="max-w-lg">
+                    <form onSubmit={handleUpdateDeliverable}>
+                        <DialogHeader>
+                            <DialogTitle>Edit Deliverable</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                            <div className="grid gap-2">
+                                <Label>Title *</Label>
+                                <Input
+                                    value={editDeliverableForm.data.title}
+                                    onChange={(e) => editDeliverableForm.setData('title', e.target.value)}
+                                />
+                                <InputError message={editDeliverableForm.errors.title} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>Type</Label>
+                                    <Select
+                                        value={editDeliverableForm.data.type}
+                                        onValueChange={(value) => editDeliverableForm.setData('type', value as any)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="document">Document</SelectItem>
+                                            <SelectItem value="design">Design</SelectItem>
+                                            <SelectItem value="report">Report</SelectItem>
+                                            <SelectItem value="code">Code</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>Version</Label>
+                                    <Input
+                                        value={editDeliverableForm.data.version}
+                                        onChange={(e) => editDeliverableForm.setData('version', e.target.value)}
+                                        placeholder="1.0"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Status</Label>
+                                <Select
+                                    value={editDeliverableForm.data.status}
+                                    onValueChange={(value) => editDeliverableForm.setData('status', value as any)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="draft">Draft</SelectItem>
+                                        <SelectItem value="in_review">In Review</SelectItem>
+                                        <SelectItem value="approved">Approved</SelectItem>
+                                        <SelectItem value="delivered">Delivered</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Description</Label>
+                                <Textarea
+                                    value={editDeliverableForm.data.description}
+                                    onChange={(e) => editDeliverableForm.setData('description', e.target.value)}
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>File URL</Label>
+                                <Input
+                                    type="url"
+                                    value={editDeliverableForm.data.fileUrl}
+                                    onChange={(e) => editDeliverableForm.setData('fileUrl', e.target.value)}
+                                    placeholder="https://..."
+                                />
+                            </div>
+
+                            {/* Acceptance Criteria for Edit */}
+                            <div className="grid gap-2">
+                                <Label>Acceptance Criteria</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={editCriterion}
+                                        onChange={(e) => setEditCriterion(e.target.value)}
+                                        placeholder="Add acceptance criterion"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addEditCriterion();
+                                            }
+                                        }}
+                                    />
+                                    <Button type="button" variant="outline" onClick={addEditCriterion}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                {editDeliverableForm.data.acceptanceCriteria.length > 0 && (
+                                    <ul className="space-y-2 mt-2">
+                                        {editDeliverableForm.data.acceptanceCriteria.map((criterion, index) => (
+                                            <li
+                                                key={index}
+                                                className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
+                                            >
+                                                <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                <span className="flex-1">{criterion}</span>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6"
+                                                    onClick={() => removeEditCriterion(index)}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEditDeliverableDialogOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={editDeliverableForm.processing}>
+                                Save
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Deliverable Confirmation Dialog */}
+            <Dialog open={deleteDeliverableDialogOpen} onOpenChange={setDeleteDeliverableDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Deliverable</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete "{selectedDeliverable?.title}"? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteDeliverableDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteDeliverable}>
+                            Delete
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </AppLayout>

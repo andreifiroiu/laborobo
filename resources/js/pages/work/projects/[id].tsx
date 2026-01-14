@@ -11,6 +11,12 @@ import {
     Edit,
     Archive,
     Trash2,
+    Upload,
+    ExternalLink,
+    Image,
+    File,
+    FileSpreadsheet,
+    Package,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -49,7 +55,7 @@ import {
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
 import { StatusBadge, ProgressBar } from '@/components/work';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { ProjectDetailProps, Message } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
 
@@ -65,6 +71,8 @@ export default function ProjectDetail({
     const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
     const [newMessage, setNewMessage] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -82,9 +90,10 @@ export default function ProjectDetail({
 
     const workOrderForm = useForm({
         title: '',
-        project_id: project.id,
+        projectId: project.id,
         description: '',
         priority: 'medium' as const,
+        dueDate: '',
     });
 
     const handleUpdateProject = (e: React.FormEvent) => {
@@ -126,6 +135,60 @@ export default function ProjectDetail({
                 onSuccess: () => setNewMessage(''),
             }
         );
+    };
+
+    // File upload handlers
+    const handleFileSelect = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        router.post(`/work/projects/${project.id}/files`, formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => {
+                setIsUploading(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            },
+        });
+    };
+
+    const handleDeleteFile = (documentId: string) => {
+        if (confirm('Are you sure you want to delete this file?')) {
+            router.delete(`/work/projects/${project.id}/files/${documentId}`, {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const getFileIcon = (type: string, fileName: string) => {
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        if (ext === 'pdf') return <FileText className="h-8 w-8 text-red-500" />;
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return <Image className="h-8 w-8 text-blue-500" />;
+        if (['xls', 'xlsx'].includes(ext || '')) return <FileSpreadsheet className="h-8 w-8 text-green-500" />;
+        if (['doc', 'docx'].includes(ext || '')) return <FileText className="h-8 w-8 text-blue-500" />;
+
+        switch (type) {
+            case 'reference':
+                return <FileText className="h-8 w-8 text-blue-500" />;
+            case 'artifact':
+                return <Package className="h-8 w-8 text-purple-500" />;
+            case 'evidence':
+                return <FileText className="h-8 w-8 text-amber-500" />;
+            case 'template':
+                return <FileText className="h-8 w-8 text-green-500" />;
+            default:
+                return <File className="h-8 w-8 text-muted-foreground" />;
+        }
     };
 
     const completedWorkOrders = workOrders.filter(
@@ -358,31 +421,85 @@ export default function ProjectDetail({
                             <h2 className="text-lg font-bold text-foreground">
                                 Documents ({documents.length})
                             </h2>
-                            <Button variant="outline" size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Upload
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleFileSelect}
+                                disabled={isUploading}
+                            >
+                                <Upload className="h-4 w-4 mr-2" />
+                                {isUploading ? 'Uploading...' : 'Upload'}
                             </Button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                className="hidden"
+                                onChange={handleFileChange}
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.txt"
+                            />
                         </div>
 
                         {documents.length === 0 ? (
-                            <div className="text-center py-8 bg-muted/50 rounded-xl">
-                                <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                <p className="text-muted-foreground">No documents attached</p>
+                            <div
+                                className="text-center py-8 bg-muted/50 rounded-xl border-2 border-dashed border-border cursor-pointer hover:bg-muted/70 transition-colors"
+                                onClick={handleFileSelect}
+                            >
+                                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-muted-foreground">
+                                    Click to upload files or drag and drop
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    PDF, DOC, XLS, Images up to 10MB
+                                </p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <div className="space-y-2">
                                 {documents.map((doc) => (
                                     <div
                                         key={doc.id}
-                                        className="p-4 bg-card border border-border rounded-lg"
+                                        className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg group"
                                     >
-                                        <FileText className="h-8 w-8 text-muted-foreground mb-2" />
-                                        <div className="font-medium truncate">{doc.name}</div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {doc.type} • {doc.fileSize}
+                                        {getFileIcon(doc.type, doc.name)}
+                                        <div className="flex-1 min-w-0">
+                                            <a
+                                                href={doc.fileUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="font-medium text-sm truncate block hover:text-primary"
+                                            >
+                                                {doc.name}
+                                            </a>
+                                            <div className="text-xs text-muted-foreground">
+                                                {doc.fileSize} • {doc.uploadedDate}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button variant="ghost" size="icon" asChild>
+                                                <a href={doc.fileUrl} target="_blank" rel="noreferrer">
+                                                    <ExternalLink className="h-4 w-4" />
+                                                </a>
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDeleteFile(doc.id)}
+                                                className="text-destructive hover:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </div>
                                 ))}
+
+                                {/* Add more files button */}
+                                <button
+                                    onClick={handleFileSelect}
+                                    disabled={isUploading}
+                                    className="w-full p-3 border-2 border-dashed border-border rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Add more files
+                                </button>
                             </div>
                         )}
                     </div>
@@ -507,6 +624,7 @@ export default function ProjectDetail({
                                     placeholder="Work order title"
                                 />
                                 <InputError message={workOrderForm.errors.title} />
+                                <InputError message={workOrderForm.errors.projectId} />
                             </div>
                             <div className="grid gap-2">
                                 <Label>Priority</Label>
@@ -536,6 +654,17 @@ export default function ProjectDetail({
                                     }
                                     placeholder="Brief description"
                                 />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Due Date</Label>
+                                <Input
+                                    type="date"
+                                    value={workOrderForm.data.dueDate}
+                                    onChange={(e) =>
+                                        workOrderForm.setData('dueDate', e.target.value)
+                                    }
+                                />
+                                <InputError message={workOrderForm.errors.dueDate} />
                             </div>
                         </div>
                         <DialogFooter>

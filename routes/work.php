@@ -22,6 +22,8 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::post('/projects/{project}/archive', [ProjectController::class, 'archive'])->name('projects.archive');
     Route::post('/projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
+    Route::post('/projects/{project}/files', [ProjectController::class, 'uploadFile'])->name('projects.files.upload');
+    Route::delete('/projects/{project}/files/{document}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
 
     // Work Orders
     Route::post('/work-orders', [WorkOrderController::class, 'store'])->name('work-orders.store');
@@ -48,6 +50,8 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::get('/deliverables/{deliverable}', [DeliverableController::class, 'show'])->name('deliverables.show');
     Route::patch('/deliverables/{deliverable}', [DeliverableController::class, 'update'])->name('deliverables.update');
     Route::delete('/deliverables/{deliverable}', [DeliverableController::class, 'destroy'])->name('deliverables.destroy');
+    Route::post('/deliverables/{deliverable}/files', [DeliverableController::class, 'uploadFile'])->name('deliverables.files.upload');
+    Route::delete('/deliverables/{deliverable}/files/{document}', [DeliverableController::class, 'deleteFile'])->name('deliverables.files.delete');
 
     // Communications (polymorphic: projects/{id}/communications or work-orders/{id}/communications)
     Route::get('/{type}/{id}/communications', [CommunicationController::class, 'show'])->name('communications.show');

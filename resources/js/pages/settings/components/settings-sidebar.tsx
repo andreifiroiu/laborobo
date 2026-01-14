@@ -45,7 +45,6 @@ export function SettingsSidebar() {
                   <Link
                     href={`/settings?tab=${item.value}`}
                     preserveScroll
-                    preserveState
                   >
                     <item.icon />
                     <span>{item.title}</span>

@@ -5,6 +5,10 @@ import { SettingsSidebar } from './components/settings-sidebar';
 import { WorkspaceSection } from './components/workspace-section';
 import { TeamSection } from './components/team-section';
 import { AIAgentsSection } from './components/ai-agents-section';
+import { NotificationsSection } from './components/notifications-section';
+import { AuditLogSection } from './components/audit-log-section';
+import { IntegrationsSection } from './components/integrations-section';
+import { BillingSection } from './components/billing-section';
 import { ComingSoonSection } from './components/coming-soon-section';
 import type { BreadcrumbItem } from '@/types';
 import type { SettingsPageProps } from '@/types/settings';
@@ -29,6 +33,11 @@ export default function Settings({
     aiAgents,
     globalAISettings,
     agentActivityLogs,
+    notificationPreferences,
+    auditLogEntries,
+    integrations,
+    billingInfo,
+    invoices,
 }: SettingsPageProps) {
     const searchParams = new URLSearchParams(window.location.search);
     const activeTab = searchParams.get('tab') || 'workspace';
@@ -63,28 +72,16 @@ export default function Settings({
                                     />
                                 )}
                                 {activeTab === 'integrations' && (
-                                    <ComingSoonSection
-                                        title="Integrations"
-                                        description="Connect third-party services"
-                                    />
+                                    <IntegrationsSection integrations={integrations} />
                                 )}
                                 {activeTab === 'billing' && (
-                                    <ComingSoonSection
-                                        title="Billing & Usage"
-                                        description="Manage subscription plan"
-                                    />
+                                    <BillingSection billingInfo={billingInfo} invoices={invoices} />
                                 )}
                                 {activeTab === 'notifications' && (
-                                    <ComingSoonSection
-                                        title="Notification Preferences"
-                                        description="Configure notification preferences"
-                                    />
+                                    <NotificationsSection preferences={notificationPreferences} />
                                 )}
                                 {activeTab === 'audit-log' && (
-                                    <ComingSoonSection
-                                        title="Audit Log"
-                                        description="Review activity history"
-                                    />
+                                    <AuditLogSection entries={auditLogEntries} />
                                 )}
                             </div>
                         </div>

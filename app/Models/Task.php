@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BlockerReason;
 use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,8 @@ class Task extends Model
         'checklist_items',
         'dependencies',
         'is_blocked',
+        'blocker_reason',
+        'blocker_details',
     ];
 
     protected $casts = [
@@ -38,6 +41,7 @@ class Task extends Model
         'checklist_items' => 'array',
         'dependencies' => 'array',
         'is_blocked' => 'boolean',
+        'blocker_reason' => BlockerReason::class,
     ];
 
     public function team(): BelongsTo

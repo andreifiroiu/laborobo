@@ -96,10 +96,14 @@ class WorkOrderController extends Controller
             'deliverables' => $workOrder->deliverables->map(fn ($del) => [
                 'id' => (string) $del->id,
                 'title' => $del->title,
+                'description' => $del->description,
                 'type' => $del->type->value,
                 'status' => $del->status->value,
                 'version' => $del->version,
+                'createdDate' => $del->created_date->format('Y-m-d'),
+                'deliveredDate' => $del->delivered_date?->format('Y-m-d'),
                 'fileUrl' => $del->file_url,
+                'acceptanceCriteria' => $del->acceptance_criteria ?? [],
             ]),
             'documents' => $workOrder->documents->map(fn (Document $doc) => [
                 'id' => (string) $doc->id,

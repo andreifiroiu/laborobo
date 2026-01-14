@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Work;
 
 use App\Enums\DeliverableStatus;
 use App\Enums\DeliverableType;
+use App\Enums\DocumentType;
 use App\Http\Controllers\Controller;
 use App\Models\Deliverable;
+use App\Models\Document;
 use App\Models\WorkOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,6 +72,14 @@ class DeliverableController extends Controller
                 'fileUrl' => $deliverable->file_url,
                 'acceptanceCriteria' => $deliverable->acceptance_criteria ?? [],
             ],
+            'documents' => $deliverable->documents->map(fn (Document $doc) => [
+                'id' => (string) $doc->id,
+                'name' => $doc->name,
+                'type' => $doc->type->value,
+                'fileUrl' => $doc->file_url,
+                'fileSize' => $doc->file_size,
+                'uploadedAt' => $doc->created_at->format('Y-m-d H:i'),
+            ]),
         ]);
     }
 
@@ -114,5 +125,74 @@ class DeliverableController extends Controller
         $deliverable->delete();
 
         return redirect()->route('work-orders.show', $workOrderId);
+    }
+
+    public function uploadFile(Request $request, Deliverable $deliverable): RedirectResponse
+    {
+        $this->authorize('update', $deliverable);
+
+        $validated = $request->validate([
+            'file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        $user = $request->user();
+        $file = $validated['file'];
+        $fileName = $file->getClientOriginalName();
+        $fileSize = $file->getSize();
+
+        // Store file in deliverables directory
+        $path = $file->store("deliverables/{$deliverable->id}", 'public');
+        $fileUrl = Storage::disk('public')->url($path);
+
+        // Use Artifact type for deliverable files
+        $documentType = DocumentType::Artifact;
+
+        // Create document record
+        Document::create([
+            'team_id' => $deliverable->team_id,
+            'uploaded_by_id' => $user->id,
+            'documentable_type' => Deliverable::class,
+            'documentable_id' => $deliverable->id,
+            'name' => $fileName,
+            'type' => $documentType,
+            'file_url' => $fileUrl,
+            'file_size' => $this->formatFileSize($fileSize),
+        ]);
+
+        return back();
+    }
+
+    public function deleteFile(Request $request, Deliverable $deliverable, Document $document): RedirectResponse
+    {
+        $this->authorize('update', $deliverable);
+
+        // Verify document belongs to this deliverable
+        if ($document->documentable_type !== Deliverable::class || $document->documentable_id !== $deliverable->id) {
+            abort(403);
+        }
+
+        // Delete file from storage
+        $path = str_replace(Storage::disk('public')->url(''), '', $document->file_url);
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        $document->delete();
+
+        return back();
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $unitIndex = 0;
+        $size = $bytes;
+
+        while ($size >= 1024 && $unitIndex < count($units) - 1) {
+            $size /= 1024;
+            $unitIndex++;
+        }
+
+        return round($size, 1) . ' ' . $units[$unitIndex];
     }
 }
