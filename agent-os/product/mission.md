@@ -37,7 +37,7 @@ Laborobo is an AI-powered work orchestration platform that helps small service t
 ### Messy Requests Become Chaotic Work
 Small teams receive work requests through multiple channels—email, Slack, phone calls, meetings. These unstructured requests lack clear scope, success criteria, or resource requirements. Without a systematic intake process, teams improvise on every project, leading to inconsistent quality, forgotten requirements, and scope creep that destroys profitability.
 
-**Our Solution:** The Dispatcher Agent converts messy requests into structured work orders with clear scope, deliverables, and acceptance criteria. The work graph (Parties → Projects → Work Orders → Tasks → Deliverables) provides a consistent framework that prevents chaos.
+**Our Solution:** The Dispatcher Agent converts messy requests into structured work orders with clear scope, deliverables, and acceptance criteria. The work graph (Parties > Projects > Work Orders > Tasks > Deliverables) provides a consistent framework that prevents chaos.
 
 ### Skill Gaps Without Budget for Specialists
 A 5-person agency needs copywriting, design, development, analytics, and project management—but can't afford dedicated specialists in each area. Team members are forced to work outside their expertise, resulting in delayed deliverables, lower quality output, and burnout from constant context switching.
@@ -57,7 +57,7 @@ Project conversations happen in Slack, decisions are buried in email threads, fi
 ### No Accountability or Definition of Done
 Without clear checkpoints, work exists in a gray area between "in progress" and "complete." Teams ship work without proper review, hoping clients won't notice issues. Or they over-iterate, perfectionism eating profit margins. Nobody knows when something is truly "done."
 
-**Our Solution:** Non-negotiable human checkpoints (Draft → Review → Approve → Deliver) create clear accountability. Agents can Draft, humans must Review and Approve, only then can work be Delivered. This protects quality without creating bureaucracy.
+**Our Solution:** Non-negotiable human checkpoints (Draft > Review > Approve > Deliver) create clear accountability. Agents can Draft, humans must Review and Approve, only then can work be Delivered. This protects quality without creating bureaucracy.
 
 ### Profitability Blindness
 Small teams often don't track time accurately, estimate based on gut feel, and discover profit problems only after projects are complete. They can't identify which types of work or clients are actually profitable. Scope creep happens invisibly until the invoice conversation reveals the damage.
@@ -77,7 +77,7 @@ Unlike automation platforms that try to eliminate humans, Laborobo enforces huma
 This results in confident adoption—teams trust the system because humans remain in control, while still benefiting from massive productivity gains on the busywork.
 
 ### CRM is Optional, Not Required
-Unlike project management tools that assume you're a customer-facing business, Laborobo works perfectly for internal ops teams, IT departments, and maintenance crews who don't need CRM concepts. The core work graph (Projects → Work Orders → Tasks) functions independently. Add the CRM module only if you need client management, pipelines, and SLAs.
+Unlike project management tools that assume you're a customer-facing business, Laborobo works perfectly for internal ops teams, IT departments, and maintenance crews who don't need CRM concepts. The core work graph (Projects > Work Orders > Tasks) functions independently. Add the CRM module only if you need client management, pipelines, and SLAs.
 
 This results in faster adoption and simpler workflows for teams that just need to organize internal work, without forcing them into a "customer-centric" mental model.
 
@@ -99,13 +99,13 @@ This results in pricing that scales with business results, not arbitrary seat co
 ## Key Features
 
 ### Core Operations Features
-- **Work Graph Structure:** Parties → Projects → Work Orders → Tasks → Deliverables provide a consistent framework for all work
-- **SOPs & Templates:** Repeatable checklists, templates, and evidence requirements ensure consistent quality
+- **Work Graph Structure:** Parties > Projects > Work Orders > Tasks > Deliverables provide a consistent framework for all work
+- **SOPs and Templates:** Repeatable checklists, templates, and evidence requirements ensure consistent quality
 - **Approvals Inbox:** Centralized queue for internal reviews and optional external client approvals
-- **Documents & Artifacts:** Attach files, drafts, and deliverables directly to work items with version history
+- **Documents and Artifacts:** Attach files, drafts, and deliverables directly to work items with version history
 - **Comms Log:** Threaded conversations tied to specific work items, maintaining context with the work
 - **Time Tracking:** Log time against work orders and tasks for accurate profitability analysis
-- **Human Checkpoints:** Enforced Draft → Review → Approve → Deliver workflow prevents work from shipping without oversight
+- **Human Checkpoints:** Enforced Draft > Review > Approve > Deliver workflow prevents work from shipping without oversight
 
 ### AI Agent Features
 - **Dispatcher Agent:** Converts messy requests into structured work orders with scope, routing, and priorities
@@ -119,7 +119,7 @@ This results in pricing that scales with business results, not arbitrary seat co
 ### Collaboration Features
 - **Change Order Flow:** Scope changes require approval before work proceeds, keeping budgets and expectations aligned
 - **Evidence Requirements:** SOPs can require specific artifacts or proof before work can be marked complete
-- **Delegation & Assignment:** Route work to specific team members or agent types based on skills needed
+- **Delegation and Assignment:** Route work to specific team members or agent types based on skills needed
 - **Status Visibility:** Real-time dashboards show what's in Draft, Review, Approved, and Delivered states
 - **Context Preservation:** All conversations, decisions, and file versions stay attached to work items
 

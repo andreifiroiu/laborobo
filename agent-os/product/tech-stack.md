@@ -2,51 +2,53 @@
 
 This document defines the complete technical stack for Laborobo, an AI-powered work orchestration platform built on Laravel with React/Inertia.js.
 
-## Framework & Runtime
+## Framework and Runtime
 
 - **Application Framework:** Laravel 12
 - **Language/Runtime:** PHP 8.3+
 - **Package Manager:** Composer
-- **Authentication:** Fortify
+- **Authentication:** Laravel Fortify (registration, login, password reset, email verification, two-factor authentication)
 - **Authorization:** Laravel policies and gates
 
 ## Frontend
 
-- **JavaScript Framework:** React 18+
+- **JavaScript Framework:** React 19
+- **TypeScript:** Strict mode enabled for type safety
 - **Bridge Layer:** Inertia.js (connects Laravel backend to React frontend without building an API)
-- **UI Component Library:** shadcn/ui (accessible, customizable React components)
+- **UI Component Library:** Radix UI primitives with custom styling
 - **CSS Framework:** Tailwind CSS v4 (utility-first CSS with Vite plugin)
 - **Build Tool:** Vite (fast HMR, optimized production builds)
+- **State Management:** TanStack Query for server state, React hooks and context for client state
 - **JavaScript Package Manager:** npm
 
-## Database & Storage
+## Database and Storage
 
-- **Primary Database:** MySQL 8.0+ (production and development)
+- **Primary Database:** MySQL 8.0+ (production and development for parity)
 - **ORM/Query Builder:** Eloquent ORM (Laravel's built-in ORM)
 - **Migrations:** Laravel migrations for version-controlled schema changes
-- **Seeders & Factories:** Laravel seeders and model factories for test data
+- **Seeders and Factories:** Laravel seeders and model factories for test data
 
-## AI & Machine Learning
+## AI and Machine Learning
 
-- **AI Integration:** neuron-ai package (existing Laravel package for AI functionality)
+- **AI Integration:** neuron-ai package (planned for AI agent functionality)
 - **AI Agent Framework:** Custom-built agent orchestration system with Tool Gateway architecture
-- **LLM Provider:** Mainly Anthropic Claude, but other providers such as OpenAI will be also integrated
+- **LLM Provider:** Primarily Anthropic Claude, with OpenAI integration planned
 
-## Testing & Quality
+## Testing and Quality
 
 - **Test Framework:** Pest (modern PHP testing framework with expressive syntax)
-- **JavaScript Testing:** TBD (likely Vitest for React components)
+- **JavaScript Testing:** Vitest for React component testing (planned)
 - **Code Formatting:** Laravel Pint (Laravel's opinionated PHP code formatter)
 - **Static Analysis:** PHPStan with Larastan (catches bugs without running code)
-- **JavaScript Linting:** ESLint (code quality and consistency for React)
+- **JavaScript Linting:** ESLint (code quality and consistency for React/TypeScript)
 
-## Queues & Background Processing
+## Queues and Background Processing
 
 - **Queue System:** Laravel Queues (database driver initially, Redis future consideration)
 - **Job Processing:** Laravel queue workers with supervisord or Laravel Horizon
 - **Scheduling:** Laravel Task Scheduler for cron-like scheduled tasks
 
-## Deployment & Infrastructure
+## Deployment and Infrastructure
 
 - **Hosting:** Hetzner (cost-effective European cloud hosting)
 - **Deployment Tool:** Laravel Forge (automated deployment, server management, SSL)
@@ -80,15 +82,15 @@ These components are noted for future implementation but not immediate prioritie
 ## Architecture Patterns
 
 - **Frontend Architecture:** Server-driven SPA using Inertia.js (no separate API needed)
-- **State Management:** React hooks and context for client-side state, Inertia for server state
+- **State Management:** TanStack Query for server state, React hooks/context for client state
 - **API Style:** Inertia controller responses (not RESTful JSON API)
 - **Agent Architecture:** Tool Gateway pattern for controlled AI agent operations
-- **Work Graph Model:** Domain-driven design with Parties → Projects → Work Orders → Tasks → Deliverables
+- **Work Graph Model:** Domain-driven design with Parties > Projects > Work Orders > Tasks > Deliverables
 - **Event Sourcing:** Laravel events for agent actions, state transitions, and audit logging
 
-## Security & Compliance
+## Security and Compliance
 
-- **Authentication:** Laravel Sanctum with SPA token-based auth
+- **Authentication:** Laravel Fortify with session-based auth
 - **CSRF Protection:** Inertia CSRF token handling built-in
 - **Input Validation:** Laravel Form Requests for backend validation
 - **XSS Protection:** React's built-in JSX escaping, Laravel Blade escaping
@@ -99,15 +101,18 @@ These components are noted for future implementation but not immediate prioritie
 
 - **Incremental Infrastructure:** Redis and S3 are planned additions but not required for initial launch
 - **AI Provider Flexibility:** The neuron-ai package provides abstraction; specific LLM providers can be swapped based on performance and cost requirements
+- **Database Parity:** MySQL used in both development and production to ensure consistent behavior
 
+---
 
+## Multi-Organization Features
 
-**Multi-Organization Features:**
 - Each organization has completely separate subscription, settings, data, team, AI budgets, and integrations
-- Switching organizations changes full context while keeping user on same page type (Today→Today, Work→Work, etc.)
+- Switching organizations changes full context while keeping user on same page type (Today to Today, Work to Work, etc.)
 - User's profile, appearance settings, and notification preferences persist across all organizations
 
 ## Layout Pattern
+
 Sidebar navigation with the following structure:
 - **Sidebar width:** 280px on desktop
 - **Logo area:** Top of sidebar with Laborobo branding
@@ -116,11 +121,13 @@ Sidebar navigation with the following structure:
 - **Content area:** Takes remaining horizontal space to the right
 
 ## Responsive Behavior
+
 - **Desktop (1024px+):** Full sidebar always visible, content area adjusts
 - **Tablet (768px-1023px):** Sidebar collapses to hamburger menu, opens as overlay
 - **Mobile (<768px):** Sidebar hidden by default, hamburger menu opens full-width overlay
 
 ## Design Notes
+
 - Active navigation item highlighted with indigo (primary color) background and text
 - Hover states use subtle indigo tints
 - Sidebar background uses slate-50 (light mode) and slate-900 (dark mode)
@@ -131,6 +138,7 @@ Sidebar navigation with the following structure:
 - Current organization highlighted in dropdown with indigo accent
 - Smooth transitions for sidebar open/close on mobile and dropdown interactions
 
+---
 
 # Typography
 
@@ -138,7 +146,7 @@ Laborobo uses two carefully selected Google Fonts that provide excellent readabi
 
 ## Font Families
 
-### Inter (Heading & Body)
+### Inter (Heading and Body)
 
 **Use for:** All UI text, headings, buttons, labels, body copy
 
@@ -385,6 +393,7 @@ Then configure in your Tailwind CSS (tokens.css):
 }
 ```
 
+---
 
 # Tailwind Color Palette
 
@@ -474,7 +483,7 @@ slate-950 #020617  /* Darkest backgrounds */
 
 While indigo, emerald, and slate are your primary palette, you may need additional Tailwind colors for specific semantic purposes:
 
-### Red (Errors & Destructive Actions)
+### Red (Errors and Destructive Actions)
 ```css
 red-600  /* Error text, destructive buttons */
 red-100  /* Error backgrounds */

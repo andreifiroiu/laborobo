@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Laravel 12 application using Livewire v3, Volt (for single-file Livewire components), Laravel Fortify (for authentication), and Livewire Flux (UI components). The project uses Tailwind CSS v4 with Vite for asset building, and Pest for testing. It includes the neuron-ai package for AI functionality.
+This is a Laravel 12 application using React 19, Inertia.js, TypeScript, and Radix UI for the frontend. The project uses Laravel Fortify for authentication, Tailwind CSS v4 with Vite for asset building, and Pest for testing. It includes the neuron-ai package (planned) for AI agent functionality.
 
 ## Development Commands
 
@@ -41,11 +41,17 @@ php artisan test tests/Feature/Auth/AuthenticationTest.php
 
 ### Code Quality
 ```bash
-# Format code with Laravel Pint
+# Format PHP code with Laravel Pint
 ./vendor/bin/pint
 
 # Format specific files/directories
 ./vendor/bin/pint app/Http/Controllers
+
+# Run PHPStan static analysis
+./vendor/bin/phpstan analyse
+
+# Lint TypeScript/React code
+npm run lint
 ```
 
 ### Database
@@ -62,11 +68,14 @@ php artisan migrate:rollback
 
 ### Assets
 ```bash
-# Development build
+# Development build with HMR
 npm run dev
 
 # Production build
 npm run build
+
+# Type check TypeScript
+npm run type-check
 ```
 
 ### Queue Management
@@ -80,31 +89,37 @@ php artisan queue:listen --tries=1
 
 ## Architecture
 
-### Authentication & Authorization
+### Authentication and Authorization
 - Uses **Laravel Fortify** for authentication (registration, login, password reset, email verification, two-factor authentication)
-- Authentication views and logic are implemented using **Livewire Volt** components in `resources/views/livewire/`
-- Two-factor authentication is configured and available in settings
+- Authentication views are implemented using **React/Inertia** components in `resources/js/pages/auth/`
+- Two-factor authentication is configured and available in account settings
 - Fortify configuration is in `config/fortify.php`
 - Custom Fortify actions are in `app/Actions/Fortify/`
 - FortifyServiceProvider customizes view responses in `app/Providers/FortifyServiceProvider.php`
 
 ### Frontend Architecture
-- **Livewire v3** with **Volt** for reactive components (single-file components using PHP)
-- **Livewire Flux** provides the UI component library (custom blade components in `resources/views/flux/`)
-- Volt components are registered in routes via `Volt::route()` in `routes/web.php`
-- Standard Livewire components are in `app/Livewire/`
-- Volt components (blade-only) are in `resources/views/livewire/`
+- **React 19** with **TypeScript** for type-safe component development
+- **Inertia.js** connects Laravel backend to React frontend without building a separate API
+- **Radix UI** primitives provide accessible, unstyled components for custom styling
+- **TanStack Query** for server state management and data fetching patterns
 - **Tailwind CSS v4** for styling via Vite plugin
-- Asset pipeline managed by **Vite** with Laravel plugin
+- Asset pipeline managed by **Vite** with Laravel plugin and HMR support
+
+### Frontend File Structure
+- React pages: `resources/js/pages/` (maps to Inertia routes)
+- Reusable components: `resources/js/components/`
+- UI primitives: `resources/js/components/ui/` (Radix-based)
+- TypeScript types: `resources/js/types/`
+- Hooks: `resources/js/hooks/`
+- Layouts: `resources/js/layouts/`
 
 ### Routing
 - Web routes defined in `routes/web.php`
-- Volt routes use `Volt::route()` method for single-file components
+- Inertia routes return React page components via `Inertia::render()`
 - Authentication and settings routes are grouped with appropriate middleware
 
 ### Database
-- Default configuration uses **SQLite** (see .env.example)
-- Database file typically at `database/database.sqlite`
+- **MySQL 8.0+** for both development and production (for parity)
 - Migrations in `database/migrations/`
 - Seeders in `database/seeders/`
 - Factories in `database/factories/`
@@ -115,19 +130,17 @@ php artisan queue:listen --tries=1
 - Feature tests in `tests/Feature/`
 - Unit tests in `tests/Unit/`
 - Tests use Pest's expect syntax
-- Test environment configured in `phpunit.xml` (uses in-memory SQLite)
+- Test environment configured in `phpunit.xml`
 
-### Layouts & Components
-- Main app layout: `resources/views/components/layouts/app.blade.php`
-- Authentication layouts in `resources/views/components/layouts/auth/`
-- Sidebar component: `resources/views/components/layouts/app/sidebar.blade.php`
-- Header component: `resources/views/components/layouts/app/header.blade.php`
-- Settings layout: `resources/views/components/settings/layout.blade.php`
+### Layouts and Components
+- Main app layout: `resources/js/layouts/app-layout.tsx`
+- Authentication layout: `resources/js/layouts/auth-layout.tsx`
+- Sidebar component: `resources/js/components/app-sidebar.tsx`
+- Header component: `resources/js/components/app-header.tsx`
 
 ### Service Providers
 - `AppServiceProvider`: Main application service provider
 - `FortifyServiceProvider`: Customizes Fortify authentication views and responses
-- `VoltServiceProvider`: Registers Volt routes
 - Providers registered in `bootstrap/providers.php`
 
 ### Configuration
@@ -140,17 +153,57 @@ php artisan queue:listen --tries=1
 
 ## Important Patterns
 
-### Livewire Volt Components
-Volt components are single-file PHP components that combine logic and views. They're typically used for simpler components and are defined directly in blade files with `@volt` directives.
+### Inertia.js Page Components
+Pages are React components that receive props from Laravel controllers. They're located in `resources/js/pages/` and map directly to Inertia routes.
+
+```tsx
+// Example page component
+export default function Today({ tasks, approvals }: TodayProps) {
+  return (
+    <AppLayout>
+      <h1>Today</h1>
+      {/* ... */}
+    </AppLayout>
+  );
+}
+```
 
 ### Fortify Integration
-When modifying authentication flows, be aware that Fortify handles the backend logic while Livewire provides the frontend. Custom logic should be added via Fortify actions in `app/Actions/Fortify/`.
+When modifying authentication flows, be aware that Fortify handles the backend logic while React/Inertia provides the frontend. Custom logic should be added via Fortify actions in `app/Actions/Fortify/`.
+
+### Component Patterns
+- Use Radix UI primitives for accessible interactive components
+- Style with Tailwind CSS utility classes
+- Keep components small and focused
+- Use TypeScript interfaces for all props
 
 ### Queue Jobs
 The application uses database queues by default. Queue jobs should be processed via `php artisan queue:work` or `queue:listen`. The `composer dev` command automatically starts a queue listener.
 
 ### Tailwind CSS v4
-Uses the new Tailwind v4 via Vite plugin. Tailwind configuration is handled differently than v3 - check Vite config for setup details.
+Uses the new Tailwind v4 via Vite plugin. Configuration is in `tailwind.config.js` and custom theme tokens in CSS files.
+
+## Key Models
+
+The application implements a work graph structure:
+- **Party**: Clients, vendors, or other external entities
+- **Project**: Top-level container for work
+- **WorkOrder**: Scoped work items with budgets and deliverables
+- **Task**: Individual action items within work orders
+- **Deliverable**: Output artifacts tied to tasks or work orders
+
+Supporting models include:
+- **Playbook**: SOP templates with checklists and validation
+- **InboxItem**: Centralized approval queue
+- **AIAgent/AgentConfiguration**: AI agent settings and activity logging
+- **CommunicationThread/Message**: Contextual conversations tied to work items
 
 ## Agent-OS Integration
+
 This project includes agent-os configuration in `agent-os/` directory with standards for backend, frontend, global, and testing practices. The configuration uses Claude Code commands and subagents.
+
+Key documentation:
+- Product mission: `agent-os/product/mission.md`
+- Development roadmap: `agent-os/product/roadmap.md`
+- Tech stack: `agent-os/product/tech-stack.md`
+- Coding standards: `agent-os/standards/`
