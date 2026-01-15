@@ -9,3 +9,11 @@
 - **State Management**: Keep state as local as possible; lift it up only when needed by multiple components
 - **Minimal Props**: Keep the number of props manageable; if a component needs many props, consider composition or splitting it
 - **Documentation**: Document component usage, props, and provide examples for easier adoption by team members
+
+## Layout Pattern
+Sidebar navigation with the following structure:
+- **Sidebar width:** 280px on desktop
+- **Logo area:** Top of sidebar with Laborobo branding
+- **Navigation items:** Vertically stacked below logo
+- **User menu:** Pinned at bottom of sidebar
+- **Content area:** Takes remaining horizontal space to the right

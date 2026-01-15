@@ -3,7 +3,7 @@
 Define your technical stack below. This serves as a reference for all team members and helps maintain consistency across the project.
 
 ### Framework & Runtime
-- **Application Framework:** Laravel
+- **Application Framework:** Laravel, Inertia.js
 - **Language/Runtime:** PHP
 - **Package Manager:** composer
 

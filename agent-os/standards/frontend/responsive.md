@@ -9,3 +9,8 @@
 - **Performance on Mobile**: Optimize images and assets for mobile network conditions and smaller screens
 - **Readable Typography**: Maintain readable font sizes across all breakpoints without requiring zoom
 - **Content Priority**: Show the most important content first on smaller screens through thoughtful layout decisions
+
+## Responsive Behavior
+- **Desktop (1024px+):** Full sidebar always visible, content area adjusts
+- **Tablet (768px-1023px):** Sidebar collapses to hamburger menu, opens as overlay
+- **Mobile (<768px):** Sidebar hidden by default, hamburger menu opens full-width overlay
