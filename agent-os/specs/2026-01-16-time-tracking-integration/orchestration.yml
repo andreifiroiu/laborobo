@@ -1,0 +1,45 @@
+task_groups:
+  - name: Database Schema Updates
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Running Timer Scope and Detection
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: API Endpoints
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Inertia Shared Data Provider
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Timer Controls Component
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Manual Time Entry Form
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Active Timer Indicator
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Time Entry History Page
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Time Reports Page
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Task/Work Order Progress Indicators
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Integration Testing
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all

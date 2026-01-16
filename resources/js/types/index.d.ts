@@ -23,6 +23,15 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface ActiveTimer {
+    id: number;
+    taskId: number;
+    taskTitle: string;
+    projectName: string;
+    startedAt: string;
+    isBillable: boolean;
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
@@ -32,6 +41,7 @@ export interface SharedData {
     organizations: Organization[];
     locale: string;
     availableLocales: string[];
+    activeTimer: ActiveTimer | null;
     [key: string]: unknown;
 }
 

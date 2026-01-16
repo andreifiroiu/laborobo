@@ -53,6 +53,7 @@ import {
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/work';
+import { HoursProgressIndicator } from '@/components/time-tracking';
 import { useState } from 'react';
 import type { WorkOrderDetailProps } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
@@ -404,13 +405,27 @@ export default function WorkOrderDetail({
                         </div>
                     </div>
 
-                    {/* Progress */}
-                    <div className="mt-4">
-                        <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="text-muted-foreground">Task Progress</span>
-                            <span className="font-medium">{progress}%</span>
+                    {/* Progress Indicators */}
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Task Progress */}
+                        <div>
+                            <div className="flex items-center justify-between text-sm mb-2">
+                                <span className="text-muted-foreground">Task Progress</span>
+                                <span className="font-medium">{progress}%</span>
+                            </div>
+                            <ProgressBar progress={progress} />
                         </div>
-                        <ProgressBar progress={progress} />
+
+                        {/* Hours Progress */}
+                        <div className="p-4 bg-card border border-border rounded-lg">
+                            <h3 className="text-sm font-medium text-foreground mb-2">
+                                Actual vs Estimated Hours
+                            </h3>
+                            <HoursProgressIndicator
+                                actualHours={workOrder.actualHours}
+                                estimatedHours={workOrder.estimatedHours}
+                            />
+                        </div>
                     </div>
 
                     {/* Status Actions */}

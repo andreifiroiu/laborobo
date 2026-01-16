@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
+use App\Models\TimeEntry;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -73,6 +77,43 @@ class HandleInertiaRequests extends Middleware
                     'updated_at' => $team->updated_at->toISOString(),
                 ];
             })->toArray() : [],
+
+            'activeTimer' => fn () => $this->getActiveTimer($request),
         ];
+    }
+
+    /**
+     * Get the active timer for the current user with brief caching.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function getActiveTimer(Request $request): ?array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return null;
+        }
+
+        $cacheKey = "active_timer_user_{$user->id}";
+
+        return Cache::remember($cacheKey, 5, function () use ($user) {
+            $runningTimer = TimeEntry::runningForUser($user->id)
+                ->with(['task.workOrder.project'])
+                ->first();
+
+            if (! $runningTimer) {
+                return null;
+            }
+
+            return [
+                'id' => $runningTimer->id,
+                'taskId' => $runningTimer->task_id,
+                'taskTitle' => $runningTimer->task?->title ?? '',
+                'projectName' => $runningTimer->task?->workOrder?->project?->name ?? '',
+                'startedAt' => $runningTimer->started_at?->toISOString(),
+                'isBillable' => $runningTimer->is_billable,
+            ];
+        });
     }
 }

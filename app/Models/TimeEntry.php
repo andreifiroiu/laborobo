@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\TimeTrackingMode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TimeEntry extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'team_id',
@@ -19,6 +23,7 @@ class TimeEntry extends Model
         'date',
         'mode',
         'note',
+        'is_billable',
         'started_at',
         'stopped_at',
     ];
@@ -27,6 +32,7 @@ class TimeEntry extends Model
         'date' => 'date',
         'hours' => 'decimal:2',
         'mode' => TimeTrackingMode::class,
+        'is_billable' => 'boolean',
         'started_at' => 'datetime',
         'stopped_at' => 'datetime',
     ];
@@ -46,22 +52,39 @@ class TimeEntry extends Model
         return $this->belongsTo(Task::class);
     }
 
-    public function scopeForTeam($query, int $teamId)
+    public function scopeForTeam(Builder $query, int $teamId): Builder
     {
         return $query->where('team_id', $teamId);
     }
 
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }
 
-    public function scopeForDate($query, $date)
+    public function scopeForDate(Builder $query, $date): Builder
     {
         return $query->whereDate('date', $date);
     }
 
-    public static function startTimer(Task $task, User $user): self
+    public function scopeRunningForUser(Builder $query, int $userId): Builder
+    {
+        return $query->where('user_id', $userId)
+            ->whereNotNull('started_at')
+            ->whereNull('stopped_at');
+    }
+
+    public function scopeBillable(Builder $query): Builder
+    {
+        return $query->where('is_billable', true);
+    }
+
+    public function scopeNonBillable(Builder $query): Builder
+    {
+        return $query->where('is_billable', false);
+    }
+
+    public static function startTimer(Task $task, User $user, bool $isBillable = true): self
     {
         return self::create([
             'team_id' => $task->team_id,
@@ -70,6 +93,7 @@ class TimeEntry extends Model
             'hours' => 0,
             'date' => now()->toDateString(),
             'mode' => TimeTrackingMode::Timer,
+            'is_billable' => $isBillable,
             'started_at' => now(),
         ]);
     }

@@ -148,16 +148,61 @@ export interface Document {
 }
 
 export interface TimeEntry {
-    id: string;
-    taskId?: string;
-    userId: string;
-    userName: string;
+    id: number;
+    task_id: number;
+    user_id: number;
     hours: number;
     date: string;
     mode: 'manual' | 'timer' | 'ai_estimation';
     note: string | null;
-    startedAt: string | null;
-    stoppedAt: string | null;
+    is_billable: boolean;
+    started_at: string | null;
+    stopped_at: string | null;
+    task?: {
+        id: number;
+        title: string;
+        work_order?: {
+            id: number;
+            title: string;
+            project?: {
+                id: number;
+                name: string;
+            };
+        };
+    };
+}
+
+// =============================================================================
+// Pagination Types
+// =============================================================================
+
+export interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+export interface PaginatedData<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    links: PaginationLink[];
+    first_page_url: string;
+    last_page_url: string;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+    path: string;
+}
+
+export interface TimeEntriesFilters {
+    date_from: string | null;
+    date_to: string | null;
+    task_id: string | null;
+    billable: string | null;
 }
 
 // =============================================================================
@@ -186,6 +231,11 @@ export interface WorkPageProps {
     communicationThreads: CommunicationThread[];
     currentView: WorkView;
     currentUserId: string;
+}
+
+export interface TimeEntriesPageProps {
+    entries: PaginatedData<TimeEntry>;
+    filters: TimeEntriesFilters;
 }
 
 export interface ProjectDetailProps {

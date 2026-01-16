@@ -42,7 +42,12 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::patch('/tasks/{task}/checklist/{itemId}', [TaskController::class, 'toggleChecklist'])->name('tasks.checklist');
 
     // Time Entries
+    Route::get('/time-entries', [TimeEntryController::class, 'index'])->name('time-entries.index');
     Route::post('/time-entries', [TimeEntryController::class, 'store'])->name('time-entries.store');
+    Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show'])->name('time-entries.show');
+    Route::patch('/time-entries/{timeEntry}', [TimeEntryController::class, 'update'])->name('time-entries.update');
+    Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('time-entries.destroy');
+    Route::post('/time-entries/{timeEntry}/stop', [TimeEntryController::class, 'stopById'])->name('time-entries.stop');
     Route::post('/tasks/{task}/timer/start', [TimeEntryController::class, 'startTimer'])->name('tasks.timer.start');
     Route::post('/tasks/{task}/timer/stop', [TimeEntryController::class, 'stopTimer'])->name('tasks.timer.stop');
 

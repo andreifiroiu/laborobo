@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\PlaybooksController;
+use App\Http\Controllers\Reports\TimeReportsController;
 use App\Http\Controllers\TodayController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,6 +25,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports', function () {
         return Inertia::render('reports/index');
     })->name('reports');
+
+    // Time Reports
+    Route::get('reports/time', [TimeReportsController::class, 'index'])->name('reports.time.index');
+    Route::get('reports/time/by-user', [TimeReportsController::class, 'byUser'])->name('reports.time.by-user');
+    Route::get('reports/time/by-project', [TimeReportsController::class, 'byProject'])->name('reports.time.by-project');
+    Route::get('reports/time/actual-vs-estimated', [TimeReportsController::class, 'actualVsEstimated'])->name('reports.time.actual-vs-estimated');
 
     Route::get('settings', function () {
         return Inertia::render('settings/index');

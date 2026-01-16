@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
 import { StatusBadge, ProgressBar } from '@/components/work';
+import { HoursProgressIndicator } from '@/components/time-tracking';
 import { useState, useEffect } from 'react';
 import type { TaskDetailProps } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
@@ -262,6 +263,17 @@ export default function TaskDetail({
                         {/* Timer & Time Tracking */}
                         <div>
                             <h2 className="text-lg font-bold text-foreground mb-4">Time Tracking</h2>
+
+                            {/* Hours Progress Indicator */}
+                            <div className="p-4 bg-card border border-border rounded-xl mb-4">
+                                <h3 className="text-sm font-medium text-foreground mb-3">
+                                    Actual vs Estimated
+                                </h3>
+                                <HoursProgressIndicator
+                                    actualHours={task.actualHours}
+                                    estimatedHours={task.estimatedHours}
+                                />
+                            </div>
 
                             {/* Timer Widget */}
                             <div className="p-6 bg-card border border-border rounded-xl mb-4">
