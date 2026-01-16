@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Work;
 
 use App\Enums\DeliverableStatus;
@@ -7,16 +9,25 @@ use App\Enums\DeliverableType;
 use App\Enums\DocumentType;
 use App\Http\Controllers\Controller;
 use App\Models\Deliverable;
+use App\Models\DeliverableVersion;
 use App\Models\Document;
+use App\Models\User;
 use App\Models\WorkOrder;
+use App\Notifications\DeliverableStatusChangedNotification;
+use App\Services\FileUploadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DeliverableController extends Controller
 {
+    public function __construct(
+        private readonly FileUploadService $fileUploadService
+    ) {}
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -53,7 +64,15 @@ class DeliverableController extends Controller
     {
         $this->authorize('view', $deliverable);
 
-        $deliverable->load(['workOrder', 'project', 'documents']);
+        $deliverable->load([
+            'workOrder',
+            'project',
+            'documents',
+            'versions' => fn ($query) => $query->latestFirst()->with('uploadedBy'),
+            'latestVersion.uploadedBy',
+        ]);
+
+        $latestVersion = $deliverable->latestVersion;
 
         return Inertia::render('work/deliverables/[id]', [
             'deliverable' => [
@@ -71,6 +90,8 @@ class DeliverableController extends Controller
                 'deliveredDate' => $deliverable->delivered_date?->format('Y-m-d'),
                 'fileUrl' => $deliverable->file_url,
                 'acceptanceCriteria' => $deliverable->acceptance_criteria ?? [],
+                'versionCount' => $deliverable->versions->count(),
+                'latestVersion' => $latestVersion ? $this->formatVersionData($latestVersion) : null,
             ],
             'documents' => $deliverable->documents->map(fn (Document $doc) => [
                 'id' => (string) $doc->id,
@@ -80,6 +101,7 @@ class DeliverableController extends Controller
                 'fileSize' => $doc->file_size,
                 'uploadedAt' => $doc->created_at->format('Y-m-d H:i'),
             ]),
+            'versions' => $deliverable->versions->map(fn (DeliverableVersion $version) => $this->formatVersionData($version)),
         ]);
     }
 
@@ -97,13 +119,19 @@ class DeliverableController extends Controller
             'acceptanceCriteria' => 'nullable|array',
         ]);
 
+        $oldStatus = $deliverable->status;
+        $statusChanged = false;
+
         $updateData = [];
         if (isset($validated['title'])) $updateData['title'] = $validated['title'];
         if (array_key_exists('description', $validated)) $updateData['description'] = $validated['description'];
         if (isset($validated['type'])) $updateData['type'] = DeliverableType::from($validated['type']);
         if (isset($validated['status'])) {
-            $updateData['status'] = DeliverableStatus::from($validated['status']);
-            // Set delivered date if status is delivered
+            $newStatus = DeliverableStatus::from($validated['status']);
+            if ($oldStatus !== $newStatus) {
+                $statusChanged = true;
+            }
+            $updateData['status'] = $newStatus;
             if ($validated['status'] === 'delivered' && !$deliverable->delivered_date) {
                 $updateData['delivered_date'] = now();
             }
@@ -113,6 +141,15 @@ class DeliverableController extends Controller
         if (isset($validated['acceptanceCriteria'])) $updateData['acceptance_criteria'] = $validated['acceptanceCriteria'];
 
         $deliverable->update($updateData);
+
+        if ($statusChanged) {
+            $this->dispatchStatusChangeNotification(
+                $deliverable,
+                $oldStatus,
+                $updateData['status'],
+                $request->user()
+            );
+        }
 
         return back();
     }
@@ -140,14 +177,11 @@ class DeliverableController extends Controller
         $fileName = $file->getClientOriginalName();
         $fileSize = $file->getSize();
 
-        // Store file in deliverables directory
         $path = $file->store("deliverables/{$deliverable->id}", 'public');
         $fileUrl = Storage::disk('public')->url($path);
 
-        // Use Artifact type for deliverable files
         $documentType = DocumentType::Artifact;
 
-        // Create document record
         Document::create([
             'team_id' => $deliverable->team_id,
             'uploaded_by_id' => $user->id,
@@ -156,7 +190,7 @@ class DeliverableController extends Controller
             'name' => $fileName,
             'type' => $documentType,
             'file_url' => $fileUrl,
-            'file_size' => $this->formatFileSize($fileSize),
+            'file_size' => $this->fileUploadService->formatFileSize($fileSize),
         ]);
 
         return back();
@@ -166,12 +200,10 @@ class DeliverableController extends Controller
     {
         $this->authorize('update', $deliverable);
 
-        // Verify document belongs to this deliverable
         if ($document->documentable_type !== Deliverable::class || $document->documentable_id !== $deliverable->id) {
             abort(403);
         }
 
-        // Delete file from storage
         $path = str_replace(Storage::disk('public')->url(''), '', $document->file_url);
         if ($path && Storage::disk('public')->exists($path)) {
             Storage::disk('public')->delete($path);
@@ -182,17 +214,69 @@ class DeliverableController extends Controller
         return back();
     }
 
-    private function formatFileSize(int $bytes): string
+    /**
+     * Format version data for API response.
+     *
+     * @return array<string, mixed>
+     */
+    private function formatVersionData(DeliverableVersion $version): array
     {
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $unitIndex = 0;
-        $size = $bytes;
+        return [
+            'id' => $version->id,
+            'versionNumber' => $version->version_number,
+            'fileUrl' => $version->file_url,
+            'fileName' => $version->file_name,
+            'fileSize' => $this->fileUploadService->formatFileSize($version->file_size),
+            'fileSizeBytes' => $version->file_size,
+            'mimeType' => $version->mime_type,
+            'notes' => $version->notes,
+            'uploadedBy' => $version->uploadedBy ? [
+                'id' => (string) $version->uploadedBy->id,
+                'name' => $version->uploadedBy->name,
+            ] : null,
+            'createdAt' => $version->created_at?->toISOString(),
+            'updatedAt' => $version->updated_at?->toISOString(),
+        ];
+    }
 
-        while ($size >= 1024 && $unitIndex < count($units) - 1) {
-            $size /= 1024;
-            $unitIndex++;
+    /**
+     * Dispatch notification to work order owner and assignee when status changes.
+     */
+    private function dispatchStatusChangeNotification(
+        Deliverable $deliverable,
+        DeliverableStatus $oldStatus,
+        DeliverableStatus $newStatus,
+        User $changedBy
+    ): void {
+        $deliverable->load('workOrder.createdBy', 'workOrder.assignedTo');
+        $workOrder = $deliverable->workOrder;
+
+        if (!$workOrder) {
+            return;
         }
 
-        return round($size, 1) . ' ' . $units[$unitIndex];
+        $recipients = collect();
+
+        if ($workOrder->createdBy && $workOrder->createdBy->id !== $changedBy->id) {
+            $recipients->push($workOrder->createdBy);
+        }
+
+        if ($workOrder->assignedTo && $workOrder->assignedTo->id !== $changedBy->id) {
+            $recipients->push($workOrder->assignedTo);
+        }
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        Notification::send(
+            $recipients->unique('id'),
+            new DeliverableStatusChangedNotification(
+                $deliverable,
+                $oldStatus,
+                $newStatus,
+                $changedBy
+            )
+        );
     }
 }

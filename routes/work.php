@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Work\CommunicationController;
 use App\Http\Controllers\Work\DeliverableController;
+use App\Http\Controllers\Work\DeliverableVersionController;
 use App\Http\Controllers\Work\PartyController;
 use App\Http\Controllers\Work\ProjectController;
 use App\Http\Controllers\Work\TaskController;
@@ -52,6 +53,13 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::delete('/deliverables/{deliverable}', [DeliverableController::class, 'destroy'])->name('deliverables.destroy');
     Route::post('/deliverables/{deliverable}/files', [DeliverableController::class, 'uploadFile'])->name('deliverables.files.upload');
     Route::delete('/deliverables/{deliverable}/files/{document}', [DeliverableController::class, 'deleteFile'])->name('deliverables.files.delete');
+
+    // Deliverable Versions
+    Route::get('/deliverables/{deliverable}/versions', [DeliverableVersionController::class, 'index'])->name('deliverables.versions.index');
+    Route::post('/deliverables/{deliverable}/versions', [DeliverableVersionController::class, 'store'])->name('deliverables.versions.store');
+    Route::get('/deliverables/{deliverable}/versions/{version}', [DeliverableVersionController::class, 'show'])->name('deliverables.versions.show');
+    Route::post('/deliverables/{deliverable}/versions/{version}/restore', [DeliverableVersionController::class, 'restore'])->name('deliverables.versions.restore');
+    Route::delete('/deliverables/{deliverable}/versions/{version}', [DeliverableVersionController::class, 'destroy'])->name('deliverables.versions.destroy');
 
     // Communications (polymorphic: projects/{id}/communications or work-orders/{id}/communications)
     Route::get('/{type}/{id}/communications', [CommunicationController::class, 'show'])->name('communications.show');

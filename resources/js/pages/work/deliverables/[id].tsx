@@ -16,6 +16,8 @@ import {
     File,
     Image,
     FileSpreadsheet,
+    History,
+    Maximize2,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -46,9 +48,15 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
-import { StatusBadge } from '@/components/work';
+import {
+    StatusBadge,
+    FilePreview,
+    VersionHistoryPanel,
+    VersionUploadDialog,
+    FilePreviewModal,
+} from '@/components/work';
 import { useState, useRef } from 'react';
-import type { Deliverable } from '@/types/work';
+import type { Deliverable, DeliverableVersion } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
 
 interface DocumentItem {
@@ -65,14 +73,22 @@ interface DeliverableDetailProps {
         projectName: string;
     };
     documents: DocumentItem[];
+    versions: DeliverableVersion[];
 }
 
-export default function DeliverableDetail({ deliverable, documents }: DeliverableDetailProps) {
+export default function DeliverableDetail({
+    deliverable,
+    documents,
+    versions,
+}: DeliverableDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [editCriterion, setEditCriterion] = useState('');
     const [newCriterion, setNewCriterion] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [previewFile, setPreviewFile] = useState<DeliverableVersion | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -114,21 +130,29 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
     const handleAddCriterion = () => {
         if (!newCriterion.trim()) return;
         const updatedCriteria = [...deliverable.acceptanceCriteria, newCriterion.trim()];
-        router.patch(`/work/deliverables/${deliverable.id}`, {
-            acceptanceCriteria: updatedCriteria,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => setNewCriterion(''),
-        });
+        router.patch(
+            `/work/deliverables/${deliverable.id}`,
+            {
+                acceptanceCriteria: updatedCriteria,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => setNewCriterion(''),
+            }
+        );
     };
 
     const handleRemoveCriterion = (index: number) => {
         const updatedCriteria = deliverable.acceptanceCriteria.filter((_, i) => i !== index);
-        router.patch(`/work/deliverables/${deliverable.id}`, {
-            acceptanceCriteria: updatedCriteria,
-        }, {
-            preserveScroll: true,
-        });
+        router.patch(
+            `/work/deliverables/${deliverable.id}`,
+            {
+                acceptanceCriteria: updatedCriteria,
+            },
+            {
+                preserveScroll: true,
+            }
+        );
     };
 
     // Edit form acceptance criteria helpers
@@ -149,7 +173,7 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
         );
     };
 
-    // File upload handling
+    // File upload handling (legacy - for documents)
     const handleFileSelect = () => {
         fileInputRef.current?.click();
     };
@@ -182,15 +206,55 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
         }
     };
 
+    // Version management handlers
+    const handleVersionRestore = (versionId: string) => {
+        router.post(
+            `/work/deliverables/${deliverable.id}/versions/${versionId}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    router.reload();
+                },
+            }
+        );
+    };
+
+    const handleVersionDelete = (versionId: string) => {
+        router.delete(`/work/deliverables/${deliverable.id}/versions/${versionId}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.reload();
+            },
+        });
+    };
+
+    const handleVersionPreview = (version: DeliverableVersion) => {
+        setPreviewFile(version);
+        setPreviewModalOpen(true);
+    };
+
+    const handleUploadSuccess = () => {
+        router.reload();
+    };
+
+    const handleOpenPreviewModal = () => {
+        if (deliverable.latestVersion) {
+            setPreviewFile(deliverable.latestVersion);
+            setPreviewModalOpen(true);
+        }
+    };
+
     const getFileIcon = (type: string, fileName: string) => {
-        // Check file extension for more specific icons
         const ext = fileName.split('.').pop()?.toLowerCase();
         if (ext === 'pdf') return <FileText className="h-5 w-5 text-red-500" />;
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return <Image className="h-5 w-5 text-blue-500" />;
-        if (['xls', 'xlsx'].includes(ext || '')) return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
-        if (['doc', 'docx'].includes(ext || '')) return <FileText className="h-5 w-5 text-blue-500" />;
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || ''))
+            return <Image className="h-5 w-5 text-blue-500" />;
+        if (['xls', 'xlsx'].includes(ext || ''))
+            return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
+        if (['doc', 'docx'].includes(ext || ''))
+            return <FileText className="h-5 w-5 text-blue-500" />;
 
-        // Fallback to type-based icons
         switch (type) {
             case 'reference':
                 return <FileText className="h-5 w-5 text-blue-500" />;
@@ -218,35 +282,45 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
         }
     };
 
+    const currentVersionNumber = deliverable.latestVersion?.versionNumber ?? 0;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={deliverable.title} />
 
             <div className="flex h-full flex-1 flex-col">
                 {/* Header */}
-                <div className="px-6 py-6 border-b border-sidebar-border/70 dark:border-sidebar-border">
-                    <div className="flex items-center gap-4 mb-4">
+                <div className="border-b border-sidebar-border/70 px-6 py-6 dark:border-sidebar-border">
+                    <div className="mb-4 flex items-center gap-4">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={`/work/work-orders/${deliverable.workOrderId}`}>
                                 <ArrowLeft className="h-4 w-4" />
+                                <span className="sr-only">Back to work order</span>
                             </Link>
                         </Button>
                         <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-2xl font-bold text-foreground">{deliverable.title}</h1>
+                            <div className="mb-1 flex items-center gap-3">
+                                <h1 className="text-2xl font-bold text-foreground">
+                                    {deliverable.title}
+                                </h1>
                                 <StatusBadge status={deliverable.status} type="deliverable" />
-                                <Badge variant="outline" className="capitalize">{deliverable.type}</Badge>
+                                <Badge variant="outline" className="capitalize">
+                                    {deliverable.type}
+                                </Badge>
                             </div>
                             <p className="text-muted-foreground">
                                 {deliverable.workOrderTitle}
-                                {deliverable.description && ` • ${deliverable.description}`}
+                                {deliverable.description && ` - ${deliverable.description}`}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
                             {deliverable.fileUrl && (
                                 <Button variant="outline" size="sm" asChild>
                                     <a href={deliverable.fileUrl} target="_blank" rel="noreferrer">
-                                        <ExternalLink className="h-4 w-4 mr-2" />
+                                        <ExternalLink
+                                            className="mr-2 h-4 w-4"
+                                            aria-hidden="true"
+                                        />
                                         View File
                                     </a>
                                 </Button>
@@ -255,11 +329,12 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon">
                                         <MoreVertical className="h-4 w-4" />
+                                        <span className="sr-only">More actions</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                                        <Edit className="h-4 w-4 mr-2" />
+                                        <Edit className="mr-2 h-4 w-4" aria-hidden="true" />
                                         Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
@@ -267,7 +342,7 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                         onClick={() => setDeleteDialogOpen(true)}
                                         className="text-destructive"
                                     >
-                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                                         Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -276,23 +351,44 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                     </div>
 
                     {/* Deliverable Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                        <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
                             {getTypeIcon(deliverable.type)}
                             <div>
                                 <div className="text-xs text-muted-foreground">Type</div>
                                 <div className="font-medium capitalize">{deliverable.type}</div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <Package className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
+                            <Package
+                                className="h-5 w-5 text-muted-foreground"
+                                aria-hidden="true"
+                            />
                             <div>
-                                <div className="text-xs text-muted-foreground">Version</div>
-                                <div className="font-medium">v{deliverable.version}</div>
+                                <div className="text-xs text-muted-foreground">Current Version</div>
+                                <div className="font-medium">
+                                    {currentVersionNumber > 0 ? `v${currentVersionNumber}` : 'N/A'}
+                                </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <Calendar className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
+                            <History
+                                className="h-5 w-5 text-muted-foreground"
+                                aria-hidden="true"
+                            />
+                            <div>
+                                <div className="text-xs text-muted-foreground">Version Count</div>
+                                <div className="font-medium">
+                                    {deliverable.versionCount}{' '}
+                                    {deliverable.versionCount === 1 ? 'version' : 'versions'}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
+                            <Calendar
+                                className="h-5 w-5 text-muted-foreground"
+                                aria-hidden="true"
+                            />
                             <div>
                                 <div className="text-xs text-muted-foreground">Created</div>
                                 <div className="font-medium">
@@ -300,8 +396,8 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
+                            <Clock className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                             <div>
                                 <div className="text-xs text-muted-foreground">Delivered</div>
                                 <div className="font-medium">
@@ -353,19 +449,57 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-auto p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Left Column - Description & Files */}
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        {/* Left Column - File Preview, Description & Version History */}
                         <div className="space-y-6">
+                            {/* Current Version File Preview */}
+                            {deliverable.latestVersion && (
+                                <div>
+                                    <div className="mb-4 flex items-center justify-between">
+                                        <h2 className="text-lg font-bold text-foreground">
+                                            Current Version Preview
+                                        </h2>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleOpenPreviewModal}
+                                        >
+                                            <Maximize2
+                                                className="mr-2 h-4 w-4"
+                                                aria-hidden="true"
+                                            />
+                                            View Full Size
+                                        </Button>
+                                    </div>
+                                    <div className="rounded-xl border border-border bg-card p-4">
+                                        <FilePreview
+                                            fileUrl={deliverable.latestVersion.fileUrl}
+                                            mimeType={deliverable.latestVersion.mimeType}
+                                            fileName={deliverable.latestVersion.fileName}
+                                            className="max-h-64"
+                                        />
+                                        <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                                            <span>{deliverable.latestVersion.fileName}</span>
+                                            <span>{deliverable.latestVersion.fileSize}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Description */}
                             <div>
-                                <h2 className="text-lg font-bold text-foreground mb-4">Description</h2>
-                                <div className="p-4 bg-card border border-border rounded-xl">
+                                <h2 className="mb-4 text-lg font-bold text-foreground">
+                                    Description
+                                </h2>
+                                <div className="rounded-xl border border-border bg-card p-4">
                                     {deliverable.description ? (
-                                        <p className="text-foreground whitespace-pre-wrap">
+                                        <p className="whitespace-pre-wrap text-foreground">
                                             {deliverable.description}
                                         </p>
                                     ) : (
-                                        <p className="text-muted-foreground italic">No description provided</p>
+                                        <p className="italic text-muted-foreground">
+                                            No description provided
+                                        </p>
                                     )}
                                 </div>
                             </div>
@@ -373,26 +507,42 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                             {/* File URL */}
                             {deliverable.fileUrl && (
                                 <div>
-                                    <h3 className="text-sm font-bold text-foreground mb-3">External Link</h3>
+                                    <h3 className="mb-3 text-sm font-bold text-foreground">
+                                        External Link
+                                    </h3>
                                     <a
                                         href={deliverable.fileUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="flex items-center gap-2 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                                        className="flex items-center gap-2 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80"
                                     >
-                                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm text-primary truncate">
+                                        <ExternalLink
+                                            className="h-4 w-4 text-muted-foreground"
+                                            aria-hidden="true"
+                                        />
+                                        <span className="truncate text-sm text-primary">
                                             {deliverable.fileUrl}
                                         </span>
                                     </a>
                                 </div>
                             )}
 
-                            {/* Files Section */}
+                            {/* Version History Panel */}
+                            <VersionHistoryPanel
+                                deliverableId={deliverable.id}
+                                versions={versions}
+                                currentVersionNumber={currentVersionNumber}
+                                onVersionRestore={handleVersionRestore}
+                                onVersionDelete={handleVersionDelete}
+                                onVersionPreview={handleVersionPreview}
+                                onUploadNew={() => setUploadDialogOpen(true)}
+                            />
+
+                            {/* Files Section (Legacy Documents) */}
                             <div>
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="mb-4 flex items-center justify-between">
                                     <h2 className="text-lg font-bold text-foreground">
-                                        Files ({documents.length})
+                                        Additional Files ({documents.length})
                                     </h2>
                                     <Button
                                         variant="outline"
@@ -400,7 +550,7 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                         onClick={handleFileSelect}
                                         disabled={isUploading}
                                     >
-                                        <Upload className="h-4 w-4 mr-2" />
+                                        <Upload className="mr-2 h-4 w-4" aria-hidden="true" />
                                         {isUploading ? 'Uploading...' : 'Upload'}
                                     </Button>
                                     <input
@@ -409,47 +559,60 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                         className="hidden"
                                         onChange={handleFileChange}
                                         accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.txt"
+                                        aria-label="Select file to upload"
                                     />
                                 </div>
 
                                 {documents.length === 0 ? (
-                                    <div
-                                        className="text-center py-8 bg-muted/50 rounded-xl border-2 border-dashed border-border cursor-pointer hover:bg-muted/70 transition-colors"
+                                    <button
+                                        type="button"
+                                        className="w-full cursor-pointer rounded-xl border-2 border-dashed border-border bg-muted/50 py-8 text-center transition-colors hover:bg-muted/70"
                                         onClick={handleFileSelect}
                                     >
-                                        <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                        <Upload
+                                            className="mx-auto mb-2 h-8 w-8 text-muted-foreground"
+                                            aria-hidden="true"
+                                        />
                                         <p className="text-muted-foreground">
                                             Click to upload files or drag and drop
                                         </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            PDF, DOC, XLS, Images up to 10MB
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            PDF, DOC, XLS, Images up to 50MB
                                         </p>
-                                    </div>
+                                    </button>
                                 ) : (
                                     <div className="space-y-2">
                                         {documents.map((doc) => (
                                             <div
                                                 key={doc.id}
-                                                className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg group"
+                                                className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                                             >
                                                 {getFileIcon(doc.type, doc.name)}
-                                                <div className="flex-1 min-w-0">
+                                                <div className="min-w-0 flex-1">
                                                     <a
                                                         href={doc.fileUrl}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="font-medium text-sm truncate block hover:text-primary"
+                                                        className="block truncate text-sm font-medium hover:text-primary"
                                                     >
                                                         {doc.name}
                                                     </a>
                                                     <div className="text-xs text-muted-foreground">
-                                                        {doc.fileSize} • {doc.uploadedAt}
+                                                        {doc.fileSize} - {doc.uploadedAt}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                                                     <Button variant="ghost" size="icon" asChild>
-                                                        <a href={doc.fileUrl} target="_blank" rel="noreferrer">
-                                                            <ExternalLink className="h-4 w-4" />
+                                                        <a
+                                                            href={doc.fileUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            aria-label={`Open ${doc.name}`}
+                                                        >
+                                                            <ExternalLink
+                                                                className="h-4 w-4"
+                                                                aria-hidden="true"
+                                                            />
                                                         </a>
                                                     </Button>
                                                     <Button
@@ -457,20 +620,24 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                                         size="icon"
                                                         onClick={() => handleDeleteFile(doc.id)}
                                                         className="text-destructive hover:text-destructive"
+                                                        aria-label={`Delete ${doc.name}`}
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <Trash2
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        />
                                                     </Button>
                                                 </div>
                                             </div>
                                         ))}
 
-                                        {/* Add more files button */}
                                         <button
+                                            type="button"
                                             onClick={handleFileSelect}
                                             disabled={isUploading}
-                                            className="w-full p-3 border-2 border-dashed border-border rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors flex items-center justify-center gap-2"
+                                            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-3 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                                         >
-                                            <Plus className="h-4 w-4" />
+                                            <Plus className="h-4 w-4" aria-hidden="true" />
                                             Add more files
                                         </button>
                                     </div>
@@ -480,14 +647,14 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
 
                         {/* Right Column - Acceptance Criteria */}
                         <div>
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="mb-4 flex items-center justify-between">
                                 <h2 className="text-lg font-bold text-foreground">
                                     Acceptance Criteria ({deliverable.acceptanceCriteria.length})
                                 </h2>
                             </div>
 
                             {/* Add new criterion inline */}
-                            <div className="flex gap-2 mb-4">
+                            <div className="mb-4 flex gap-2">
                                 <Input
                                     value={newCriterion}
                                     onChange={(e) => setNewCriterion(e.target.value)}
@@ -499,16 +666,25 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                         }
                                     }}
                                 />
-                                <Button onClick={handleAddCriterion} disabled={!newCriterion.trim()}>
-                                    <Plus className="h-4 w-4" />
+                                <Button
+                                    onClick={handleAddCriterion}
+                                    disabled={!newCriterion.trim()}
+                                >
+                                    <Plus className="h-4 w-4" aria-hidden="true" />
+                                    <span className="sr-only">Add criterion</span>
                                 </Button>
                             </div>
 
                             {deliverable.acceptanceCriteria.length === 0 ? (
-                                <div className="text-center py-8 bg-muted/50 rounded-xl">
-                                    <CheckCircle2 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                    <p className="text-muted-foreground">No acceptance criteria defined</p>
-                                    <p className="text-xs text-muted-foreground mt-1">
+                                <div className="rounded-xl bg-muted/50 py-8 text-center">
+                                    <CheckCircle2
+                                        className="mx-auto mb-2 h-8 w-8 text-muted-foreground"
+                                        aria-hidden="true"
+                                    />
+                                    <p className="text-muted-foreground">
+                                        No acceptance criteria defined
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
                                         Add criteria to track deliverable requirements
                                     </p>
                                 </div>
@@ -517,17 +693,23 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                     {deliverable.acceptanceCriteria.map((criterion, index) => (
                                         <div
                                             key={index}
-                                            className="flex items-start gap-3 p-3 bg-card border border-border rounded-lg group"
+                                            className="group flex items-start gap-3 rounded-lg border border-border bg-card p-3"
                                         >
-                                            <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                                            <span className="text-foreground flex-1">{criterion}</span>
+                                            <CheckCircle2
+                                                className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500"
+                                                aria-hidden="true"
+                                            />
+                                            <span className="flex-1 text-foreground">
+                                                {criterion}
+                                            </span>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                                                className="h-6 w-6 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                                                 onClick={() => handleRemoveCriterion(index)}
+                                                aria-label={`Remove criterion: ${criterion}`}
                                             >
-                                                <X className="h-4 w-4" />
+                                                <X className="h-4 w-4" aria-hidden="true" />
                                             </Button>
                                         </div>
                                     ))}
@@ -545,10 +727,11 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                         <DialogHeader>
                             <DialogTitle>Edit Deliverable</DialogTitle>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                        <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
                             <div className="grid gap-2">
-                                <Label>Title</Label>
+                                <Label htmlFor="edit-title">Title</Label>
                                 <Input
+                                    id="edit-title"
                                     value={editForm.data.title}
                                     onChange={(e) => editForm.setData('title', e.target.value)}
                                 />
@@ -556,12 +739,14 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label>Type</Label>
+                                    <Label htmlFor="edit-type">Type</Label>
                                     <Select
                                         value={editForm.data.type}
-                                        onValueChange={(v) => editForm.setData('type', v as any)}
+                                        onValueChange={(v) =>
+                                            editForm.setData('type', v as Deliverable['type'])
+                                        }
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger id="edit-type">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -574,20 +759,23 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                     </Select>
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label>Version</Label>
+                                    <Label htmlFor="edit-version">Version</Label>
                                     <Input
+                                        id="edit-version"
                                         value={editForm.data.version}
                                         onChange={(e) => editForm.setData('version', e.target.value)}
                                     />
                                 </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label>Status</Label>
+                                <Label htmlFor="edit-status">Status</Label>
                                 <Select
                                     value={editForm.data.status}
-                                    onValueChange={(v) => editForm.setData('status', v as any)}
+                                    onValueChange={(v) =>
+                                        editForm.setData('status', v as Deliverable['status'])
+                                    }
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger id="edit-status">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -599,16 +787,20 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                 </Select>
                             </div>
                             <div className="grid gap-2">
-                                <Label>Description</Label>
+                                <Label htmlFor="edit-description">Description</Label>
                                 <Textarea
+                                    id="edit-description"
                                     value={editForm.data.description}
-                                    onChange={(e) => editForm.setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        editForm.setData('description', e.target.value)
+                                    }
                                     rows={3}
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label>External File URL</Label>
+                                <Label htmlFor="edit-file-url">External File URL</Label>
                                 <Input
+                                    id="edit-file-url"
                                     type="url"
                                     value={editForm.data.fileUrl}
                                     onChange={(e) => editForm.setData('fileUrl', e.target.value)}
@@ -618,9 +810,10 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
 
                             {/* Acceptance Criteria */}
                             <div className="grid gap-2">
-                                <Label>Acceptance Criteria</Label>
+                                <Label htmlFor="edit-criterion">Acceptance Criteria</Label>
                                 <div className="flex gap-2">
                                     <Input
+                                        id="edit-criterion"
                                         value={editCriterion}
                                         onChange={(e) => setEditCriterion(e.target.value)}
                                         placeholder="Add acceptance criterion"
@@ -631,30 +824,44 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                                             }
                                         }}
                                     />
-                                    <Button type="button" variant="outline" onClick={addEditCriterion}>
-                                        <Plus className="h-4 w-4" />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={addEditCriterion}
+                                    >
+                                        <Plus className="h-4 w-4" aria-hidden="true" />
+                                        <span className="sr-only">Add criterion</span>
                                     </Button>
                                 </div>
                                 {editForm.data.acceptanceCriteria.length > 0 && (
-                                    <ul className="space-y-2 mt-2">
-                                        {editForm.data.acceptanceCriteria.map((criterion, index) => (
-                                            <li
-                                                key={index}
-                                                className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
-                                            >
-                                                <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                <span className="flex-1">{criterion}</span>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6"
-                                                    onClick={() => removeEditCriterion(index)}
+                                    <ul className="mt-2 space-y-2">
+                                        {editForm.data.acceptanceCriteria.map(
+                                            (criterion, index) => (
+                                                <li
+                                                    key={index}
+                                                    className="flex items-center gap-2 rounded-md bg-muted p-2 text-sm"
                                                 >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            </li>
-                                        ))}
+                                                    <CheckCircle2
+                                                        className="h-4 w-4 shrink-0 text-muted-foreground"
+                                                        aria-hidden="true"
+                                                    />
+                                                    <span className="flex-1">{criterion}</span>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6"
+                                                        onClick={() => removeEditCriterion(index)}
+                                                        aria-label={`Remove: ${criterion}`}
+                                                    >
+                                                        <X
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        />
+                                                    </Button>
+                                                </li>
+                                            )
+                                        )}
                                     </ul>
                                 )}
                             </div>
@@ -681,8 +888,8 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                     <DialogHeader>
                         <DialogTitle>Delete Deliverable</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete "{deliverable.title}"? This action cannot be
-                            undone.
+                            Are you sure you want to delete "{deliverable.title}"? This action
+                            cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -695,6 +902,25 @@ export default function DeliverableDetail({ deliverable, documents }: Deliverabl
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Version Upload Dialog */}
+            <VersionUploadDialog
+                open={uploadDialogOpen}
+                onOpenChange={setUploadDialogOpen}
+                deliverableId={deliverable.id}
+                onSuccess={handleUploadSuccess}
+            />
+
+            {/* File Preview Modal */}
+            {previewFile && (
+                <FilePreviewModal
+                    open={previewModalOpen}
+                    onOpenChange={setPreviewModalOpen}
+                    fileUrl={previewFile.fileUrl}
+                    mimeType={previewFile.mimeType}
+                    fileName={previewFile.fileName}
+                />
+            )}
         </AppLayout>
     );
 }

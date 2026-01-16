@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\PartyType;
@@ -8,7 +10,7 @@ use App\Models\Team;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Party>
+ * @extends Factory<Party>
  */
 class PartyFactory extends Factory
 {
@@ -28,12 +30,14 @@ class PartyFactory extends Factory
             'name' => match ($type) {
                 PartyType::Client => fake()->company(),
                 PartyType::Vendor => fake()->company() . ' Services',
-                PartyType::Department => 'Internal - ' . fake()->randomElement(['Marketing', 'Engineering', 'Sales', 'Operations']),
+                PartyType::Partner => fake()->company() . ' Partners',
+                PartyType::Department => 'Department - ' . fake()->randomElement(['Marketing', 'Engineering', 'Sales', 'Operations']),
+                PartyType::InternalDepartment => 'Internal - ' . fake()->randomElement(['Marketing', 'Engineering', 'Sales', 'Operations']),
                 PartyType::TeamMember => fake()->name(),
             },
             'type' => $type,
-            'contact_name' => $type !== PartyType::Department ? fake()->name() : null,
-            'contact_email' => $type !== PartyType::Department ? fake()->companyEmail() : null,
+            'contact_name' => !in_array($type, [PartyType::Department, PartyType::InternalDepartment]) ? fake()->name() : null,
+            'contact_email' => !in_array($type, [PartyType::Department, PartyType::InternalDepartment]) ? fake()->companyEmail() : null,
         ];
     }
 
@@ -61,7 +65,7 @@ class PartyFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'type' => PartyType::Department,
-            'name' => 'Internal - ' . fake()->randomElement(['Marketing', 'Engineering', 'Sales', 'Operations']),
+            'name' => 'Department - ' . fake()->randomElement(['Marketing', 'Engineering', 'Sales', 'Operations']),
             'contact_name' => null,
             'contact_email' => null,
         ]);

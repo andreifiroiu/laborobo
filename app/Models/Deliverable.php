@@ -1,12 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\DeliverableStatus;
 use App\Enums\DeliverableType;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -55,6 +60,33 @@ class Deliverable extends Model
     public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
+    }
+
+    /**
+     * Get all versions for this deliverable.
+     */
+    public function versions(): HasMany
+    {
+        return $this->hasMany(DeliverableVersion::class);
+    }
+
+    /**
+     * Get the latest version of this deliverable.
+     */
+    public function latestVersion(): HasOne
+    {
+        return $this->hasOne(DeliverableVersion::class)
+            ->orderByDesc('version_number');
+    }
+
+    /**
+     * Get the count of versions for this deliverable.
+     */
+    protected function versionCount(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->versions()->count()
+        );
     }
 
     public function scopeForTeam($query, int $teamId)

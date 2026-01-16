@@ -13,3 +13,11 @@ export { CalendarEvent } from './calendar-event';
 export { CalendarView } from './calendar-view';
 export { ArchiveProjectCard } from './archive-project-card';
 export { ArchiveView } from './archive-view';
+
+// File Management Components
+export { FilePreview } from './file-preview';
+export { FileUploader } from './file-uploader';
+export { VersionHistoryPanel } from './version-history-panel';
+export type { DeliverableVersion } from './version-history-panel';
+export { VersionUploadDialog } from './version-upload-dialog';
+export { FilePreviewModal } from './file-preview-modal';

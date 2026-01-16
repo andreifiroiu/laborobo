@@ -81,6 +81,22 @@ export interface Task {
     isBlocked: boolean;
 }
 
+// =============================================================================
+// Deliverable Version Types
+// =============================================================================
+
+export interface DeliverableVersion {
+    id: string;
+    versionNumber: number;
+    fileUrl: string;
+    fileName: string;
+    fileSize: string;
+    mimeType: string;
+    notes: string | null;
+    uploadedBy: { id: string; name: string } | null;
+    createdAt: string;
+}
+
 export interface Deliverable {
     id: string;
     title: string;
@@ -95,6 +111,8 @@ export interface Deliverable {
     deliveredDate: string | null;
     fileUrl: string | null;
     acceptanceCriteria: string[];
+    versionCount: number;
+    latestVersion: DeliverableVersion | null;
 }
 
 export interface CommunicationThread {
@@ -234,6 +252,21 @@ export interface TaskDetailProps {
         startedAt: string;
     } | null;
     teamMembers: Array<{ id: string; name: string }>;
+}
+
+export interface DeliverableDetailProps {
+    deliverable: Deliverable & {
+        projectName: string;
+    };
+    documents: Array<{
+        id: string;
+        name: string;
+        type: string;
+        fileUrl: string;
+        fileSize: string;
+        uploadedAt: string;
+    }>;
+    versions: DeliverableVersion[];
 }
 
 // =============================================================================

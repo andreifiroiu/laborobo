@@ -1,0 +1,29 @@
+task_groups:
+  - name: DeliverableVersion Model and Migration
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: FileUploadService and Validation
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Version History API Endpoints
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Status Change Notifications
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: File Preview and Upload Components
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Deliverable Detail Page Enhancements
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Test Review and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all
