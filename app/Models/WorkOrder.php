@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\Priority;
@@ -21,6 +23,11 @@ class WorkOrder extends Model
         'project_id',
         'assigned_to_id',
         'created_by_id',
+        'accountable_id',
+        'responsible_id',
+        'reviewer_id',
+        'consulted_ids',
+        'informed_ids',
         'party_contact_id',
         'title',
         'description',
@@ -42,6 +49,8 @@ class WorkOrder extends Model
         'actual_hours' => 'decimal:2',
         'acceptance_criteria' => 'array',
         'sop_attached' => 'boolean',
+        'consulted_ids' => 'array',
+        'informed_ids' => 'array',
     ];
 
     public function team(): BelongsTo
@@ -62,6 +71,30 @@ class WorkOrder extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    /**
+     * Get the user who is accountable for this work order.
+     */
+    public function accountable(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'accountable_id');
+    }
+
+    /**
+     * Get the user who is responsible for this work order.
+     */
+    public function responsible(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responsible_id');
+    }
+
+    /**
+     * Get the user who is the explicit reviewer for this work order.
+     */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewer_id');
     }
 
     public function partyContact(): BelongsTo
@@ -87,6 +120,15 @@ class WorkOrder extends Model
     public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
+    }
+
+    /**
+     * Get all status transitions for this work order.
+     */
+    public function statusTransitions(): MorphMany
+    {
+        return $this->morphMany(StatusTransition::class, 'transitionable')
+            ->orderByDesc('created_at');
     }
 
     public function scopeForTeam($query, int $teamId)

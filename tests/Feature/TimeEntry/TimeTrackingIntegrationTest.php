@@ -44,10 +44,11 @@ beforeEach(function () {
 });
 
 test('complete timer workflow: start, stop, entry appears in history', function () {
-    // Start a timer
+    // Start a timer (with confirmed=true to bypass workflow confirmation dialog)
     $this->actingAs($this->user)
-        ->post("/work/tasks/{$this->task->id}/timer/start")
-        ->assertRedirect();
+        ->post("/work/tasks/{$this->task->id}/timer/start?confirmed=true")
+        ->assertStatus(200)
+        ->assertJson(['started' => true]);
 
     // Verify timer is running
     $runningTimer = TimeEntry::runningForUser($this->user->id)->first();
@@ -157,9 +158,9 @@ test('multiple time entries on same task sum correctly', function () {
 });
 
 test('stopById from header indicator stops timer and recalculates hours', function () {
-    // Start timer
+    // Start timer (with confirmed=true to bypass workflow confirmation dialog)
     $this->actingAs($this->user)
-        ->post("/work/tasks/{$this->task->id}/timer/start");
+        ->post("/work/tasks/{$this->task->id}/timer/start?confirmed=true");
 
     $runningTimer = TimeEntry::runningForUser($this->user->id)->first();
 
@@ -179,9 +180,9 @@ test('stopById from header indicator stops timer and recalculates hours', functi
 });
 
 test('activeTimer shared data reflects running timer across pages', function () {
-    // Start a timer
+    // Start a timer (with confirmed=true to bypass workflow confirmation dialog)
     $this->actingAs($this->user)
-        ->post("/work/tasks/{$this->task->id}/timer/start");
+        ->post("/work/tasks/{$this->task->id}/timer/start?confirmed=true");
 
     // Check timer shows in dashboard
     $dashboardResponse = $this->actingAs($this->user)->get('/dashboard');

@@ -14,8 +14,8 @@
 9. [~] Work Order Intake UI — Forms and interfaces for creating work orders manually with title, description, scope, success criteria, budget estimates, and team member assignment. Basic index/show pages exist, full CRUD in progress. `M`
 10. [~] Task Management UI — Task creation within work orders, assignment to users, status tracking (To Do, In Progress, Blocked, Complete), and dependencies. Models complete, UI in progress. `M`
 11. [~] Project Management UI — Project detail pages showing work orders, tasks, timeline, team members, and activity feed. Index page exists, detail views in progress. `M`
-12. [ ] Deliverable Management UI — Deliverable entities tied to tasks/work orders, file upload system, version history, and draft/final status marking. `M`
-13. [ ] Time Tracking Integration — Time entry UI for logging hours against tasks/work orders, timer functionality, time log history, and basic time reporting by user and project. `M`
+12. [x] Deliverable Management UI — Deliverable entities tied to tasks/work orders, file upload system, version history, and draft/final status marking. `M`
+13. [x] Time Tracking Integration — Time entry UI for logging hours against tasks/work orders, timer functionality, time log history, and basic time reporting by user and project. `M`
 14. [ ] Human Checkpoint Workflow — Draft > Review > Approve > Deliver state machine for work items, role-based transition permissions, and approval flow enforcement. `L`
 
 ## Communications and Context

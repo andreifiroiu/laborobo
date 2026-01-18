@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\Priority;
@@ -32,10 +34,17 @@ class WorkOrderFactory extends Factory
             'project_id' => Project::factory(),
             'assigned_to_id' => fake()->optional(0.8)->passthrough(User::factory()),
             'created_by_id' => User::factory(),
+            'accountable_id' => fn (array $attributes) => $attributes['created_by_id'],
             'party_contact_id' => null,
             'title' => fake()->sentence(4),
             'description' => fake()->paragraph(),
-            'status' => fake()->randomElement(WorkOrderStatus::cases()),
+            'status' => fake()->randomElement([
+                WorkOrderStatus::Draft,
+                WorkOrderStatus::Active,
+                WorkOrderStatus::InReview,
+                WorkOrderStatus::Approved,
+                WorkOrderStatus::Delivered,
+            ]),
             'priority' => fake()->randomElement(Priority::cases()),
             'due_date' => fake()->dateTimeBetween('now', '+3 months'),
             'estimated_hours' => $estimatedHours,
@@ -71,10 +80,38 @@ class WorkOrderFactory extends Factory
         ]);
     }
 
+    public function approved(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => WorkOrderStatus::Approved,
+        ]);
+    }
+
     public function delivered(): static
     {
         return $this->state(fn (array $attributes) => [
             'status' => WorkOrderStatus::Delivered,
+        ]);
+    }
+
+    public function blocked(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => WorkOrderStatus::Blocked,
+        ]);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => WorkOrderStatus::Cancelled,
+        ]);
+    }
+
+    public function revisionRequested(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => WorkOrderStatus::RevisionRequested,
         ]);
     }
 

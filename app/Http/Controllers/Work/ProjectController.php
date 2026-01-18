@@ -40,6 +40,7 @@ class ProjectController extends Controller
             'team_id' => $team->id,
             'party_id' => $validated['partyId'],
             'owner_id' => $user->id,
+            'accountable_id' => $user->id, // Owner is initially accountable (RACI)
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'status' => ProjectStatus::Active,

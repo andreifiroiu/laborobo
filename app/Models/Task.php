@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\BlockerReason;
@@ -20,6 +22,8 @@ class Task extends Model
         'work_order_id',
         'project_id',
         'assigned_to_id',
+        'created_by_id',
+        'reviewer_id',
         'title',
         'description',
         'status',
@@ -64,6 +68,22 @@ class Task extends Model
         return $this->belongsTo(User::class, 'assigned_to_id');
     }
 
+    /**
+     * Get the user who created this task.
+     */
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    /**
+     * Get the reviewer assigned to this task.
+     */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class);
@@ -72,6 +92,15 @@ class Task extends Model
     public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
+    }
+
+    /**
+     * Get all status transitions for this task.
+     */
+    public function statusTransitions(): MorphMany
+    {
+        return $this->morphMany(StatusTransition::class, 'transitionable')
+            ->orderByDesc('created_at');
     }
 
     public function scopeForTeam($query, int $teamId)

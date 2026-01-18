@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
@@ -20,6 +22,10 @@ class Project extends Model
         'team_id',
         'party_id',
         'owner_id',
+        'accountable_id',
+        'responsible_id',
+        'consulted_ids',
+        'informed_ids',
         'name',
         'description',
         'status',
@@ -38,6 +44,8 @@ class Project extends Model
         'budget_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
         'tags' => 'array',
+        'consulted_ids' => 'array',
+        'informed_ids' => 'array',
     ];
 
     public function team(): BelongsTo
@@ -53,6 +61,22 @@ class Project extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    /**
+     * Get the user who is accountable for this project.
+     */
+    public function accountable(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'accountable_id');
+    }
+
+    /**
+     * Get the user who is responsible for this project.
+     */
+    public function responsible(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responsible_id');
     }
 
     public function workOrders(): HasMany

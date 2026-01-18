@@ -1,0 +1,77 @@
+task_groups:
+  - name: Status Enums and Status Transition Table
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: RACI Fields for Projects and Work Orders
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Task Model Extensions
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Workflow Transition Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Reviewer Resolver Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Timer Integration with Status Transitions
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: InboxItem Integration for Approvals
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Workflow Transition API Endpoints
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Timer Start API with Confirmation Flow
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: RACI Assignment API Endpoints
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Status Badge and Transition UI Components
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Timer Confirmation Dialog
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Status Transition History Component
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: RACI Assignment UI Components
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Task Detail Page Updates
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Work Order Detail Page Updates
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Inbox Approval List View Enhancements
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Inbox Approval Detail Panel
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Test Review and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all

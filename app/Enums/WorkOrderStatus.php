@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 enum WorkOrderStatus: string
@@ -9,6 +11,9 @@ enum WorkOrderStatus: string
     case InReview = 'in_review';
     case Approved = 'approved';
     case Delivered = 'delivered';
+    case Blocked = 'blocked';
+    case Cancelled = 'cancelled';
+    case RevisionRequested = 'revision_requested';
 
     public function label(): string
     {
@@ -18,6 +23,9 @@ enum WorkOrderStatus: string
             self::InReview => 'In Review',
             self::Approved => 'Approved',
             self::Delivered => 'Delivered',
+            self::Blocked => 'Blocked',
+            self::Cancelled => 'Cancelled',
+            self::RevisionRequested => 'Revision Requested',
         };
     }
 
@@ -29,6 +37,9 @@ enum WorkOrderStatus: string
             self::InReview => 'amber',
             self::Approved => 'emerald',
             self::Delivered => 'emerald',
+            self::Blocked => 'red',
+            self::Cancelled => 'red',
+            self::RevisionRequested => 'orange',
         };
     }
 }

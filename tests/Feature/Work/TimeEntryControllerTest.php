@@ -51,9 +51,11 @@ test('user can log time manually', function () {
 });
 
 test('user can start a timer', function () {
-    $response = $this->actingAs($this->user)->post("/work/tasks/{$this->task->id}/timer/start");
+    // Use confirmed=true to bypass workflow confirmation dialog
+    $response = $this->actingAs($this->user)->post("/work/tasks/{$this->task->id}/timer/start?confirmed=true");
 
-    $response->assertRedirect();
+    $response->assertStatus(200);
+    $response->assertJson(['started' => true]);
 
     $this->assertDatabaseHas('time_entries', [
         'task_id' => $this->task->id,
@@ -67,8 +69,8 @@ test('user can start a timer', function () {
 });
 
 test('user can stop a timer', function () {
-    // Start a timer first
-    $this->actingAs($this->user)->post("/work/tasks/{$this->task->id}/timer/start");
+    // Start a timer first (with confirmed=true to bypass workflow dialog)
+    $this->actingAs($this->user)->post("/work/tasks/{$this->task->id}/timer/start?confirmed=true");
 
     // Stop the timer
     $response = $this->actingAs($this->user)->post("/work/tasks/{$this->task->id}/timer/stop");
@@ -81,18 +83,19 @@ test('user can stop a timer', function () {
 });
 
 test('starting a new timer stops any active timer', function () {
-    // Start first timer
-    $this->actingAs($this->user)->post("/work/tasks/{$this->task->id}/timer/start");
+    // Start first timer (with confirmed=true to bypass workflow dialog)
+    $this->actingAs($this->user)->post("/work/tasks/{$this->task->id}/timer/start?confirmed=true");
     $firstEntry = TimeEntry::where('task_id', $this->task->id)->first();
 
     // Create another task
     $anotherTask = Task::factory()->create([
         'team_id' => $this->team->id,
         'work_order_id' => $this->workOrder->id,
+        'project_id' => $this->project->id,
     ]);
 
-    // Start timer on another task
-    $this->actingAs($this->user)->post("/work/tasks/{$anotherTask->id}/timer/start");
+    // Start timer on another task (with confirmed=true to bypass workflow dialog)
+    $this->actingAs($this->user)->post("/work/tasks/{$anotherTask->id}/timer/start?confirmed=true");
 
     // First timer should be stopped
     $firstEntry->refresh();

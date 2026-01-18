@@ -13,6 +13,9 @@ import {
     CheckCircle2,
     ExternalLink,
     X,
+    History,
+    AlertTriangle,
+    Users,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -21,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
     Dialog,
     DialogContent,
@@ -54,9 +58,126 @@ import {
 import InputError from '@/components/input-error';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/work';
 import { HoursProgressIndicator } from '@/components/time-tracking';
-import { useState } from 'react';
-import type { WorkOrderDetailProps } from '@/types/work';
+import {
+    TransitionButton,
+    TransitionDialog,
+    TransitionHistory,
+    RaciSelector,
+    AssignmentConfirmationDialog,
+    type TransitionOption,
+    type StatusTransition,
+    type RaciValue,
+    type RaciUser,
+    type RaciRole,
+    type AssignmentChange,
+} from '@/components/workflow';
+import { workOrderStatusLabels } from '@/components/ui/status-badge';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { BreadcrumbItem } from '@/types';
+
+/**
+ * Team member type
+ */
+interface TeamMember {
+    id: string;
+    name: string;
+}
+
+/**
+ * Rejection feedback from a previous revision request
+ */
+interface RejectionFeedback {
+    comment: string;
+    user: { id: number; name: string; email: string };
+    createdAt: string;
+}
+
+/**
+ * Extended Work Order type with RACI properties
+ */
+interface WorkOrderWithRaci {
+    id: string;
+    title: string;
+    description: string | null;
+    projectId: string;
+    projectName: string;
+    assignedToId: string | null;
+    assignedToName: string;
+    status: string;
+    priority: string;
+    dueDate: string;
+    estimatedHours: number;
+    actualHours: number;
+    acceptanceCriteria: string[];
+    sopAttached: boolean;
+    sopName: string | null;
+    partyContactId: string | null;
+    createdBy: string;
+    createdByName: string;
+    accountableId?: number | null;
+    accountableName?: string | null;
+    responsibleId?: number | null;
+    responsibleName?: string | null;
+    reviewerId?: number | null;
+    reviewerName?: string | null;
+    consultedIds?: number[] | null;
+    informedIds?: number[] | null;
+}
+
+/**
+ * Extended props with workflow features
+ */
+interface WorkOrderDetailProps {
+    workOrder: WorkOrderWithRaci;
+    tasks: Array<{
+        id: string;
+        title: string;
+        status: string;
+        dueDate: string;
+        assignedToName: string;
+        estimatedHours: number;
+        actualHours: number;
+        checklistItems: Array<{ id: string; text: string; completed: boolean }>;
+        isBlocked: boolean;
+    }>;
+    deliverables: Array<{
+        id: string;
+        title: string;
+        description: string | null;
+        type: string;
+        status: string;
+        version: string;
+        createdDate: string;
+        deliveredDate: string | null;
+        fileUrl: string | null;
+        acceptanceCriteria: string[];
+    }>;
+    documents: Array<{
+        id: string;
+        name: string;
+        type: string;
+        fileUrl: string;
+        fileSize: string | null;
+    }>;
+    communicationThread: {
+        id: string;
+        messageCount: number;
+    } | null;
+    messages: Array<{
+        id: string;
+        authorId: string;
+        authorName: string;
+        authorType: string;
+        timestamp: string;
+        content: string;
+        type: string;
+    }>;
+    teamMembers: TeamMember[];
+    statusTransitions?: StatusTransition[];
+    allowedTransitions?: TransitionOption[];
+    raciValue?: RaciValue;
+    rejectionFeedback?: RejectionFeedback | null;
+}
 
 export default function WorkOrderDetail({
     workOrder,
@@ -66,6 +187,10 @@ export default function WorkOrderDetail({
     communicationThread,
     messages,
     teamMembers,
+    statusTransitions = [],
+    allowedTransitions = [],
+    raciValue,
+    rejectionFeedback = null,
 }: WorkOrderDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false);
@@ -77,6 +202,33 @@ export default function WorkOrderDetail({
     const [editCriterion, setEditCriterion] = useState('');
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
     const [newMessage, setNewMessage] = useState('');
+
+    // Workflow state
+    const [transitionDialogOpen, setTransitionDialogOpen] = useState(false);
+    const [selectedTransition, setSelectedTransition] = useState<string | null>(null);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [transitionError, setTransitionError] = useState<string | null>(null);
+    const [localStatus, setLocalStatus] = useState(workOrder.status);
+    const [localTransitions, setLocalTransitions] = useState(statusTransitions);
+    const [localAllowedTransitions, setLocalAllowedTransitions] = useState(allowedTransitions);
+
+    // RACI state
+    const [localRaciValue, setLocalRaciValue] = useState<RaciValue>(
+        raciValue ?? {
+            responsible_id: workOrder.responsibleId ?? null,
+            accountable_id: workOrder.accountableId ?? null,
+            consulted_ids: workOrder.consultedIds ?? [],
+            informed_ids: workOrder.informedIds ?? [],
+        }
+    );
+    const [isUpdatingRaci, setIsUpdatingRaci] = useState(false);
+    const [raciError, setRaciError] = useState<string | null>(null);
+    const [assignmentConfirmOpen, setAssignmentConfirmOpen] = useState(false);
+    const [pendingAssignmentChange, setPendingAssignmentChange] = useState<{
+        role: RaciRole;
+        currentUserId: number | null;
+        newUserId: number | null;
+    } | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -119,6 +271,35 @@ export default function WorkOrderDetail({
         fileUrl: '',
         acceptanceCriteria: [] as string[],
     });
+
+    // Convert team members to RACI user format (memoized to prevent infinite re-renders)
+    const raciUsers: RaciUser[] = useMemo(
+        () =>
+            teamMembers.map((member) => ({
+                id: parseInt(member.id, 10),
+                name: member.name,
+            })),
+        [teamMembers]
+    );
+
+    // Sync local state with props
+    useEffect(() => {
+        setLocalStatus(workOrder.status);
+    }, [workOrder.status]);
+
+    useEffect(() => {
+        setLocalTransitions(statusTransitions);
+    }, [statusTransitions]);
+
+    useEffect(() => {
+        setLocalAllowedTransitions(allowedTransitions);
+    }, [allowedTransitions]);
+
+    useEffect(() => {
+        if (raciValue) {
+            setLocalRaciValue(raciValue);
+        }
+    }, [raciValue]);
 
     const handleUpdateWorkOrder = (e: React.FormEvent) => {
         e.preventDefault();
@@ -229,10 +410,6 @@ export default function WorkOrderDetail({
         );
     };
 
-    const handleStatusChange = (status: string) => {
-        router.patch(`/work/work-orders/${workOrder.id}/status`, { status });
-    };
-
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this work order? This action cannot be undone.')) {
             router.delete(`/work/work-orders/${workOrder.id}`);
@@ -251,6 +428,232 @@ export default function WorkOrderDetail({
         );
     };
 
+    /**
+     * Handle transition button click - open dialog for transitions that need confirmation
+     */
+    const handleTransitionSelect = useCallback((targetStatus: string) => {
+        setSelectedTransition(targetStatus);
+        setTransitionDialogOpen(true);
+        setTransitionError(null);
+    }, []);
+
+    /**
+     * Execute the transition via API
+     */
+    const handleTransitionConfirm = useCallback(
+        async (comment?: string) => {
+            if (!selectedTransition) return;
+
+            setIsTransitioning(true);
+            setTransitionError(null);
+
+            try {
+                const response = await fetch(`/work/work-orders/${workOrder.id}/transition`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN':
+                            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({
+                        status: selectedTransition,
+                        comment: comment || undefined,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setTransitionError(data.message || 'Failed to update status');
+                    return;
+                }
+
+                // Update local state with the new status and transitions
+                setLocalStatus(data.workOrder.status);
+                if (data.workOrder.statusTransitions) {
+                    setLocalTransitions(
+                        data.workOrder.statusTransitions.map(
+                            (t: {
+                                id: string;
+                                from_status: string;
+                                to_status: string;
+                                user_id: string | null;
+                                comment: string | null;
+                                created_at: string;
+                            }) => ({
+                                id: parseInt(t.id, 10),
+                                fromStatus: t.from_status,
+                                toStatus: t.to_status,
+                                user: { id: parseInt(t.user_id || '0', 10), name: 'User', email: '' },
+                                createdAt: t.created_at,
+                                comment: t.comment,
+                                commentCategory: null,
+                            })
+                        )
+                    );
+                }
+
+                // Update allowed transitions based on new status
+                updateAllowedTransitions(data.workOrder.status);
+
+                setTransitionDialogOpen(false);
+                setSelectedTransition(null);
+
+                // Reload page to get fresh data
+                router.reload({ only: ['workOrder', 'statusTransitions', 'allowedTransitions', 'rejectionFeedback'] });
+            } catch (error) {
+                setTransitionError('An error occurred while updating the status');
+            } finally {
+                setIsTransitioning(false);
+            }
+        },
+        [selectedTransition, workOrder.id]
+    );
+
+    /**
+     * Update allowed transitions based on new status
+     */
+    const updateAllowedTransitions = useCallback((newStatus: string) => {
+        const transitionMap: Record<string, TransitionOption[]> = {
+            draft: [
+                { value: 'active', label: 'Start Work Order' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            active: [
+                { value: 'in_review', label: 'Submit for Review' },
+                { value: 'delivered', label: 'Mark as Delivered' },
+                { value: 'blocked', label: 'Mark as Blocked' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            in_review: [
+                { value: 'approved', label: 'Approve' },
+                { value: 'revision_requested', label: 'Request Changes' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            approved: [
+                { value: 'delivered', label: 'Mark as Delivered' },
+                { value: 'revision_requested', label: 'Request Changes' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            blocked: [
+                { value: 'active', label: 'Unblock' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            delivered: [],
+            cancelled: [],
+            revision_requested: [],
+        };
+        setLocalAllowedTransitions(transitionMap[newStatus] || []);
+    }, []);
+
+    const handleTransitionCancel = useCallback(() => {
+        setTransitionDialogOpen(false);
+        setSelectedTransition(null);
+        setTransitionError(null);
+    }, []);
+
+    /**
+     * Handle RACI value change
+     */
+    const handleRaciChange = useCallback(
+        async (newValue: RaciValue) => {
+            setLocalRaciValue(newValue);
+            setRaciError(null);
+            setIsUpdatingRaci(true);
+
+            try {
+                const response = await fetch(`/work/work-orders/${workOrder.id}/raci`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN':
+                            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({
+                        accountable_id: newValue.accountable_id,
+                        responsible_id: newValue.responsible_id,
+                        consulted_ids: newValue.consulted_ids,
+                        informed_ids: newValue.informed_ids,
+                        confirmed: true,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setRaciError(data.message || 'Failed to update RACI assignments');
+                    return;
+                }
+
+                // Reload to get fresh data
+                router.reload({ only: ['workOrder', 'raciValue'] });
+            } catch (error) {
+                setRaciError('An error occurred while updating RACI assignments');
+            } finally {
+                setIsUpdatingRaci(false);
+            }
+        },
+        [workOrder.id]
+    );
+
+    /**
+     * Handle RACI confirmation requirement
+     */
+    const handleRaciConfirmationRequired = useCallback(
+        (role: RaciRole, currentUserId: number | null, newUserId: number | null) => {
+            setPendingAssignmentChange({ role, currentUserId, newUserId });
+            setAssignmentConfirmOpen(true);
+        },
+        []
+    );
+
+    /**
+     * Confirm RACI assignment change
+     */
+    const handleAssignmentConfirm = useCallback(async () => {
+        if (!pendingAssignmentChange) return;
+
+        const { role, newUserId } = pendingAssignmentChange;
+        const updatedValue: RaciValue = {
+            ...localRaciValue,
+            [`${role}_id`]: newUserId,
+        };
+
+        setAssignmentConfirmOpen(false);
+        setPendingAssignmentChange(null);
+
+        await handleRaciChange(updatedValue);
+    }, [pendingAssignmentChange, localRaciValue, handleRaciChange]);
+
+    /**
+     * Cancel RACI assignment change
+     */
+    const handleAssignmentCancel = useCallback(() => {
+        setAssignmentConfirmOpen(false);
+        setPendingAssignmentChange(null);
+    }, []);
+
+    // Helper functions for assignment confirmation dialog
+    const getCurrentAssignmentForDialog = (): AssignmentChange | null => {
+        if (!pendingAssignmentChange) return null;
+        const { role, currentUserId } = pendingAssignmentChange;
+        const user = raciUsers.find((u) => u.id === currentUserId);
+        if (!user) return null;
+        const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+        return { role: roleLabel as AssignmentChange['role'], user };
+    };
+
+    const getNewAssignmentForDialog = (): AssignmentChange | null => {
+        if (!pendingAssignmentChange) return null;
+        const { role, newUserId } = pendingAssignmentChange;
+        const user = raciUsers.find((u) => u.id === newUserId);
+        if (!user) return null;
+        const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+        return { role: roleLabel as AssignmentChange['role'], user };
+    };
+
     const completedTasks = tasks.filter((t) => t.status === 'done').length;
     const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
 
@@ -259,35 +662,70 @@ export default function WorkOrderDetail({
     const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     const isOverdue = daysUntilDue < 0;
 
+    // Get the label for the selected transition
+    const selectedTransitionLabel = selectedTransition
+        ? workOrderStatusLabels[selectedTransition as keyof typeof workOrderStatusLabels] || selectedTransition
+        : '';
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={workOrder.title} />
 
             <div className="flex h-full flex-1 flex-col">
+                {/* Rejection Feedback Banner */}
+                {rejectionFeedback && (
+                    <div className="px-6 pt-6">
+                        <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/50">
+                            <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                            <AlertTitle className="text-orange-900 dark:text-orange-100">
+                                Revision Requested
+                            </AlertTitle>
+                            <AlertDescription className="text-orange-800 dark:text-orange-200">
+                                <p className="mt-1">{rejectionFeedback.comment}</p>
+                                <p className="mt-2 text-sm text-orange-600 dark:text-orange-400">
+                                    Requested by {rejectionFeedback.user.name} on{' '}
+                                    {new Date(rejectionFeedback.createdAt).toLocaleDateString()}
+                                </p>
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                )}
+
                 {/* Header */}
-                <div className="px-6 py-6 border-b border-sidebar-border/70 dark:border-sidebar-border">
-                    <div className="flex items-center gap-4 mb-4">
+                <div className="border-sidebar-border/70 dark:border-sidebar-border border-b px-6 py-6">
+                    <div className="mb-4 flex items-center gap-4">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={`/work/projects/${workOrder.projectId}`}>
                                 <ArrowLeft className="h-4 w-4" />
                             </Link>
                         </Button>
                         <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-2xl font-bold text-foreground">{workOrder.title}</h1>
-                                <StatusBadge status={workOrder.status} type="workOrder" />
+                            <div className="mb-1 flex items-center gap-3">
+                                <h1 className="text-foreground text-2xl font-bold">{workOrder.title}</h1>
+                                <StatusBadge status={localStatus} type="workOrder" />
                                 <PriorityBadge priority={workOrder.priority} />
                             </div>
                             <p className="text-muted-foreground">
                                 {workOrder.projectName}
-                                {workOrder.description && ` • ${workOrder.description}`}
+                                {workOrder.description && ` - ${workOrder.description}`}
                             </p>
                         </div>
+
+                        {/* Transition Button */}
+                        {localAllowedTransitions.length > 0 && (
+                            <TransitionButton
+                                currentStatus={localStatus}
+                                allowedTransitions={localAllowedTransitions}
+                                onTransition={handleTransitionSelect}
+                                isLoading={isTransitioning}
+                            />
+                        )}
+
                         <div className="flex items-center gap-2">
                             <Sheet open={commsPanelOpen} onOpenChange={setCommsPanelOpen}>
                                 <SheetTrigger asChild>
                                     <Button variant="outline" size="sm">
-                                        <MessageSquare className="h-4 w-4 mr-2" />
+                                        <MessageSquare className="mr-2 h-4 w-4" />
                                         {communicationThread?.messageCount || 0} Messages
                                     </Button>
                                 </SheetTrigger>
@@ -298,20 +736,20 @@ export default function WorkOrderDetail({
                                             Discussion thread for this work order
                                         </SheetDescription>
                                     </SheetHeader>
-                                    <div className="flex flex-col h-[calc(100vh-180px)] mt-4">
-                                        <div className="flex-1 overflow-auto space-y-4">
+                                    <div className="mt-4 flex h-[calc(100vh-180px)] flex-col">
+                                        <div className="flex-1 space-y-4 overflow-auto">
                                             {messages.length === 0 ? (
-                                                <p className="text-sm text-muted-foreground text-center py-8">
+                                                <p className="text-muted-foreground py-8 text-center text-sm">
                                                     No messages yet
                                                 </p>
                                             ) : (
                                                 messages.map((msg) => (
-                                                    <div key={msg.id} className="p-3 bg-muted rounded-lg">
-                                                        <div className="flex items-center justify-between mb-1">
+                                                    <div key={msg.id} className="bg-muted rounded-lg p-3">
+                                                        <div className="mb-1 flex items-center justify-between">
                                                             <span className="text-sm font-medium">
                                                                 {msg.authorName}
                                                             </span>
-                                                            <span className="text-xs text-muted-foreground">
+                                                            <span className="text-muted-foreground text-xs">
                                                                 {new Date(msg.timestamp).toLocaleDateString()}
                                                             </span>
                                                         </div>
@@ -320,7 +758,7 @@ export default function WorkOrderDetail({
                                                 ))
                                             )}
                                         </div>
-                                        <div className="flex gap-2 mt-4">
+                                        <div className="mt-4 flex gap-2">
                                             <Input
                                                 value={newMessage}
                                                 onChange={(e) => setNewMessage(e.target.value)}
@@ -340,12 +778,12 @@ export default function WorkOrderDetail({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                                        <Edit className="h-4 w-4 mr-2" />
+                                        <Edit className="mr-2 h-4 w-4" />
                                         Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -354,25 +792,25 @@ export default function WorkOrderDetail({
                     </div>
 
                     {/* Work Order Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <User className="h-5 w-5 text-muted-foreground" />
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <User className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Assigned To</div>
+                                <div className="text-muted-foreground text-xs">Assigned To</div>
                                 <div className="font-medium">{workOrder.assignedToName || 'Unassigned'}</div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <Clock className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Hours</div>
+                                <div className="text-muted-foreground text-xs">Hours</div>
                                 <div className="font-medium">
                                     {workOrder.actualHours} / {workOrder.estimatedHours}h
                                 </div>
                             </div>
                         </div>
                         <div
-                            className={`flex items-center gap-3 p-3 rounded-lg ${
+                            className={`flex items-center gap-3 rounded-lg p-3 ${
                                 isOverdue ? 'bg-destructive/10' : 'bg-muted'
                             }`}
                         >
@@ -380,36 +818,36 @@ export default function WorkOrderDetail({
                                 className={`h-5 w-5 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
                             />
                             <div>
-                                <div className="text-xs text-muted-foreground">Due Date</div>
+                                <div className="text-muted-foreground text-xs">Due Date</div>
                                 <div className={`font-medium ${isOverdue ? 'text-destructive' : ''}`}>
                                     {dueDate.toLocaleDateString()}
                                     {isOverdue && ` (${Math.abs(daysUntilDue)}d overdue)`}
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <CheckCircle2 className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Tasks</div>
+                                <div className="text-muted-foreground text-xs">Tasks</div>
                                 <div className="font-medium">
                                     {completedTasks} / {tasks.length}
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <FileText className="h-5 w-5 text-muted-foreground" />
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <FileText className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Deliverables</div>
+                                <div className="text-muted-foreground text-xs">Deliverables</div>
                                 <div className="font-medium">{deliverables.length}</div>
                             </div>
                         </div>
                     </div>
 
                     {/* Progress Indicators */}
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                         {/* Task Progress */}
                         <div>
-                            <div className="flex items-center justify-between text-sm mb-2">
+                            <div className="mb-2 flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">Task Progress</span>
                                 <span className="font-medium">{progress}%</span>
                             </div>
@@ -417,8 +855,8 @@ export default function WorkOrderDetail({
                         </div>
 
                         {/* Hours Progress */}
-                        <div className="p-4 bg-card border border-border rounded-lg">
-                            <h3 className="text-sm font-medium text-foreground mb-2">
+                        <div className="bg-card border-border rounded-lg border p-4">
+                            <h3 className="text-foreground mb-2 text-sm font-medium">
                                 Actual vs Estimated Hours
                             </h3>
                             <HoursProgressIndicator
@@ -427,56 +865,23 @@ export default function WorkOrderDetail({
                             />
                         </div>
                     </div>
-
-                    {/* Status Actions */}
-                    <div className="mt-4 flex gap-2">
-                        {workOrder.status === 'draft' && (
-                            <Button size="sm" onClick={() => handleStatusChange('active')}>
-                                Start Work Order
-                            </Button>
-                        )}
-                        {workOrder.status === 'active' && (
-                            <Button size="sm" onClick={() => handleStatusChange('in_review')}>
-                                Submit for Review
-                            </Button>
-                        )}
-                        {workOrder.status === 'in_review' && (
-                            <>
-                                <Button size="sm" onClick={() => handleStatusChange('approved')}>
-                                    Approve
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleStatusChange('active')}
-                                >
-                                    Request Changes
-                                </Button>
-                            </>
-                        )}
-                        {workOrder.status === 'approved' && (
-                            <Button size="sm" onClick={() => handleStatusChange('delivered')}>
-                                Mark as Delivered
-                            </Button>
-                        )}
-                    </div>
                 </div>
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-auto p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Tasks Section */}
                         <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-foreground">Tasks</h2>
+                            <div className="mb-4 flex items-center justify-between">
+                                <h2 className="text-foreground text-lg font-bold">Tasks</h2>
                                 <Button size="sm" onClick={() => setCreateTaskDialogOpen(true)}>
-                                    <Plus className="h-4 w-4 mr-2" />
+                                    <Plus className="mr-2 h-4 w-4" />
                                     Add Task
                                 </Button>
                             </div>
 
                             {tasks.length === 0 ? (
-                                <div className="text-center py-8 bg-muted/50 rounded-xl">
+                                <div className="bg-muted/50 rounded-xl py-8 text-center">
                                     <p className="text-muted-foreground mb-4">No tasks yet</p>
                                     <Button onClick={() => setCreateTaskDialogOpen(true)}>
                                         Create Task
@@ -488,26 +893,26 @@ export default function WorkOrderDetail({
                                         <Link
                                             key={task.id}
                                             href={`/work/tasks/${task.id}`}
-                                            className="block p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors"
+                                            className="bg-card border-border hover:border-primary/50 block rounded-lg border p-4 transition-colors"
                                         >
                                             <div className="flex items-start gap-3">
                                                 <div
-                                                    className={`mt-1 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                                    className={`mt-1 flex h-4 w-4 items-center justify-center rounded-full border-2 ${
                                                         task.status === 'done'
                                                             ? 'bg-primary border-primary'
                                                             : 'border-muted-foreground'
                                                     }`}
                                                 >
                                                     {task.status === 'done' && (
-                                                        <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                                                        <CheckCircle2 className="text-primary-foreground h-3 w-3" />
                                                     )}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
+                                                    <div className="mb-1 flex items-center gap-2">
                                                         <span
                                                             className={`font-medium ${
                                                                 task.status === 'done'
-                                                                    ? 'line-through text-muted-foreground'
+                                                                    ? 'text-muted-foreground line-through'
                                                                     : ''
                                                             }`}
                                                         >
@@ -517,10 +922,10 @@ export default function WorkOrderDetail({
                                                             <Badge variant="destructive">Blocked</Badge>
                                                         )}
                                                     </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {task.assignedToName} •{' '}
+                                                    <div className="text-muted-foreground text-sm">
+                                                        {task.assignedToName} -{' '}
                                                         {task.checklistItems.filter((i) => i.completed).length}/
-                                                        {task.checklistItems.length} items •{' '}
+                                                        {task.checklistItems.length} items -{' '}
                                                         {task.actualHours}/{task.estimatedHours}h
                                                     </div>
                                                 </div>
@@ -529,141 +934,121 @@ export default function WorkOrderDetail({
                                     ))}
                                 </div>
                             )}
-                        </div>
 
-                        {/* Deliverables Section */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-foreground">Deliverables</h2>
-                                <Button variant="outline" size="sm" onClick={() => setCreateDeliverableDialogOpen(true)}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add
-                                </Button>
-                            </div>
-
-                            {deliverables.length === 0 ? (
-                                <div className="text-center py-8 bg-muted/50 rounded-xl">
-                                    <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                    <p className="text-muted-foreground">No deliverables yet</p>
+                            {/* Deliverables Section */}
+                            <div className="mt-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-foreground text-lg font-bold">Deliverables</h2>
+                                    <Button variant="outline" size="sm" onClick={() => setCreateDeliverableDialogOpen(true)}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add
+                                    </Button>
                                 </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {deliverables.map((d) => (
-                                        <div
-                                            key={d.id}
-                                            className="p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors"
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <Link
-                                                    href={`/work/deliverables/${d.id}`}
-                                                    className="flex-1 min-w-0"
-                                                >
-                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                        <span className="font-medium truncate">{d.title}</span>
-                                                        <StatusBadge status={d.status} type="deliverable" />
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
-                                                        <span className="capitalize">{d.type}</span>
-                                                        <span>•</span>
-                                                        <span>v{d.version}</span>
-                                                        <span>•</span>
-                                                        <span>Created {new Date(d.createdDate).toLocaleDateString()}</span>
-                                                        {d.deliveredDate && (
-                                                            <>
-                                                                <span>•</span>
-                                                                <span className="text-emerald-600 dark:text-emerald-400">
-                                                                    Delivered {new Date(d.deliveredDate).toLocaleDateString()}
-                                                                </span>
-                                                            </>
-                                                        )}
-                                                        {d.acceptanceCriteria.length > 0 && (
-                                                            <>
-                                                                <span>•</span>
-                                                                <span>{d.acceptanceCriteria.length} criteria</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </Link>
-                                                <div className="flex items-center gap-1 ml-2">
-                                                    {/* Status workflow buttons */}
-                                                    {d.status === 'draft' && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleDeliverableStatusChange(d.id, 'in_review');
-                                                            }}
-                                                        >
-                                                            Submit
-                                                        </Button>
-                                                    )}
-                                                    {d.status === 'in_review' && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleDeliverableStatusChange(d.id, 'approved');
-                                                            }}
-                                                        >
-                                                            Approve
-                                                        </Button>
-                                                    )}
-                                                    {d.status === 'approved' && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleDeliverableStatusChange(d.id, 'delivered');
-                                                            }}
-                                                        >
-                                                            Deliver
-                                                        </Button>
-                                                    )}
-                                                    {d.fileUrl && (
-                                                        <Button variant="ghost" size="icon" asChild>
-                                                            <a href={d.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                                <ExternalLink className="h-4 w-4" />
-                                                            </a>
-                                                        </Button>
-                                                    )}
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" onClick={(e) => e.preventDefault()}>
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleEditDeliverable(d)}>
-                                                                <Edit className="h-4 w-4 mr-2" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                onClick={() => {
-                                                                    setSelectedDeliverable(d);
-                                                                    setDeleteDeliverableDialogOpen(true);
+
+                                {deliverables.length === 0 ? (
+                                    <div className="bg-muted/50 rounded-xl py-8 text-center">
+                                        <FileText className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
+                                        <p className="text-muted-foreground">No deliverables yet</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {deliverables.map((d) => (
+                                            <div
+                                                key={d.id}
+                                                className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <Link
+                                                        href={`/work/deliverables/${d.id}`}
+                                                        className="min-w-0 flex-1"
+                                                    >
+                                                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                                                            <span className="truncate font-medium">{d.title}</span>
+                                                            <StatusBadge status={d.status} type="deliverable" />
+                                                        </div>
+                                                        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+                                                            <span className="capitalize">{d.type}</span>
+                                                            <span>-</span>
+                                                            <span>v{d.version}</span>
+                                                        </div>
+                                                    </Link>
+                                                    <div className="ml-2 flex items-center gap-1">
+                                                        {d.status === 'draft' && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    handleDeliverableStatusChange(d.id, 'in_review');
                                                                 }}
-                                                                className="text-destructive"
                                                             >
-                                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                                Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                                Submit
+                                                            </Button>
+                                                        )}
+                                                        {d.fileUrl && (
+                                                            <Button variant="ghost" size="icon" asChild>
+                                                                <a href={d.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                                    <ExternalLink className="h-4 w-4" />
+                                                                </a>
+                                                            </Button>
+                                                        )}
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" onClick={(e) => e.preventDefault()}>
+                                                                    <MoreVertical className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => handleEditDeliverable(d)}>
+                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {
+                                                                        setSelectedDeliverable(d);
+                                                                        setDeleteDeliverableDialogOpen(true);
+                                                                    }}
+                                                                    className="text-destructive"
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* RACI Assignments Section */}
+                        <div>
+                            <div className="mb-4 flex items-center gap-2">
+                                <Users className="text-muted-foreground h-5 w-5" />
+                                <h2 className="text-foreground text-lg font-bold">RACI Assignments</h2>
+                            </div>
+                            <div className="bg-card border-border rounded-xl border p-4">
+                                <RaciSelector
+                                    value={localRaciValue}
+                                    onChange={handleRaciChange}
+                                    users={raciUsers}
+                                    entityType="work_order"
+                                    disabled={isUpdatingRaci}
+                                    onConfirmationRequired={handleRaciConfirmationRequired}
+                                />
+                                {raciError && (
+                                    <p className="text-destructive mt-2 text-sm">{raciError}</p>
+                                )}
+                            </div>
 
                             {/* Acceptance Criteria */}
                             {workOrder.acceptanceCriteria.length > 0 && (
                                 <div className="mt-6">
-                                    <h3 className="text-sm font-bold text-foreground mb-3">
+                                    <h3 className="text-foreground mb-3 text-sm font-bold">
                                         Acceptance Criteria
                                     </h3>
                                     <ul className="space-y-2">
@@ -677,9 +1062,42 @@ export default function WorkOrderDetail({
                                 </div>
                             )}
                         </div>
+
+                        {/* Transition History */}
+                        <div>
+                            <div className="mb-4 flex items-center gap-2">
+                                <History className="text-muted-foreground h-5 w-5" />
+                                <h2 className="text-foreground text-lg font-bold">Activity</h2>
+                            </div>
+                            <div className="bg-card border-border rounded-xl border p-4">
+                                <TransitionHistory transitions={localTransitions} variant="work_order" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Transition Dialog */}
+            <TransitionDialog
+                isOpen={transitionDialogOpen}
+                targetStatus={selectedTransition || ''}
+                targetLabel={selectedTransitionLabel}
+                onConfirm={handleTransitionConfirm}
+                onCancel={handleTransitionCancel}
+                isLoading={isTransitioning}
+            />
+
+            {/* Assignment Confirmation Dialog */}
+            {pendingAssignmentChange && getCurrentAssignmentForDialog() && getNewAssignmentForDialog() && (
+                <AssignmentConfirmationDialog
+                    isOpen={assignmentConfirmOpen}
+                    currentAssignment={getCurrentAssignmentForDialog()!}
+                    newAssignment={getNewAssignmentForDialog()!}
+                    onConfirm={handleAssignmentConfirm}
+                    onCancel={handleAssignmentCancel}
+                    isLoading={isUpdatingRaci}
+                />
+            )}
 
             {/* Edit Dialog */}
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -833,7 +1251,7 @@ export default function WorkOrderDetail({
                                 Add a new deliverable to this work order
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                        <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
                             <div className="grid gap-2">
                                 <Label>Title *</Label>
                                 <Input
@@ -905,13 +1323,13 @@ export default function WorkOrderDetail({
                                     </Button>
                                 </div>
                                 {deliverableForm.data.acceptanceCriteria.length > 0 && (
-                                    <ul className="space-y-2 mt-2">
+                                    <ul className="mt-2 space-y-2">
                                         {deliverableForm.data.acceptanceCriteria.map((criterion, index) => (
                                             <li
                                                 key={index}
-                                                className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
+                                                className="bg-muted flex items-center gap-2 rounded-md p-2 text-sm"
                                             >
-                                                <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                <CheckCircle2 className="text-muted-foreground h-4 w-4 shrink-0" />
                                                 <span className="flex-1">{criterion}</span>
                                                 <Button
                                                     type="button"
@@ -955,7 +1373,7 @@ export default function WorkOrderDetail({
                         <DialogHeader>
                             <DialogTitle>Edit Deliverable</DialogTitle>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                        <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
                             <div className="grid gap-2">
                                 <Label>Title *</Label>
                                 <Input
@@ -1047,13 +1465,13 @@ export default function WorkOrderDetail({
                                     </Button>
                                 </div>
                                 {editDeliverableForm.data.acceptanceCriteria.length > 0 && (
-                                    <ul className="space-y-2 mt-2">
+                                    <ul className="mt-2 space-y-2">
                                         {editDeliverableForm.data.acceptanceCriteria.map((criterion, index) => (
                                             <li
                                                 key={index}
-                                                className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
+                                                className="bg-muted flex items-center gap-2 rounded-md p-2 text-sm"
                                             >
-                                                <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                <CheckCircle2 className="text-muted-foreground h-4 w-4 shrink-0" />
                                                 <span className="flex-1">{criterion}</span>
                                                 <Button
                                                     type="button"
@@ -1105,6 +1523,22 @@ export default function WorkOrderDetail({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Transition Error Display */}
+            {transitionError && (
+                <div className="fixed right-4 bottom-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 p-4 shadow-lg dark:border-red-800 dark:bg-red-950">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        <p className="text-sm text-red-800 dark:text-red-200">{transitionError}</p>
+                        <button
+                            onClick={() => setTransitionError(null)}
+                            className="ml-auto text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

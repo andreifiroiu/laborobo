@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TimeEntry;
 use App\Models\WorkOrder;
+use App\Services\WorkflowTransitionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -15,6 +16,10 @@ use Inertia\Response;
 
 class TaskController extends Controller
 {
+    public function __construct(
+        private readonly WorkflowTransitionService $transitionService,
+    ) {}
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -63,7 +68,14 @@ class TaskController extends Controller
     {
         $this->authorize('view', $task);
 
-        $task->load(['workOrder', 'project', 'assignedTo', 'timeEntries.user', 'documents']);
+        $task->load([
+            'workOrder',
+            'project',
+            'assignedTo',
+            'timeEntries.user',
+            'documents',
+            'statusTransitions.user',
+        ]);
 
         // Get active timer if any
         $activeTimer = $task->timeEntries()
@@ -71,6 +83,12 @@ class TaskController extends Controller
             ->whereNull('stopped_at')
             ->where('user_id', $request->user()->id)
             ->first();
+
+        // Get allowed transitions for current user
+        $allowedTransitions = $this->getFormattedAllowedTransitions($task, $request->user());
+
+        // Get rejection feedback if applicable (status is InProgress and previous transition was from RevisionRequested)
+        $rejectionFeedback = $this->getRejectionFeedback($task);
 
         return Inertia::render('work/tasks/[id]', [
             'task' => [
@@ -110,6 +128,22 @@ class TaskController extends Controller
                 'id' => (string) $user->id,
                 'name' => $user->name,
             ]),
+            'statusTransitions' => $task->statusTransitions->map(fn ($transition) => [
+                'id' => $transition->id,
+                'fromStatus' => $transition->from_status,
+                'toStatus' => $transition->to_status,
+                'user' => $transition->user ? [
+                    'id' => $transition->user->id,
+                    'name' => $transition->user->name,
+                    'email' => $transition->user->email,
+                    'avatar' => $transition->user->avatar ?? null,
+                ] : null,
+                'createdAt' => $transition->created_at->toIso8601String(),
+                'comment' => $transition->comment,
+                'commentCategory' => $transition->comment_category ?? null,
+            ]),
+            'allowedTransitions' => $allowedTransitions,
+            'rejectionFeedback' => $rejectionFeedback,
         ]);
     }
 
@@ -180,5 +214,78 @@ class TaskController extends Controller
         $task->toggleChecklistItem($itemId, $validated['completed']);
 
         return back();
+    }
+
+    /**
+     * Get formatted allowed transitions for the frontend.
+     *
+     * @return array<int, array{value: string, label: string, destructive?: bool}>
+     */
+    private function getFormattedAllowedTransitions(Task $task, $user): array
+    {
+        $availableTransitions = $this->transitionService->getAvailableTransitions($task, $user);
+
+        $transitionLabels = [
+            'in_progress' => ['label' => 'Start Working', 'destructive' => false],
+            'in_review' => ['label' => 'Submit for Review', 'destructive' => false],
+            'approved' => ['label' => 'Approve', 'destructive' => false],
+            'done' => ['label' => 'Mark as Done', 'destructive' => false],
+            'blocked' => ['label' => 'Mark as Blocked', 'destructive' => false],
+            'cancelled' => ['label' => 'Cancel', 'destructive' => true],
+            'revision_requested' => ['label' => 'Request Changes', 'destructive' => false],
+        ];
+
+        return array_map(
+            fn (string $status) => [
+                'value' => $status,
+                'label' => $transitionLabels[$status]['label'] ?? ucwords(str_replace('_', ' ', $status)),
+                'destructive' => $transitionLabels[$status]['destructive'] ?? false,
+            ],
+            $availableTransitions
+        );
+    }
+
+    /**
+     * Get rejection feedback if the task was recently sent back for revisions.
+     *
+     * @return array{comment: string, user: array{id: int, name: string, email: string}, createdAt: string}|null
+     */
+    private function getRejectionFeedback(Task $task): ?array
+    {
+        // Only show feedback if current status is InProgress
+        if ($task->status !== TaskStatus::InProgress) {
+            return null;
+        }
+
+        // Find the most recent revision_requested transition
+        $revisionTransition = $task->statusTransitions
+            ->filter(fn ($t) => $t->to_status === 'revision_requested' && $t->comment !== null)
+            ->sortByDesc('created_at')
+            ->first();
+
+        if ($revisionTransition === null) {
+            return null;
+        }
+
+        // Check if there's a transition from revision_requested to in_progress after the rejection
+        $autoTransition = $task->statusTransitions
+            ->filter(fn ($t) => $t->from_status === 'revision_requested' && $t->to_status === 'in_progress')
+            ->sortByDesc('created_at')
+            ->first();
+
+        // Only show if the revision happened and auto-transitioned to in_progress
+        if ($autoTransition === null || $autoTransition->created_at < $revisionTransition->created_at) {
+            return null;
+        }
+
+        return [
+            'comment' => $revisionTransition->comment,
+            'user' => [
+                'id' => $revisionTransition->user?->id ?? 0,
+                'name' => $revisionTransition->user?->name ?? 'Unknown',
+                'email' => $revisionTransition->user?->email ?? '',
+            ],
+            'createdAt' => $revisionTransition->created_at->toIso8601String(),
+        ];
     }
 }

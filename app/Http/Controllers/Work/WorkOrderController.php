@@ -10,6 +10,7 @@ use App\Models\Message;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\WorkOrder;
+use App\Services\WorkflowTransitionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -47,20 +48,27 @@ class WorkOrderController extends Controller
             'due_date' => $validated['dueDate'],
             'estimated_hours' => $validated['estimatedHours'] ?? 0,
             'acceptance_criteria' => $validated['acceptanceCriteria'] ?? [],
+            'accountable_id' => $user->id, // Creator is initially accountable (RACI)
         ]);
 
         return back();
     }
 
-    public function show(Request $request, WorkOrder $workOrder): Response
+    public function show(Request $request, WorkOrder $workOrder, WorkflowTransitionService $transitionService): Response
     {
         $this->authorize('view', $workOrder);
 
-        $workOrder->load(['project', 'assignedTo', 'createdBy', 'tasks', 'deliverables', 'documents']);
+        $workOrder->load(['project', 'assignedTo', 'createdBy', 'tasks', 'deliverables', 'documents', 'statusTransitions.user', 'accountable', 'responsible']);
 
         // Get communication thread and messages
         $thread = $workOrder->communicationThread;
         $messages = $thread ? $thread->messages()->with('author')->orderBy('created_at', 'desc')->get() : collect();
+
+        // Get allowed transitions for current user
+        $allowedTransitions = $this->getFormattedAllowedTransitions($workOrder, $request->user(), $transitionService);
+
+        // Get rejection feedback if applicable
+        $rejectionFeedback = $this->getRejectionFeedback($workOrder);
 
         return Inertia::render('work/work-orders/[id]', [
             'workOrder' => [
@@ -81,6 +89,13 @@ class WorkOrderController extends Controller
                 'sopName' => $workOrder->sop_name,
                 'createdBy' => (string) $workOrder->created_by_id,
                 'createdByName' => $workOrder->createdBy?->name ?? 'Unknown',
+                'accountableId' => $workOrder->accountable_id,
+                'accountableName' => $workOrder->accountable?->name,
+                'responsibleId' => $workOrder->responsible_id,
+                'responsibleName' => $workOrder->responsible?->name,
+                'reviewerId' => $workOrder->reviewer_id ?? null,
+                'consultedIds' => $workOrder->consulted_ids ?? [],
+                'informedIds' => $workOrder->informed_ids ?? [],
             ],
             'tasks' => $workOrder->tasks->map(fn (Task $task) => [
                 'id' => (string) $task->id,
@@ -129,7 +144,85 @@ class WorkOrderController extends Controller
                 'id' => (string) $user->id,
                 'name' => $user->name,
             ]),
+            'statusTransitions' => $workOrder->statusTransitions->map(fn ($transition) => [
+                'id' => $transition->id,
+                'fromStatus' => $transition->from_status,
+                'toStatus' => $transition->to_status,
+                'user' => $transition->user ? [
+                    'id' => $transition->user->id,
+                    'name' => $transition->user->name,
+                    'email' => $transition->user->email,
+                ] : null,
+                'createdAt' => $transition->created_at->toIso8601String(),
+                'comment' => $transition->comment,
+                'commentCategory' => null,
+            ]),
+            'allowedTransitions' => $allowedTransitions,
+            'raciValue' => [
+                'responsible_id' => $workOrder->responsible_id,
+                'accountable_id' => $workOrder->accountable_id,
+                'consulted_ids' => $workOrder->consulted_ids ?? [],
+                'informed_ids' => $workOrder->informed_ids ?? [],
+            ],
+            'rejectionFeedback' => $rejectionFeedback,
         ]);
+    }
+
+    /**
+     * Get formatted allowed transitions for the frontend.
+     */
+    private function getFormattedAllowedTransitions(WorkOrder $workOrder, $user, WorkflowTransitionService $transitionService): array
+    {
+        $transitions = $transitionService->getAvailableTransitions($workOrder, $user);
+
+        $labels = [
+            'draft' => 'Set as Draft',
+            'active' => 'Start Work Order',
+            'in_review' => 'Submit for Review',
+            'approved' => 'Approve',
+            'delivered' => 'Mark as Delivered',
+            'blocked' => 'Mark as Blocked',
+            'cancelled' => 'Cancel',
+            'revision_requested' => 'Request Changes',
+        ];
+
+        $destructive = ['cancelled', 'revision_requested'];
+
+        return collect($transitions)->map(fn ($status) => [
+            'value' => $status,
+            'label' => $labels[$status] ?? ucfirst(str_replace('_', ' ', $status)),
+            'destructive' => in_array($status, $destructive),
+        ])->values()->all();
+    }
+
+    /**
+     * Get rejection feedback if the work order was recently rejected.
+     */
+    private function getRejectionFeedback(WorkOrder $workOrder): ?array
+    {
+        if ($workOrder->status !== WorkOrderStatus::Active) {
+            return null;
+        }
+
+        $lastTransition = $workOrder->statusTransitions()
+            ->where('to_status', 'revision_requested')
+            ->with('user')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (! $lastTransition || ! $lastTransition->comment) {
+            return null;
+        }
+
+        return [
+            'comment' => $lastTransition->comment,
+            'user' => [
+                'id' => $lastTransition->user?->id,
+                'name' => $lastTransition->user?->name ?? 'Unknown',
+                'email' => $lastTransition->user?->email ?? '',
+            ],
+            'createdAt' => $lastTransition->created_at->toIso8601String(),
+        ];
     }
 
     public function update(Request $request, WorkOrder $workOrder): RedirectResponse

@@ -1,14 +1,18 @@
 <?php
 
+use App\Http\Controllers\ProjectRaciController;
 use App\Http\Controllers\Work\CommunicationController;
 use App\Http\Controllers\Work\DeliverableController;
 use App\Http\Controllers\Work\DeliverableVersionController;
 use App\Http\Controllers\Work\PartyController;
 use App\Http\Controllers\Work\ProjectController;
 use App\Http\Controllers\Work\TaskController;
+use App\Http\Controllers\Work\TaskTransitionController;
 use App\Http\Controllers\Work\TimeEntryController;
 use App\Http\Controllers\Work\WorkController;
 use App\Http\Controllers\Work\WorkOrderController;
+use App\Http\Controllers\Work\WorkOrderTransitionController;
+use App\Http\Controllers\WorkOrderRaciController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
@@ -25,6 +29,7 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
     Route::post('/projects/{project}/files', [ProjectController::class, 'uploadFile'])->name('projects.files.upload');
     Route::delete('/projects/{project}/files/{document}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
+    Route::patch('/projects/{project}/raci', [ProjectRaciController::class, 'update'])->name('projects.raci');
 
     // Work Orders
     Route::post('/work-orders', [WorkOrderController::class, 'store'])->name('work-orders.store');
@@ -32,6 +37,8 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::patch('/work-orders/{workOrder}', [WorkOrderController::class, 'update'])->name('work-orders.update');
     Route::delete('/work-orders/{workOrder}', [WorkOrderController::class, 'destroy'])->name('work-orders.destroy');
     Route::patch('/work-orders/{workOrder}/status', [WorkOrderController::class, 'updateStatus'])->name('work-orders.status');
+    Route::post('/work-orders/{workOrder}/transition', [WorkOrderTransitionController::class, 'transition'])->name('work-orders.transition');
+    Route::patch('/work-orders/{workOrder}/raci', [WorkOrderRaciController::class, 'update'])->name('work-orders.raci');
 
     // Tasks
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
@@ -39,6 +46,7 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::patch('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status');
+    Route::post('/tasks/{task}/transition', [TaskTransitionController::class, 'transition'])->name('tasks.transition');
     Route::patch('/tasks/{task}/checklist/{itemId}', [TaskController::class, 'toggleChecklist'])->name('tasks.checklist');
 
     // Time Entries

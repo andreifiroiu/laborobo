@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\ProjectStatus;
@@ -30,6 +32,7 @@ class ProjectFactory extends Factory
             'team_id' => Team::factory(),
             'party_id' => Party::factory(),
             'owner_id' => User::factory(),
+            'accountable_id' => fn (array $attributes) => $attributes['owner_id'],
             'name' => fake()->catchPhrase(),
             'description' => fake()->paragraph(),
             'status' => fake()->randomElement(ProjectStatus::cases()),

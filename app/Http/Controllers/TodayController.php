@@ -43,7 +43,7 @@ class TodayController extends Controller
     private function getDailySummary(Team $team, User $user): array
     {
         $pendingApprovals = InboxItem::forTeam($team->id)
-            ->byType(InboxItemType::Approval->value)
+            ->byType(InboxItemType::Approval)
             ->count();
 
         $overdueTasks = Task::forTeam($team->id)
@@ -96,7 +96,7 @@ class TodayController extends Controller
     private function getApprovals(Team $team): array
     {
         return InboxItem::forTeam($team->id)
-            ->byType(InboxItemType::Approval->value)
+            ->byType(InboxItemType::Approval)
             ->with(['relatedWorkOrder.project'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -230,7 +230,7 @@ class TodayController extends Controller
                 ->count(),
 
             'approvalsPending' => InboxItem::forTeam($team->id)
-                ->byType(InboxItemType::Approval->value)
+                ->byType(InboxItemType::Approval)
                 ->count(),
 
             'hoursLoggedToday' => (float) TimeEntry::forTeam($team->id)

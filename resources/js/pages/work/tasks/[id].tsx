@@ -11,6 +11,8 @@ import {
     Plus,
     CheckCircle2,
     Circle,
+    AlertTriangle,
+    History,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -18,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
     Dialog,
     DialogContent,
@@ -43,19 +46,98 @@ import {
 import InputError from '@/components/input-error';
 import { StatusBadge, ProgressBar } from '@/components/work';
 import { HoursProgressIndicator } from '@/components/time-tracking';
-import { useState, useEffect } from 'react';
-import type { TaskDetailProps } from '@/types/work';
+import {
+    TransitionButton,
+    TransitionDialog,
+    TransitionHistory,
+    TimerConfirmationDialog,
+    type TransitionOption,
+    type StatusTransition,
+} from '@/components/workflow';
+import { taskStatusLabels } from '@/components/ui/status-badge';
+import { useState, useEffect, useCallback } from 'react';
 import type { BreadcrumbItem } from '@/types';
+
+/**
+ * Extended Task type with additional workflow properties
+ */
+interface TaskWithWorkflow {
+    id: string;
+    title: string;
+    description: string | null;
+    workOrderId: string;
+    workOrderTitle: string;
+    projectId: string;
+    projectName?: string;
+    assignedToId: string | null;
+    assignedToName: string;
+    status: string;
+    dueDate: string;
+    estimatedHours: number;
+    actualHours: number;
+    checklistItems: Array<{ id: string; text: string; completed: boolean }>;
+    dependencies: string[];
+    isBlocked: boolean;
+}
+
+/**
+ * Time entry type for display
+ */
+interface TimeEntryDisplay {
+    id: string;
+    userId: string;
+    userName: string;
+    hours: number;
+    date: string;
+    mode: string;
+    note: string | null;
+    startedAt: string | null;
+    stoppedAt: string | null;
+}
+
+/**
+ * Rejection feedback from a previous revision request
+ */
+interface RejectionFeedback {
+    comment: string;
+    user: { id: number; name: string; email: string };
+    createdAt: string;
+}
+
+/**
+ * Extended props with workflow features
+ */
+interface TaskDetailProps {
+    task: TaskWithWorkflow;
+    timeEntries: TimeEntryDisplay[];
+    activeTimer: { id: string; startedAt: string } | null;
+    teamMembers: Array<{ id: string; name: string }>;
+    statusTransitions?: StatusTransition[];
+    allowedTransitions?: TransitionOption[];
+    rejectionFeedback?: RejectionFeedback | null;
+}
 
 export default function TaskDetail({
     task,
     timeEntries,
     activeTimer,
     teamMembers,
+    statusTransitions = [],
+    allowedTransitions = [],
+    rejectionFeedback = null,
 }: TaskDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [logTimeDialogOpen, setLogTimeDialogOpen] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [transitionDialogOpen, setTransitionDialogOpen] = useState(false);
+    const [selectedTransition, setSelectedTransition] = useState<string | null>(null);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [transitionError, setTransitionError] = useState<string | null>(null);
+    const [timerConfirmDialogOpen, setTimerConfirmDialogOpen] = useState(false);
+    const [isStartingTimer, setIsStartingTimer] = useState(false);
+    const [localStatus, setLocalStatus] = useState(task.status);
+    const [localTransitions, setLocalTransitions] = useState(statusTransitions);
+    const [localAllowedTransitions, setLocalAllowedTransitions] = useState(allowedTransitions);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -97,6 +179,19 @@ export default function TaskDetail({
         };
     }, [activeTimer]);
 
+    // Sync local state with props
+    useEffect(() => {
+        setLocalStatus(task.status);
+    }, [task.status]);
+
+    useEffect(() => {
+        setLocalTransitions(statusTransitions);
+    }, [statusTransitions]);
+
+    useEffect(() => {
+        setLocalAllowedTransitions(allowedTransitions);
+    }, [allowedTransitions]);
+
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
@@ -112,17 +207,207 @@ export default function TaskDetail({
         });
     };
 
-    const handleStatusChange = (status: string) => {
-        router.patch(`/work/tasks/${task.id}/status`, { status });
+    const handleToggleChecklist = (itemId: string, completed: boolean) => {
+        router.patch(`/work/tasks/${task.id}/checklist/${itemId}`, {
+            completed: !completed,
+        });
     };
 
-    const handleToggleChecklist = (itemIndex: number) => {
-        router.patch(`/work/tasks/${task.id}/checklist/${itemIndex}`);
-    };
+    /**
+     * Handle transition button click - open dialog for transitions that need confirmation
+     */
+    const handleTransitionSelect = useCallback((targetStatus: string) => {
+        setSelectedTransition(targetStatus);
+        setTransitionDialogOpen(true);
+        setTransitionError(null);
+    }, []);
 
-    const handleStartTimer = () => {
-        router.post(`/work/tasks/${task.id}/timer/start`);
-    };
+    /**
+     * Execute the transition via API
+     */
+    const handleTransitionConfirm = useCallback(
+        async (comment?: string) => {
+            if (!selectedTransition) return;
+
+            setIsTransitioning(true);
+            setTransitionError(null);
+
+            try {
+                const response = await fetch(`/work/tasks/${task.id}/transition`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN':
+                            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({
+                        status: selectedTransition,
+                        comment: comment || undefined,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setTransitionError(data.message || 'Failed to update status');
+                    return;
+                }
+
+                // Update local state with the new status and transitions
+                setLocalStatus(data.task.status);
+                if (data.task.statusTransitions) {
+                    setLocalTransitions(
+                        data.task.statusTransitions.map(
+                            (t: {
+                                id: string;
+                                from_status: string;
+                                to_status: string;
+                                user_id: string | null;
+                                comment: string | null;
+                                created_at: string;
+                            }) => ({
+                                id: parseInt(t.id, 10),
+                                fromStatus: t.from_status,
+                                toStatus: t.to_status,
+                                user: { id: parseInt(t.user_id || '0', 10), name: 'User', email: '' },
+                                createdAt: t.created_at,
+                                comment: t.comment,
+                                commentCategory: null,
+                            })
+                        )
+                    );
+                }
+
+                // Update allowed transitions based on new status
+                updateAllowedTransitions(data.task.status);
+
+                setTransitionDialogOpen(false);
+                setSelectedTransition(null);
+
+                // Reload page to get fresh data
+                router.reload({ only: ['task', 'statusTransitions', 'allowedTransitions', 'rejectionFeedback'] });
+            } catch (error) {
+                setTransitionError('An error occurred while updating the status');
+            } finally {
+                setIsTransitioning(false);
+            }
+        },
+        [selectedTransition, task.id]
+    );
+
+    /**
+     * Update allowed transitions based on new status
+     */
+    const updateAllowedTransitions = useCallback((newStatus: string) => {
+        const transitionMap: Record<string, TransitionOption[]> = {
+            todo: [
+                { value: 'in_progress', label: 'Start Working' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            in_progress: [
+                { value: 'in_review', label: 'Submit for Review' },
+                { value: 'done', label: 'Mark as Done' },
+                { value: 'blocked', label: 'Mark as Blocked' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            in_review: [
+                { value: 'approved', label: 'Approve' },
+                { value: 'revision_requested', label: 'Request Changes' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            approved: [
+                { value: 'done', label: 'Mark as Done' },
+                { value: 'revision_requested', label: 'Request Changes' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            blocked: [
+                { value: 'in_progress', label: 'Unblock' },
+                { value: 'cancelled', label: 'Cancel', destructive: true },
+            ],
+            done: [],
+            cancelled: [],
+            revision_requested: [],
+        };
+        setLocalAllowedTransitions(transitionMap[newStatus] || []);
+    }, []);
+
+    const handleTransitionCancel = useCallback(() => {
+        setTransitionDialogOpen(false);
+        setSelectedTransition(null);
+        setTransitionError(null);
+    }, []);
+
+    /**
+     * Handle timer start with confirmation flow
+     */
+    const handleStartTimer = useCallback(async () => {
+        setIsStartingTimer(true);
+
+        try {
+            const response = await fetch(`/work/tasks/${task.id}/timer/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN':
+                        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.confirmation_required) {
+                setTimerConfirmDialogOpen(true);
+            } else if (data.blocked) {
+                // Timer is blocked for cancelled tasks
+                alert(data.message);
+            } else if (data.started) {
+                // Timer started successfully
+                router.reload();
+            }
+        } catch (error) {
+            alert('Failed to start timer');
+        } finally {
+            setIsStartingTimer(false);
+        }
+    }, [task.id]);
+
+    /**
+     * Confirm timer start and transition status
+     */
+    const handleTimerConfirm = useCallback(async () => {
+        setIsStartingTimer(true);
+
+        try {
+            const response = await fetch(`/work/tasks/${task.id}/timer/start?confirmed=true`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN':
+                        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.started) {
+                setTimerConfirmDialogOpen(false);
+                router.reload();
+            } else {
+                alert(data.message || 'Failed to start timer');
+            }
+        } catch (error) {
+            alert('Failed to start timer');
+        } finally {
+            setIsStartingTimer(false);
+        }
+    }, [task.id]);
+
+    const handleTimerConfirmCancel = useCallback(() => {
+        setTimerConfirmDialogOpen(false);
+    }, []);
 
     const handleStopTimer = () => {
         router.post(`/work/tasks/${task.id}/timer/stop`);
@@ -133,7 +418,7 @@ export default function TaskDetail({
         timeForm.post('/work/time-entries', {
             data: {
                 ...timeForm.data,
-                task_id: task.id,
+                taskId: task.id,
             },
             preserveScroll: true,
             onSuccess: () => {
@@ -155,30 +440,65 @@ export default function TaskDetail({
 
     const totalTimeLogged = timeEntries.reduce((sum, entry) => sum + entry.hours, 0);
 
+    // Get the label for the selected transition
+    const selectedTransitionLabel = selectedTransition
+        ? taskStatusLabels[selectedTransition as keyof typeof taskStatusLabels] || selectedTransition
+        : '';
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={task.title} />
 
             <div className="flex h-full flex-1 flex-col">
+                {/* Rejection Feedback Banner */}
+                {rejectionFeedback && (
+                    <div className="px-6 pt-6">
+                        <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/50">
+                            <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                            <AlertTitle className="text-orange-900 dark:text-orange-100">
+                                Revision Requested
+                            </AlertTitle>
+                            <AlertDescription className="text-orange-800 dark:text-orange-200">
+                                <p className="mt-1">{rejectionFeedback.comment}</p>
+                                <p className="mt-2 text-sm text-orange-600 dark:text-orange-400">
+                                    Requested by {rejectionFeedback.user.name} on{' '}
+                                    {new Date(rejectionFeedback.createdAt).toLocaleDateString()}
+                                </p>
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                )}
+
                 {/* Header */}
-                <div className="px-6 py-6 border-b border-sidebar-border/70 dark:border-sidebar-border">
-                    <div className="flex items-center gap-4 mb-4">
+                <div className="border-sidebar-border/70 dark:border-sidebar-border border-b px-6 py-6">
+                    <div className="mb-4 flex items-center gap-4">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href={`/work/work-orders/${task.workOrderId}`}>
                                 <ArrowLeft className="h-4 w-4" />
                             </Link>
                         </Button>
                         <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-2xl font-bold text-foreground">{task.title}</h1>
-                                <StatusBadge status={task.status} type="task" />
+                            <div className="mb-1 flex items-center gap-3">
+                                <h1 className="text-foreground text-2xl font-bold">{task.title}</h1>
+                                <StatusBadge status={localStatus} type="task" />
                                 {task.isBlocked && <Badge variant="destructive">Blocked</Badge>}
                             </div>
                             <p className="text-muted-foreground">
                                 {task.workOrderTitle}
-                                {task.description && ` • ${task.description}`}
+                                {task.description && ` - ${task.description}`}
                             </p>
                         </div>
+
+                        {/* Transition Button */}
+                        {localAllowedTransitions.length > 0 && (
+                            <TransitionButton
+                                currentStatus={localStatus}
+                                allowedTransitions={localAllowedTransitions}
+                                onTransition={handleTransitionSelect}
+                                isLoading={isTransitioning}
+                            />
+                        )}
+
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="icon">
@@ -187,12 +507,12 @@ export default function TaskDetail({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                                    <Edit className="h-4 w-4 mr-2" />
+                                    <Edit className="mr-2 h-4 w-4" />
                                     Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -200,75 +520,50 @@ export default function TaskDetail({
                     </div>
 
                     {/* Task Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <User className="h-5 w-5 text-muted-foreground" />
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <User className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Assigned To</div>
+                                <div className="text-muted-foreground text-xs">Assigned To</div>
                                 <div className="font-medium">{task.assignedToName || 'Unassigned'}</div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <Clock className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Estimated</div>
+                                <div className="text-muted-foreground text-xs">Estimated</div>
                                 <div className="font-medium">{task.estimatedHours}h</div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <Clock className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Logged</div>
+                                <div className="text-muted-foreground text-xs">Logged</div>
                                 <div className="font-medium">{totalTimeLogged.toFixed(1)}h</div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <CheckCircle2 className="text-muted-foreground h-5 w-5" />
                             <div>
-                                <div className="text-xs text-muted-foreground">Checklist</div>
+                                <div className="text-muted-foreground text-xs">Checklist</div>
                                 <div className="font-medium">
                                     {completedItems}/{totalItems}
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Status Actions */}
-                    <div className="mt-4 flex gap-2">
-                        {task.status === 'todo' && (
-                            <Button size="sm" onClick={() => handleStatusChange('in_progress')}>
-                                Start Working
-                            </Button>
-                        )}
-                        {task.status === 'in_progress' && (
-                            <Button size="sm" onClick={() => handleStatusChange('done')}>
-                                Mark as Done
-                            </Button>
-                        )}
-                        {task.status === 'done' && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleStatusChange('in_progress')}
-                            >
-                                Reopen
-                            </Button>
-                        )}
-                    </div>
                 </div>
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-auto p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Timer & Time Tracking */}
                         <div>
-                            <h2 className="text-lg font-bold text-foreground mb-4">Time Tracking</h2>
+                            <h2 className="text-foreground mb-4 text-lg font-bold">Time Tracking</h2>
 
                             {/* Hours Progress Indicator */}
-                            <div className="p-4 bg-card border border-border rounded-xl mb-4">
-                                <h3 className="text-sm font-medium text-foreground mb-3">
-                                    Actual vs Estimated
-                                </h3>
+                            <div className="bg-card border-border mb-4 rounded-xl border p-4">
+                                <h3 className="text-foreground mb-3 text-sm font-medium">Actual vs Estimated</h3>
                                 <HoursProgressIndicator
                                     actualHours={task.actualHours}
                                     estimatedHours={task.estimatedHours}
@@ -276,29 +571,29 @@ export default function TaskDetail({
                             </div>
 
                             {/* Timer Widget */}
-                            <div className="p-6 bg-card border border-border rounded-xl mb-4">
-                                <div className="text-center mb-4">
-                                    <div className="text-4xl font-mono font-bold text-foreground mb-2">
+                            <div className="bg-card border-border mb-4 rounded-xl border p-6">
+                                <div className="mb-4 text-center">
+                                    <div className="text-foreground mb-2 font-mono text-4xl font-bold">
                                         {formatTime(elapsedTime)}
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-muted-foreground text-sm">
                                         {activeTimer ? 'Timer running...' : 'Timer stopped'}
                                     </p>
                                 </div>
                                 <div className="flex justify-center gap-2">
                                     {activeTimer ? (
                                         <Button onClick={handleStopTimer} variant="destructive">
-                                            <Pause className="h-4 w-4 mr-2" />
+                                            <Pause className="mr-2 h-4 w-4" />
                                             Stop Timer
                                         </Button>
                                     ) : (
-                                        <Button onClick={handleStartTimer}>
-                                            <Play className="h-4 w-4 mr-2" />
-                                            Start Timer
+                                        <Button onClick={handleStartTimer} disabled={isStartingTimer}>
+                                            <Play className="mr-2 h-4 w-4" />
+                                            {isStartingTimer ? 'Starting...' : 'Start Timer'}
                                         </Button>
                                     )}
                                     <Button variant="outline" onClick={() => setLogTimeDialogOpen(true)}>
-                                        <Plus className="h-4 w-4 mr-2" />
+                                        <Plus className="mr-2 h-4 w-4" />
                                         Log Time
                                     </Button>
                                 </div>
@@ -306,27 +601,24 @@ export default function TaskDetail({
 
                             {/* Time Entries */}
                             <div className="space-y-2">
-                                <h3 className="text-sm font-medium text-foreground">Time Entries</h3>
+                                <h3 className="text-foreground text-sm font-medium">Time Entries</h3>
                                 {timeEntries.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground py-4 text-center">
-                                        No time logged yet
-                                    </p>
+                                    <p className="text-muted-foreground py-4 text-center text-sm">No time logged yet</p>
                                 ) : (
                                     timeEntries.map((entry) => (
                                         <div
                                             key={entry.id}
-                                            className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                                            className="bg-muted flex items-center justify-between rounded-lg p-3"
                                         >
                                             <div>
                                                 <div className="font-medium">{entry.hours}h</div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {entry.userName} •{' '}
-                                                    {new Date(entry.date).toLocaleDateString()} •{' '}
+                                                <div className="text-muted-foreground text-xs">
+                                                    {entry.userName} - {new Date(entry.date).toLocaleDateString()} -{' '}
                                                     {entry.mode}
                                                 </div>
                                             </div>
                                             {entry.note && (
-                                                <p className="text-sm text-muted-foreground">{entry.note}</p>
+                                                <p className="text-muted-foreground text-sm">{entry.note}</p>
                                             )}
                                         </div>
                                     ))
@@ -336,11 +628,11 @@ export default function TaskDetail({
 
                         {/* Checklist */}
                         <div>
-                            <h2 className="text-lg font-bold text-foreground mb-4">Checklist</h2>
+                            <h2 className="text-foreground mb-4 text-lg font-bold">Checklist</h2>
 
                             {totalItems > 0 && (
                                 <div className="mb-4">
-                                    <div className="flex items-center justify-between text-sm mb-2">
+                                    <div className="mb-2 flex items-center justify-between text-sm">
                                         <span className="text-muted-foreground">Progress</span>
                                         <span className="font-medium">{progress}%</span>
                                     </div>
@@ -349,24 +641,22 @@ export default function TaskDetail({
                             )}
 
                             {totalItems === 0 ? (
-                                <div className="text-center py-8 bg-muted/50 rounded-xl">
+                                <div className="bg-muted/50 rounded-xl py-8 text-center">
                                     <p className="text-muted-foreground">No checklist items</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {task.checklistItems.map((item, index) => (
+                                    {task.checklistItems.map((item) => (
                                         <div
                                             key={item.id}
-                                            className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg"
+                                            className="bg-card border-border flex items-center gap-3 rounded-lg border p-3"
                                         >
                                             <Checkbox
                                                 checked={item.completed}
-                                                onCheckedChange={() => handleToggleChecklist(index)}
+                                                onCheckedChange={() => handleToggleChecklist(item.id, item.completed)}
                                             />
                                             <span
-                                                className={
-                                                    item.completed ? 'line-through text-muted-foreground' : ''
-                                                }
+                                                className={item.completed ? 'text-muted-foreground line-through' : ''}
                                             >
                                                 {item.text}
                                             </span>
@@ -378,16 +668,14 @@ export default function TaskDetail({
                             {/* Dependencies */}
                             {task.dependencies.length > 0 && (
                                 <div className="mt-6">
-                                    <h3 className="text-sm font-medium text-foreground mb-3">
-                                        Dependencies
-                                    </h3>
+                                    <h3 className="text-foreground mb-3 text-sm font-medium">Dependencies</h3>
                                     <div className="space-y-2">
                                         {task.dependencies.map((dep, i) => (
                                             <div
                                                 key={i}
-                                                className="flex items-center gap-2 p-3 bg-muted rounded-lg text-sm"
+                                                className="bg-muted flex items-center gap-2 rounded-lg p-3 text-sm"
                                             >
-                                                <Circle className="h-4 w-4 text-muted-foreground" />
+                                                <Circle className="text-muted-foreground h-4 w-4" />
                                                 <span>{dep}</span>
                                             </div>
                                         ))}
@@ -395,9 +683,39 @@ export default function TaskDetail({
                                 </div>
                             )}
                         </div>
+
+                        {/* Transition History */}
+                        <div>
+                            <div className="mb-4 flex items-center gap-2">
+                                <History className="text-muted-foreground h-5 w-5" />
+                                <h2 className="text-foreground text-lg font-bold">Activity</h2>
+                            </div>
+                            <div className="bg-card border-border rounded-xl border p-4">
+                                <TransitionHistory transitions={localTransitions} variant="task" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Transition Dialog */}
+            <TransitionDialog
+                isOpen={transitionDialogOpen}
+                targetStatus={selectedTransition || ''}
+                targetLabel={selectedTransitionLabel}
+                onConfirm={handleTransitionConfirm}
+                onCancel={handleTransitionCancel}
+                isLoading={isTransitioning}
+            />
+
+            {/* Timer Confirmation Dialog */}
+            <TimerConfirmationDialog
+                isOpen={timerConfirmDialogOpen}
+                currentStatus={localStatus}
+                onConfirm={handleTimerConfirm}
+                onCancel={handleTimerConfirmCancel}
+                isLoading={isStartingTimer}
+            />
 
             {/* Edit Dialog */}
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -511,11 +829,7 @@ export default function TaskDetail({
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setLogTimeDialogOpen(false)}
-                            >
+                            <Button type="button" variant="outline" onClick={() => setLogTimeDialogOpen(false)}>
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={timeForm.processing}>
@@ -525,6 +839,22 @@ export default function TaskDetail({
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Transition Error Display */}
+            {transitionError && (
+                <div className="fixed right-4 bottom-4 z-50 max-w-sm rounded-lg border border-red-200 bg-red-50 p-4 shadow-lg dark:border-red-800 dark:bg-red-950">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        <p className="text-sm text-red-800 dark:text-red-200">{transitionError}</p>
+                        <button
+                            onClick={() => setTransitionError(null)}
+                            className="ml-auto text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

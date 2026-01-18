@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\TaskStatus;
@@ -32,9 +34,15 @@ class TaskFactory extends Factory
             'work_order_id' => WorkOrder::factory(),
             'project_id' => Project::factory(),
             'assigned_to_id' => fake()->optional(0.8)->passthrough(User::factory()),
+            'created_by_id' => User::factory(),
+            'reviewer_id' => fake()->optional(0.3)->passthrough(User::factory()),
             'title' => fake()->sentence(5),
             'description' => fake()->optional()->paragraph(),
-            'status' => fake()->randomElement(TaskStatus::cases()),
+            'status' => fake()->randomElement([
+                TaskStatus::Todo,
+                TaskStatus::InProgress,
+                TaskStatus::Done,
+            ]),
             'due_date' => fake()->dateTimeBetween('now', '+1 month'),
             'estimated_hours' => $estimatedHours,
             'actual_hours' => fake()->numberBetween(0, $estimatedHours),
@@ -74,6 +82,20 @@ class TaskFactory extends Factory
         ]);
     }
 
+    public function inReview(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => TaskStatus::InReview,
+        ]);
+    }
+
+    public function approved(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => TaskStatus::Approved,
+        ]);
+    }
+
     public function done(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -84,7 +106,22 @@ class TaskFactory extends Factory
     public function blocked(): static
     {
         return $this->state(fn (array $attributes) => [
+            'status' => TaskStatus::Blocked,
             'is_blocked' => true,
+        ]);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => TaskStatus::Cancelled,
+        ]);
+    }
+
+    public function revisionRequested(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => TaskStatus::RevisionRequested,
         ]);
     }
 }
