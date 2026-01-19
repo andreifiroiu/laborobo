@@ -15,6 +15,7 @@ use App\Models\AuditLog;
 use App\Models\InboxItem;
 use App\Models\StatusTransition;
 use App\Models\Task;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\WorkOrder;
 use Illuminate\Database\Eloquent\Model;
@@ -136,6 +137,11 @@ class WorkflowTransitionService
         // Check AI agent restrictions
         if ($actor instanceof AIAgent) {
             $this->validateAIAgentPermission($item, $fromStatusValue, $toStatusValue);
+        }
+
+        // Check role-based permissions for human users
+        if ($actor instanceof User) {
+            $this->validateRoleBasedPermission($item, $actor, $fromStatusValue, $toStatusValue);
         }
 
         // Check if comment is required for rejection transitions
@@ -515,5 +521,111 @@ class WorkflowTransitionService
         }
 
         return array_values($availableTransitions);
+    }
+
+    /**
+     * Validate role-based permissions for human users.
+     *
+     * @throws InvalidTransitionException
+     */
+    private function validateRoleBasedPermission(
+        Model $item,
+        User $user,
+        string $fromStatus,
+        string $toStatus,
+    ): void {
+        // Only validate specific checkpoint transitions
+        if ($fromStatus === 'in_review' && $toStatus === 'approved') {
+            $this->validateApprovalPermission($item, $user);
+        } elseif ($fromStatus === 'approved' && in_array($toStatus, ['done', 'delivered'], true)) {
+            $this->validateDeliveryPermission($item, $user);
+        }
+    }
+
+    /**
+     * Validate permission for InReview → Approved transition.
+     * Allowed: Team owners, managers, OR any user except the original submitter (prevents self-approval).
+     *
+     * @throws InvalidTransitionException
+     */
+    private function validateApprovalPermission(Model $item, User $user): void
+    {
+        /** @var Task|WorkOrder $item */
+        $team = $item->team;
+
+        // Team owners can always approve
+        if ($user->ownsTeam($team)) {
+            return;
+        }
+
+        // Managers/admins can always approve
+        if ($this->isTeamManager($user, $team)) {
+            return;
+        }
+
+        // For non-managers: check if this user submitted the review (prevent self-approval)
+        $submitter = $this->findReviewSubmitter($item);
+        if ($submitter !== null && $submitter->id === $user->id) {
+            throw InvalidTransitionException::permissionDenied('in_review', 'approved');
+        }
+    }
+
+    /**
+     * Validate permission for Approved → Done/Delivered transition.
+     * Allowed: Team owners, managers, OR the assigned user.
+     *
+     * @throws InvalidTransitionException
+     */
+    private function validateDeliveryPermission(Model $item, User $user): void
+    {
+        /** @var Task|WorkOrder $item */
+        $team = $item->team;
+        $toStatus = $item instanceof Task ? 'done' : 'delivered';
+
+        // Team owners can always mark as delivered
+        if ($user->ownsTeam($team)) {
+            return;
+        }
+
+        // Managers/admins can always mark as delivered
+        if ($this->isTeamManager($user, $team)) {
+            return;
+        }
+
+        // For Tasks: the assigned user can mark as done
+        if ($item instanceof Task && $item->assigned_to_id === $user->id) {
+            return;
+        }
+
+        // WorkOrders don't have direct assignment, so only managers/owners can deliver
+        throw InvalidTransitionException::permissionDenied('approved', $toStatus);
+    }
+
+    /**
+     * Check if user has a manager or admin role on the team.
+     */
+    private function isTeamManager(User $user, Team $team): bool
+    {
+        return $user->hasTeamRole($team, ['admin', 'manager']);
+    }
+
+    /**
+     * Find the user who submitted the item for review (moved to InReview status).
+     */
+    private function findReviewSubmitter(Model $item): ?User
+    {
+        /** @var Task|WorkOrder $item */
+        $transition = StatusTransition::query()
+            ->where('transitionable_type', get_class($item))
+            ->where('transitionable_id', $item->id)
+            ->where('to_status', 'in_review')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($transition === null || $transition->user_id === null) {
+            return null;
+        }
+
+        return User::find($transition->user_id);
     }
 }

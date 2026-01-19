@@ -16,7 +16,7 @@
 11. [~] Project Management UI — Project detail pages showing work orders, tasks, timeline, team members, and activity feed. Index page exists, detail views in progress. `M`
 12. [x] Deliverable Management UI — Deliverable entities tied to tasks/work orders, file upload system, version history, and draft/final status marking. `M`
 13. [x] Time Tracking Integration — Time entry UI for logging hours against tasks/work orders, timer functionality, time log history, and basic time reporting by user and project. `M`
-14. [ ] Human Checkpoint Workflow — Draft > Review > Approve > Deliver state machine for work items, role-based transition permissions, and approval flow enforcement. `L`
+14. [~] Human Checkpoint Workflow — Draft > Review > Approve > Deliver state machine for work items, role-based transition permissions, and approval flow enforcement. Core workflow engine, status enums, WorkflowTransitionService, RACI fields, ReviewerResolver, StatusTransition audit trail, and frontend components complete. Remaining: role-based permission validation, inbox approval auto-transition, rejection feedback routing. `L`
 
 ## Communications and Context
 15. [ ] Communications Log — Threaded conversation system tied to work items (projects, work orders, tasks), real-time message updates, @mentions, and context preservation. `L`
