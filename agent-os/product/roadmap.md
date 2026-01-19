@@ -10,13 +10,13 @@
 7. [x] Settings and Preferences — WorkspaceSettings, NotificationPreferences, TeamIntegrations, BillingInfo, and AuditLog models with comprehensive settings UI pages. `L`
 8. [x] Today Dashboard — Today page showing daily overview with tasks due, approvals pending, recent activity, and quick actions for common workflows. `M`
 
-## Core Operations (In Progress)
-9. [~] Work Order Intake UI — Forms and interfaces for creating work orders manually with title, description, scope, success criteria, budget estimates, and team member assignment. Basic index/show pages exist, full CRUD in progress. `M`
-10. [~] Task Management UI — Task creation within work orders, assignment to users, status tracking (To Do, In Progress, Blocked, Complete), and dependencies. Models complete, UI in progress. `M`
-11. [~] Project Management UI — Project detail pages showing work orders, tasks, timeline, team members, and activity feed. Index page exists, detail views in progress. `M`
+## Core Operations (Complete)
+9. [x] Work Order Intake UI — Forms and interfaces for creating work orders manually with title, description, scope, success criteria, budget estimates, and team member assignment. Modal-based creation from work page, comprehensive detail page with inline editing, RACI management, and workflow transitions. `M`
+10. [x] Task Management UI — Task creation within work orders, assignment to users, status tracking (To Do, In Progress, Blocked, Complete), and dependencies. Embedded task list in work order detail, full task detail page with timer, checklist, and workflow transitions. `M`
+11. [x] Project Management UI — Project detail pages showing work orders, tasks, timeline, team members, and activity feed. Tree-based navigation on work page, comprehensive detail page with documents, communications, and team management. `M`
 12. [x] Deliverable Management UI — Deliverable entities tied to tasks/work orders, file upload system, version history, and draft/final status marking. `M`
 13. [x] Time Tracking Integration — Time entry UI for logging hours against tasks/work orders, timer functionality, time log history, and basic time reporting by user and project. `M`
-14. [~] Human Checkpoint Workflow — Draft > Review > Approve > Deliver state machine for work items, role-based transition permissions, and approval flow enforcement. Core workflow engine, status enums, WorkflowTransitionService, RACI fields, ReviewerResolver, StatusTransition audit trail, and frontend components complete. Remaining: role-based permission validation, inbox approval auto-transition, rejection feedback routing. `L`
+14. [x] Human Checkpoint Workflow — Draft > Review > Approve > Deliver state machine for work items, role-based transition permissions, and approval flow enforcement. Core workflow engine, status enums, WorkflowTransitionService, RACI fields, ReviewerResolver, StatusTransition audit trail, frontend components, role-based permission validation (designated reviewer enforcement), inbox approval auto-transitions, and rejection feedback routing with notifications complete. `L`
 
 ## Communications and Context
 15. [ ] Communications Log — Threaded conversation system tied to work items (projects, work orders, tasks), real-time message updates, @mentions, and context preservation. `L`
