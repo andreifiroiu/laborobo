@@ -10,7 +10,9 @@ use App\Exceptions\InvalidTransitionException;
 use App\Models\InboxItem;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Models\WorkOrder;
+use App\Notifications\RejectionFeedbackNotification;
 use App\Services\WorkflowTransitionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,7 +29,7 @@ class InboxController extends Controller
         $user = $request->user();
         $team = $user->currentTeam;
 
-        if (!$team) {
+        if (! $team) {
             return Inertia::render('inbox/index', [
                 'inboxItems' => [],
                 'teamMembers' => [],
@@ -220,12 +222,12 @@ class InboxController extends Controller
         }
 
         if (count($errors) > 0) {
-            $message = "{$successCount} item(s) processed. Errors: " . implode('; ', $errors);
+            $message = "{$successCount} item(s) processed. Errors: ".implode('; ', $errors);
 
             return back()->with('warning', $message);
         }
 
-        return back()->with('success', ucfirst($validated['action']) . " action completed for {$successCount} item(s).");
+        return back()->with('success', ucfirst($validated['action'])." action completed for {$successCount} item(s).");
     }
 
     /**
@@ -287,7 +289,7 @@ class InboxController extends Controller
             'team_id' => $originalItem->team_id,
             'type' => InboxItemType::Flag,
             'title' => "Revision requested: {$originalItem->title}",
-            'content_preview' => "Your submission requires revisions. See feedback below.",
+            'content_preview' => 'Your submission requires revisions. See feedback below.',
             'full_content' => $this->buildFeedbackContent($originalItem, $reviewer, $feedback),
             'source_id' => "user-{$reviewer->id}",
             'source_name' => $reviewer->name,
@@ -300,6 +302,18 @@ class InboxController extends Controller
             'urgency' => $originalItem->urgency,
             'reviewer_id' => $submitterUserId,
         ]);
+
+        // Send notification to the submitter
+        $submitter = User::find($submitterUserId);
+        $approvable = $originalItem->approvable;
+
+        if ($submitter !== null && $approvable !== null) {
+            $submitter->notify(new RejectionFeedbackNotification(
+                item: $approvable,
+                reviewer: $reviewer,
+                feedback: $feedback,
+            ));
+        }
     }
 
     /**
@@ -309,9 +323,9 @@ class InboxController extends Controller
     {
         $content = "## Revision Requested\n\n";
         $content .= "**Reviewed by:** {$reviewer->name}\n";
-        $content .= '**Date:** ' . now()->toDateTimeString() . "\n\n";
+        $content .= '**Date:** '.now()->toDateTimeString()."\n\n";
         $content .= "### Feedback\n\n";
-        $content .= $feedback . "\n\n";
+        $content .= $feedback."\n\n";
         $content .= "---\n\n";
         $content .= "### Original Submission\n\n";
         $content .= $originalItem->full_content ?? $originalItem->content_preview ?? 'No content available.';

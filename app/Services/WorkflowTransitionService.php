@@ -544,7 +544,8 @@ class WorkflowTransitionService
 
     /**
      * Validate permission for InReview → Approved transition.
-     * Allowed: Team owners, managers, OR any user except the original submitter (prevents self-approval).
+     * Allowed: Team owners, managers, OR the designated reviewer (if set).
+     * If no reviewer is designated, any non-submitter team member can approve (backward compatibility).
      *
      * @throws InvalidTransitionException
      */
@@ -567,6 +568,19 @@ class WorkflowTransitionService
         $submitter = $this->findReviewSubmitter($item);
         if ($submitter !== null && $submitter->id === $user->id) {
             throw InvalidTransitionException::permissionDenied('in_review', 'approved');
+        }
+
+        // Check if user is the designated reviewer
+        $designatedReviewer = $this->reviewerResolver->resolve($item);
+
+        // If no reviewer is designated, allow any non-submitter team member (backward compatibility)
+        if ($designatedReviewer === null) {
+            return;
+        }
+
+        // Only the designated reviewer can approve
+        if ($designatedReviewer->id !== $user->id) {
+            throw InvalidTransitionException::notDesignatedReviewer('in_review', 'approved');
         }
     }
 

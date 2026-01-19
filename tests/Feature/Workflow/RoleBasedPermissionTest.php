@@ -94,19 +94,20 @@ test('user cannot self-approve their own submission', function () {
     $this->service->transition($task, $this->otherUser, TaskStatus::Approved);
 })->throws(InvalidTransitionException::class, 'permission');
 
-test('different user can approve work when not self-approving', function () {
-    // Another user for approval
+test('designated reviewer can approve work when not self-approving', function () {
+    // Another user designated as reviewer
     $thirdUser = User::factory()->create();
     $thirdUser->current_team_id = $this->team->id;
     $thirdUser->save();
 
-    // Create task already in review, submitted by otherUser
+    // Create task already in review, submitted by otherUser, with thirdUser as designated reviewer
     $task = Task::factory()->create([
         'team_id' => $this->team->id,
         'work_order_id' => $this->workOrder->id,
         'project_id' => $this->project->id,
         'created_by_id' => $this->otherUser->id,
         'assigned_to_id' => $this->otherUser->id,
+        'reviewer_id' => $thirdUser->id, // Designate thirdUser as reviewer
         'status' => TaskStatus::InReview,
     ]);
 
@@ -120,7 +121,7 @@ test('different user can approve work when not self-approving', function () {
         'created_at' => now(),
     ]);
 
-    // thirdUser approves - should succeed (not the submitter)
+    // thirdUser (designated reviewer) approves - should succeed
     $transition = $this->service->transition($task, $thirdUser, TaskStatus::Approved);
 
     expect($transition)->toBeInstanceOf(StatusTransition::class);

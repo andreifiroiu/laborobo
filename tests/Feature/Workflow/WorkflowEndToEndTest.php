@@ -298,6 +298,7 @@ describe('AI Agent Workflow Restrictions', function () {
             'work_order_id' => $this->workOrder->id,
             'project_id' => $this->project->id,
             'created_by_id' => $this->manager->id,
+            'reviewer_id' => $this->reviewer->id, // Explicitly set reviewer for approval validation
             'status' => TaskStatus::InReview,
         ]);
 
@@ -308,7 +309,7 @@ describe('AI Agent Workflow Restrictions', function () {
             toStatus: TaskStatus::Approved,
         ))->toBeFalse();
 
-        // But human CAN approve
+        // But designated reviewer CAN approve
         expect($this->transitionService->canTransition(
             item: $taskInReview,
             actor: $this->reviewer,

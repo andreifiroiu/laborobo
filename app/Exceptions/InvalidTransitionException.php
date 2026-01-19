@@ -56,4 +56,14 @@ class InvalidTransitionException extends Exception
             reason: 'permission_denied',
         );
     }
+
+    public static function notDesignatedReviewer(string $fromStatus, string $toStatus): self
+    {
+        return new self(
+            message: "Only the designated reviewer can perform the transition from '{$fromStatus}' to '{$toStatus}'.",
+            fromStatus: $fromStatus,
+            toStatus: $toStatus,
+            reason: 'not_designated_reviewer',
+        );
+    }
 }
