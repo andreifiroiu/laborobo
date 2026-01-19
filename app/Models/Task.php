@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
@@ -101,6 +102,11 @@ class Task extends Model
     {
         return $this->morphMany(StatusTransition::class, 'transitionable')
             ->orderByDesc('created_at');
+    }
+
+    public function communicationThread(): MorphOne
+    {
+        return $this->morphOne(CommunicationThread::class, 'threadable');
     }
 
     public function scopeForTeam($query, int $teamId)

@@ -1,0 +1,29 @@
+task_groups:
+  - name: Data Models and Migrations
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Core API Endpoints
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Notifications and Events
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Consolidated Communications Endpoint
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Core UI Components
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Page Integration
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Test Review and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all

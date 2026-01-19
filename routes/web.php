@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CommunicationsController;
 use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\PlaybooksController;
 use App\Http\Controllers\Reports\TimeReportsController;
@@ -21,6 +22,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('playbooks', [PlaybooksController::class, 'index'])->name('playbooks');
 
     Route::get('directory', [DirectoryController::class, 'index'])->name('directory');
+
+    // Consolidated communications view
+    Route::get('communications', [CommunicationsController::class, 'index'])->name('communications.index');
 
     Route::get('reports', function () {
         return Inertia::render('reports/index');

@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\MentionSearchController;
 use App\Http\Controllers\ProjectRaciController;
 use App\Http\Controllers\Work\CommunicationController;
 use App\Http\Controllers\Work\DeliverableController;
 use App\Http\Controllers\Work\DeliverableVersionController;
+use App\Http\Controllers\Work\MessageController;
 use App\Http\Controllers\Work\PartyController;
 use App\Http\Controllers\Work\ProjectController;
 use App\Http\Controllers\Work\TaskController;
@@ -74,13 +76,24 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/deliverables/{deliverable}/versions/{version}/restore', [DeliverableVersionController::class, 'restore'])->name('deliverables.versions.restore');
     Route::delete('/deliverables/{deliverable}/versions/{version}', [DeliverableVersionController::class, 'destroy'])->name('deliverables.versions.destroy');
 
-    // Communications (polymorphic: projects/{id}/communications or work-orders/{id}/communications)
+    // Communications (polymorphic: projects/{id}/communications, work-orders/{id}/communications, or tasks/{id}/communications)
     Route::get('/{type}/{id}/communications', [CommunicationController::class, 'show'])->name('communications.show');
     Route::post('/{type}/{id}/communications', [CommunicationController::class, 'store'])->name('communications.store');
+
+    // Message operations (edit, delete, reactions)
+    Route::patch('/communications/messages/{message}', [MessageController::class, 'update'])->name('communications.messages.update');
+    Route::delete('/communications/messages/{message}', [MessageController::class, 'destroy'])->name('communications.messages.destroy');
+    Route::post('/communications/messages/{message}/reactions', [MessageController::class, 'addReaction'])->name('communications.messages.reactions.store');
+    Route::delete('/communications/messages/{message}/reactions/{emoji}', [MessageController::class, 'removeReaction'])->name('communications.messages.reactions.destroy');
 
     // Parties
     Route::get('/parties', [PartyController::class, 'index'])->name('parties.index');
     Route::post('/parties', [PartyController::class, 'store'])->name('parties.store');
     Route::patch('/parties/{party}', [PartyController::class, 'update'])->name('parties.update');
     Route::delete('/parties/{party}', [PartyController::class, 'destroy'])->name('parties.destroy');
+});
+
+// API routes for mentions search
+Route::middleware(['auth', 'verified'])->prefix('api')->group(function () {
+    Route::get('/mentions/search', [MentionSearchController::class, 'search'])->name('api.mentions.search');
 });

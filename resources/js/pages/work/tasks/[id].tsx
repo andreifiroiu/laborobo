@@ -13,6 +13,7 @@ import {
     Circle,
     AlertTriangle,
     History,
+    MessageSquare,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ import {
     type TransitionOption,
     type StatusTransition,
 } from '@/components/workflow';
+import { CommunicationsPanel } from '@/components/communications';
 import { taskStatusLabels } from '@/components/ui/status-badge';
 import { useState, useEffect, useCallback } from 'react';
 import type { BreadcrumbItem } from '@/types';
@@ -105,6 +107,14 @@ interface RejectionFeedback {
 }
 
 /**
+ * Communication thread summary
+ */
+interface CommunicationThreadSummary {
+    id: string;
+    messageCount: number;
+}
+
+/**
  * Extended props with workflow features
  */
 interface TaskDetailProps {
@@ -115,6 +125,7 @@ interface TaskDetailProps {
     statusTransitions?: StatusTransition[];
     allowedTransitions?: TransitionOption[];
     rejectionFeedback?: RejectionFeedback | null;
+    communicationThread?: CommunicationThreadSummary | null;
 }
 
 export default function TaskDetail({
@@ -125,6 +136,7 @@ export default function TaskDetail({
     statusTransitions = [],
     allowedTransitions = [],
     rejectionFeedback = null,
+    communicationThread = null,
 }: TaskDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [logTimeDialogOpen, setLogTimeDialogOpen] = useState(false);
@@ -138,6 +150,7 @@ export default function TaskDetail({
     const [localStatus, setLocalStatus] = useState(task.status);
     const [localTransitions, setLocalTransitions] = useState(statusTransitions);
     const [localAllowedTransitions, setLocalAllowedTransitions] = useState(allowedTransitions);
+    const [commsPanelOpen, setCommsPanelOpen] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -499,6 +512,17 @@ export default function TaskDetail({
                             />
                         )}
 
+                        {/* Communications Button */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCommsPanelOpen(true)}
+                            aria-label="Communications"
+                        >
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            {communicationThread?.messageCount || 0} Messages
+                        </Button>
+
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="icon">
@@ -697,6 +721,14 @@ export default function TaskDetail({
                     </div>
                 </div>
             </div>
+
+            {/* Communications Panel */}
+            <CommunicationsPanel
+                threadableType="tasks"
+                threadableId={task.id}
+                open={commsPanelOpen}
+                onOpenChange={setCommsPanelOpen}
+            />
 
             {/* Transition Dialog */}
             <TransitionDialog

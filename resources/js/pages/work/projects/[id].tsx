@@ -39,14 +39,6 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from '@/components/ui/sheet';
-import {
     Select,
     SelectContent,
     SelectItem,
@@ -55,8 +47,9 @@ import {
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
 import { StatusBadge, ProgressBar, ProjectTeamSection } from '@/components/work';
+import { CommunicationsPanel } from '@/components/communications';
 import { useState, useRef } from 'react';
-import type { ProjectDetailProps, Message } from '@/types/work';
+import type { ProjectDetailProps } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
 
 export default function ProjectDetail({
@@ -71,7 +64,6 @@ export default function ProjectDetail({
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
-    const [newMessage, setNewMessage] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -124,18 +116,6 @@ export default function ProjectDetail({
         if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
             router.delete(`/work/projects/${project.id}`);
         }
-    };
-
-    const handleSendMessage = () => {
-        if (!newMessage.trim()) return;
-        router.post(
-            `/work/project/${project.id}/communications`,
-            { content: newMessage, type: 'note' },
-            {
-                preserveScroll: true,
-                onSuccess: () => setNewMessage(''),
-            }
-        );
     };
 
     // File upload handlers
@@ -219,61 +199,14 @@ export default function ProjectDetail({
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                            <Sheet open={commsPanelOpen} onOpenChange={setCommsPanelOpen}>
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                        <MessageSquare className="h-4 w-4 mr-2" />
-                                        {communicationThread?.messageCount || 0} Messages
-                                    </Button>
-                                </SheetTrigger>
-                                <SheetContent>
-                                    <SheetHeader>
-                                        <SheetTitle>Project Communications</SheetTitle>
-                                        <SheetDescription>
-                                            Discussion thread for this project
-                                        </SheetDescription>
-                                    </SheetHeader>
-                                    <div className="flex flex-col h-[calc(100vh-180px)] mt-4">
-                                        <div className="flex-1 overflow-auto space-y-4">
-                                            {messages.length === 0 ? (
-                                                <p className="text-sm text-muted-foreground text-center py-8">
-                                                    No messages yet. Start the conversation!
-                                                </p>
-                                            ) : (
-                                                messages.map((msg) => (
-                                                    <div
-                                                        key={msg.id}
-                                                        className="p-3 bg-muted rounded-lg"
-                                                    >
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <span className="text-sm font-medium">
-                                                                {msg.authorName}
-                                                            </span>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {new Date(
-                                                                    msg.timestamp
-                                                                ).toLocaleDateString()}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-sm">{msg.content}</p>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                        <div className="flex gap-2 mt-4">
-                                            <Input
-                                                value={newMessage}
-                                                onChange={(e) => setNewMessage(e.target.value)}
-                                                placeholder="Type a message..."
-                                                onKeyDown={(e) =>
-                                                    e.key === 'Enter' && handleSendMessage()
-                                                }
-                                            />
-                                            <Button onClick={handleSendMessage}>Send</Button>
-                                        </div>
-                                    </div>
-                                </SheetContent>
-                            </Sheet>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCommsPanelOpen(true)}
+                            >
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                {communicationThread?.messageCount || 0} Messages
+                            </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon">
@@ -512,6 +445,14 @@ export default function ProjectDetail({
                     </div>
                 </div>
             </div>
+
+            {/* Communications Panel */}
+            <CommunicationsPanel
+                threadableType="projects"
+                threadableId={project.id}
+                open={commsPanelOpen}
+                onOpenChange={setCommsPanelOpen}
+            />
 
             {/* Edit Dialog */}
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

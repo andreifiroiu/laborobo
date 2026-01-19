@@ -41,14 +41,6 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from '@/components/ui/sheet';
-import {
     Select,
     SelectContent,
     SelectItem,
@@ -58,6 +50,7 @@ import {
 import InputError from '@/components/input-error';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/work';
 import { HoursProgressIndicator } from '@/components/time-tracking';
+import { CommunicationsPanel } from '@/components/communications';
 import {
     TransitionButton,
     TransitionDialog,
@@ -201,7 +194,6 @@ export default function WorkOrderDetail({
     const [newCriterion, setNewCriterion] = useState('');
     const [editCriterion, setEditCriterion] = useState('');
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
-    const [newMessage, setNewMessage] = useState('');
 
     // Workflow state
     const [transitionDialogOpen, setTransitionDialogOpen] = useState(false);
@@ -414,18 +406,6 @@ export default function WorkOrderDetail({
         if (confirm('Are you sure you want to delete this work order? This action cannot be undone.')) {
             router.delete(`/work/work-orders/${workOrder.id}`);
         }
-    };
-
-    const handleSendMessage = () => {
-        if (!newMessage.trim()) return;
-        router.post(
-            `/work/work-order/${workOrder.id}/communications`,
-            { content: newMessage, type: 'note' },
-            {
-                preserveScroll: true,
-                onSuccess: () => setNewMessage(''),
-            }
-        );
     };
 
     /**
@@ -722,54 +702,16 @@ export default function WorkOrderDetail({
                         )}
 
                         <div className="flex items-center gap-2">
-                            <Sheet open={commsPanelOpen} onOpenChange={setCommsPanelOpen}>
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                        <MessageSquare className="mr-2 h-4 w-4" />
-                                        {communicationThread?.messageCount || 0} Messages
-                                    </Button>
-                                </SheetTrigger>
-                                <SheetContent>
-                                    <SheetHeader>
-                                        <SheetTitle>Work Order Communications</SheetTitle>
-                                        <SheetDescription>
-                                            Discussion thread for this work order
-                                        </SheetDescription>
-                                    </SheetHeader>
-                                    <div className="mt-4 flex h-[calc(100vh-180px)] flex-col">
-                                        <div className="flex-1 space-y-4 overflow-auto">
-                                            {messages.length === 0 ? (
-                                                <p className="text-muted-foreground py-8 text-center text-sm">
-                                                    No messages yet
-                                                </p>
-                                            ) : (
-                                                messages.map((msg) => (
-                                                    <div key={msg.id} className="bg-muted rounded-lg p-3">
-                                                        <div className="mb-1 flex items-center justify-between">
-                                                            <span className="text-sm font-medium">
-                                                                {msg.authorName}
-                                                            </span>
-                                                            <span className="text-muted-foreground text-xs">
-                                                                {new Date(msg.timestamp).toLocaleDateString()}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-sm">{msg.content}</p>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                        <div className="mt-4 flex gap-2">
-                                            <Input
-                                                value={newMessage}
-                                                onChange={(e) => setNewMessage(e.target.value)}
-                                                placeholder="Type a message..."
-                                                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                            />
-                                            <Button onClick={handleSendMessage}>Send</Button>
-                                        </div>
-                                    </div>
-                                </SheetContent>
-                            </Sheet>
+                            {/* Communications Button */}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCommsPanelOpen(true)}
+                                aria-label="Communications"
+                            >
+                                <MessageSquare className="mr-2 h-4 w-4" />
+                                {communicationThread?.messageCount || 0} Messages
+                            </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon">
@@ -1076,6 +1018,14 @@ export default function WorkOrderDetail({
                     </div>
                 </div>
             </div>
+
+            {/* Communications Panel */}
+            <CommunicationsPanel
+                threadableType="work-orders"
+                threadableId={workOrder.id}
+                open={commsPanelOpen}
+                onOpenChange={setCommsPanelOpen}
+            />
 
             {/* Transition Dialog */}
             <TransitionDialog
