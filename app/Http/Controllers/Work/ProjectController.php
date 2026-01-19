@@ -5,13 +5,11 @@ namespace App\Http\Controllers\Work;
 use App\Enums\DocumentType;
 use App\Enums\ProjectStatus;
 use App\Http\Controllers\Controller;
-use App\Models\CommunicationThread;
-use App\Models\Deliverable;
 use App\Models\Document;
 use App\Models\Message;
 use App\Models\Party;
 use App\Models\Project;
-use App\Models\Task;
+use App\Models\User;
 use App\Models\WorkOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,7 +55,14 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['party', 'owner', 'workOrders.tasks', 'workOrders.deliverables', 'documents']);
+        $project->load([
+            'party', 'owner', 'accountable', 'responsible',
+            'workOrders.tasks', 'workOrders.deliverables',
+            'workOrders.assignedTo', 'workOrders.accountable',
+            'workOrders.responsible', 'workOrders.reviewer',
+            'workOrders.tasks.assignedTo', 'workOrders.tasks.reviewer',
+            'documents',
+        ]);
 
         // Get communication thread and messages
         $thread = $project->communicationThread;
@@ -116,6 +121,7 @@ class ProjectController extends Controller
                 'id' => (string) $p->id,
                 'name' => $p->name,
             ]),
+            'teamMembers' => $this->aggregateProjectTeamMembers($project),
         ]);
     }
 
@@ -135,14 +141,30 @@ class ProjectController extends Controller
         ]);
 
         $updateData = [];
-        if (isset($validated['name'])) $updateData['name'] = $validated['name'];
-        if (array_key_exists('description', $validated)) $updateData['description'] = $validated['description'];
-        if (isset($validated['partyId'])) $updateData['party_id'] = $validated['partyId'];
-        if (isset($validated['status'])) $updateData['status'] = ProjectStatus::from($validated['status']);
-        if (isset($validated['startDate'])) $updateData['start_date'] = $validated['startDate'];
-        if (array_key_exists('targetEndDate', $validated)) $updateData['target_end_date'] = $validated['targetEndDate'];
-        if (array_key_exists('budgetHours', $validated)) $updateData['budget_hours'] = $validated['budgetHours'];
-        if (isset($validated['tags'])) $updateData['tags'] = $validated['tags'];
+        if (isset($validated['name'])) {
+            $updateData['name'] = $validated['name'];
+        }
+        if (array_key_exists('description', $validated)) {
+            $updateData['description'] = $validated['description'];
+        }
+        if (isset($validated['partyId'])) {
+            $updateData['party_id'] = $validated['partyId'];
+        }
+        if (isset($validated['status'])) {
+            $updateData['status'] = ProjectStatus::from($validated['status']);
+        }
+        if (isset($validated['startDate'])) {
+            $updateData['start_date'] = $validated['startDate'];
+        }
+        if (array_key_exists('targetEndDate', $validated)) {
+            $updateData['target_end_date'] = $validated['targetEndDate'];
+        }
+        if (array_key_exists('budgetHours', $validated)) {
+            $updateData['budget_hours'] = $validated['budgetHours'];
+        }
+        if (isset($validated['tags'])) {
+            $updateData['tags'] = $validated['tags'];
+        }
 
         $project->update($updateData);
 
@@ -239,6 +261,134 @@ class ProjectController extends Controller
             $unitIndex++;
         }
 
-        return round($size, 1) . ' ' . $units[$unitIndex];
+        return round($size, 1).' '.$units[$unitIndex];
+    }
+
+    /**
+     * Aggregate all team members from project, work orders, and tasks.
+     *
+     * @return array<int, array{id: string, name: string, email: string, avatarUrl: string|null, roles: array, workload: array}>
+     */
+    private function aggregateProjectTeamMembers(Project $project): array
+    {
+        $userRoles = []; // userId => ['roles' => [], 'workOrdersCount' => 0, 'tasksCount' => 0, 'totalEstimatedHours' => 0]
+
+        // Helper to add a role for a user
+        $addRole = function (?int $userId, string $role, string $scope, string $scopeTitle) use (&$userRoles) {
+            if (! $userId) {
+                return;
+            }
+
+            if (! isset($userRoles[$userId])) {
+                $userRoles[$userId] = [
+                    'roles' => [],
+                    'workOrdersCount' => 0,
+                    'tasksCount' => 0,
+                    'totalEstimatedHours' => 0,
+                ];
+            }
+
+            // Avoid duplicate roles with same scope and scopeTitle
+            $roleKey = "{$role}:{$scope}:{$scopeTitle}";
+            if (! isset($userRoles[$userId]['roleKeys'][$roleKey])) {
+                $userRoles[$userId]['roles'][] = [
+                    'role' => $role,
+                    'scope' => $scope,
+                    'scopeTitle' => $scopeTitle,
+                ];
+                $userRoles[$userId]['roleKeys'][$roleKey] = true;
+            }
+        };
+
+        // Project-level RACI
+        $addRole($project->owner_id, 'owner', 'project', $project->name);
+        $addRole($project->accountable_id, 'accountable', 'project', $project->name);
+        $addRole($project->responsible_id, 'responsible', 'project', $project->name);
+
+        // Consulted and informed (arrays of user IDs)
+        foreach ($project->consulted_ids ?? [] as $userId) {
+            $addRole((int) $userId, 'consulted', 'project', $project->name);
+        }
+        foreach ($project->informed_ids ?? [] as $userId) {
+            $addRole((int) $userId, 'informed', 'project', $project->name);
+        }
+
+        // Work Orders
+        foreach ($project->workOrders as $wo) {
+            $addRole($wo->assigned_to_id, 'assigned', 'work_order', $wo->title);
+            $addRole($wo->accountable_id, 'accountable', 'work_order', $wo->title);
+            $addRole($wo->responsible_id, 'responsible', 'work_order', $wo->title);
+            $addRole($wo->reviewer_id, 'reviewer', 'work_order', $wo->title);
+
+            foreach ($wo->consulted_ids ?? [] as $userId) {
+                $addRole((int) $userId, 'consulted', 'work_order', $wo->title);
+            }
+            foreach ($wo->informed_ids ?? [] as $userId) {
+                $addRole((int) $userId, 'informed', 'work_order', $wo->title);
+            }
+
+            // Track workload for assigned user
+            if ($wo->assigned_to_id) {
+                $userRoles[$wo->assigned_to_id]['workOrdersCount']++;
+                $userRoles[$wo->assigned_to_id]['totalEstimatedHours'] += (float) $wo->estimated_hours;
+            }
+
+            // Tasks
+            foreach ($wo->tasks as $task) {
+                $addRole($task->assigned_to_id, 'assigned', 'task', $task->title);
+                $addRole($task->reviewer_id, 'reviewer', 'task', $task->title);
+
+                // Track workload for assigned user
+                if ($task->assigned_to_id) {
+                    if (! isset($userRoles[$task->assigned_to_id])) {
+                        $userRoles[$task->assigned_to_id] = [
+                            'roles' => [],
+                            'workOrdersCount' => 0,
+                            'tasksCount' => 0,
+                            'totalEstimatedHours' => 0,
+                        ];
+                    }
+                    $userRoles[$task->assigned_to_id]['tasksCount']++;
+                    $userRoles[$task->assigned_to_id]['totalEstimatedHours'] += (float) $task->estimated_hours;
+                }
+            }
+        }
+
+        // Now fetch all users
+        $userIds = array_keys($userRoles);
+        if (empty($userIds)) {
+            return [];
+        }
+
+        $users = User::whereIn('id', $userIds)->get()->keyBy('id');
+
+        $result = [];
+        foreach ($userRoles as $userId => $data) {
+            $user = $users->get($userId);
+            if (! $user) {
+                continue;
+            }
+
+            // Remove the roleKeys helper from the data
+            unset($data['roleKeys']);
+
+            $result[] = [
+                'id' => (string) $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatarUrl' => $user->profile_photo_url ?? null,
+                'roles' => $data['roles'],
+                'workload' => [
+                    'workOrdersCount' => $data['workOrdersCount'],
+                    'tasksCount' => $data['tasksCount'],
+                    'totalEstimatedHours' => $data['totalEstimatedHours'],
+                ],
+            ];
+        }
+
+        // Sort by number of roles (most involved first)
+        usort($result, fn ($a, $b) => count($b['roles']) <=> count($a['roles']));
+
+        return $result;
     }
 }

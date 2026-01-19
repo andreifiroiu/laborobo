@@ -258,6 +258,7 @@ export interface ProjectDetailProps {
     } | null;
     messages: Message[];
     parties: Array<{ id: string; name: string }>;
+    teamMembers: ProjectTeamMember[];
 }
 
 export interface WorkOrderDetailProps {
@@ -390,4 +391,27 @@ export interface TimeTrackerProps {
     onStartTimer: () => void;
     onStopTimer: () => void;
     onLogManual: (hours: number, date: string, note?: string) => void;
+}
+
+// =============================================================================
+// Project Team Member Types
+// =============================================================================
+
+export interface TeamMemberRole {
+    role: 'owner' | 'accountable' | 'responsible' | 'assigned' | 'reviewer' | 'consulted' | 'informed';
+    scope: 'project' | 'work_order' | 'task';
+    scopeTitle: string;
+}
+
+export interface ProjectTeamMember {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    roles: TeamMemberRole[];
+    workload: {
+        workOrdersCount: number;
+        tasksCount: number;
+        totalEstimatedHours: number;
+    };
 }

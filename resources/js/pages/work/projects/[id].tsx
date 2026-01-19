@@ -54,7 +54,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
-import { StatusBadge, ProgressBar } from '@/components/work';
+import { StatusBadge, ProgressBar, ProjectTeamSection } from '@/components/work';
 import { useState, useRef } from 'react';
 import type { ProjectDetailProps, Message } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
@@ -66,6 +66,7 @@ export default function ProjectDetail({
     communicationThread,
     messages,
     parties,
+    teamMembers,
 }: ProjectDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
@@ -352,6 +353,12 @@ export default function ProjectDetail({
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-auto p-6">
+                    {/* Team Members Section */}
+                    <ProjectTeamSection
+                        teamMembers={teamMembers}
+                        projectId={project.id}
+                    />
+
                     {/* Work Orders Section */}
                     <div className="mb-8">
                         <div className="flex items-center justify-between mb-4">

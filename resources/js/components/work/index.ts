@@ -4,6 +4,8 @@ export { QuickAddBar } from './quick-add-bar';
 export { StatusBadge } from './status-badge';
 export { PriorityBadge } from './priority-badge';
 export { ProgressBar } from './progress-bar';
+export { RoleBadge } from './role-badge';
+export { ProjectTeamSection } from './project-team-section';
 export { ProjectTreeItem } from './project-tree-item';
 export { MyWorkCard } from './my-work-card';
 export { MyWorkView } from './my-work-view';
