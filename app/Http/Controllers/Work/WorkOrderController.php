@@ -259,8 +259,8 @@ class WorkOrderController extends Controller
             'description' => 'nullable|string',
             'assignedToId' => 'nullable|exists:users,id',
             'priority' => 'sometimes|required|string|in:low,medium,high,urgent',
-            'dueDate' => 'sometimes|required|date',
-            'estimatedHours' => 'nullable|numeric|min:0',
+            'due_date' => 'nullable|date',
+            'estimated_hours' => 'nullable|numeric|min:0',
             'acceptanceCriteria' => 'nullable|array',
         ]);
 
@@ -269,8 +269,8 @@ class WorkOrderController extends Controller
         if (array_key_exists('description', $validated)) $updateData['description'] = $validated['description'];
         if (array_key_exists('assignedToId', $validated)) $updateData['assigned_to_id'] = $validated['assignedToId'];
         if (isset($validated['priority'])) $updateData['priority'] = Priority::from($validated['priority']);
-        if (isset($validated['dueDate'])) $updateData['due_date'] = $validated['dueDate'];
-        if (array_key_exists('estimatedHours', $validated)) $updateData['estimated_hours'] = $validated['estimatedHours'] ?? 0;
+        if (array_key_exists('due_date', $validated)) $updateData['due_date'] = $validated['due_date'];
+        if (array_key_exists('estimated_hours', $validated)) $updateData['estimated_hours'] = $validated['estimated_hours'] ?? 0;
         if (isset($validated['acceptanceCriteria'])) $updateData['acceptance_criteria'] = $validated['acceptanceCriteria'];
 
         $workOrder->update($updateData);

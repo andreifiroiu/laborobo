@@ -121,7 +121,7 @@ interface WorkOrderWithRaci {
     assignedToName: string;
     status: string;
     priority: string;
-    dueDate: string;
+    dueDate: string | null;
     estimatedHours: number;
     actualHours: number;
     acceptanceCriteria: string[];
@@ -150,7 +150,7 @@ interface WorkOrderDetailProps {
         title: string;
         description: string | null;
         status: string;
-        dueDate: string;
+        dueDate: string | null;
         assignedToId: string | null;
         assignedToName: string;
         estimatedHours: number;
@@ -424,7 +424,7 @@ export default function WorkOrderDetail({
         description: workOrder.description || '',
         status: workOrder.status,
         priority: workOrder.priority as 'low' | 'medium' | 'high' | 'urgent',
-        due_date: workOrder.dueDate,
+        due_date: workOrder.dueDate || '',
         estimated_hours: workOrder.estimatedHours.toString(),
     });
 
@@ -1031,10 +1031,10 @@ export default function WorkOrderDetail({
     const completedTasks = tasks.filter((t) => t.status === 'done').length;
     const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
 
-    const dueDate = new Date(workOrder.dueDate);
+    const dueDate = workOrder.dueDate ? new Date(workOrder.dueDate) : null;
     const now = new Date();
-    const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const isOverdue = daysUntilDue < 0;
+    const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    const isOverdue = dueDate ? daysUntilDue < 0 : false;
 
     // Get the label for the selected transition
     const selectedTransitionLabel = selectedTransition
@@ -1156,8 +1156,14 @@ export default function WorkOrderDetail({
                             <div>
                                 <div className="text-muted-foreground text-xs">Due Date</div>
                                 <div className={`font-medium ${isOverdue ? 'text-destructive' : ''}`}>
-                                    {dueDate.toLocaleDateString()}
-                                    {isOverdue && ` (${Math.abs(daysUntilDue)}d overdue)`}
+                                    {dueDate ? (
+                                        <>
+                                            {dueDate.toLocaleDateString()}
+                                            {isOverdue && ` (${Math.abs(daysUntilDue)}d overdue)`}
+                                        </>
+                                    ) : (
+                                        <span className="text-muted-foreground">Not set</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
