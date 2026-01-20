@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Work;
 
+use App\Enums\Priority;
 use App\Enums\TaskStatus;
+use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TimeEntry;
@@ -214,6 +216,74 @@ class TaskController extends Controller
         $task->toggleChecklistItem($itemId, $validated['completed']);
 
         return back();
+    }
+
+    /**
+     * Promote a task to a work order.
+     */
+    public function promote(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'priority' => 'required|string|in:low,medium,high,urgent',
+            'dueDate' => 'nullable|date',
+            'estimatedHours' => 'nullable|numeric|min:0',
+            'assignedToId' => 'nullable|exists:users,id',
+            'acceptanceCriteria' => 'nullable|array',
+            'acceptanceCriteria.*' => 'string',
+            'originalTaskAction' => 'required|string|in:cancel,delete,keep',
+            'convertChecklistToTasks' => 'boolean',
+        ]);
+
+        $user = $request->user();
+        $task->load('workOrder.project');
+
+        // Create the new work order
+        $workOrder = WorkOrder::create([
+            'team_id' => $task->team_id,
+            'project_id' => $task->workOrder->project_id,
+            'assigned_to_id' => $validated['assignedToId'] ?? $task->assigned_to_id,
+            'created_by_id' => $user->id,
+            'party_contact_id' => $task->workOrder->project->party_id ?? null,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? $task->description,
+            'status' => WorkOrderStatus::Draft,
+            'priority' => Priority::from($validated['priority']),
+            'due_date' => $validated['dueDate'] ?? $task->due_date,
+            'estimated_hours' => $validated['estimatedHours'] ?? $task->estimated_hours,
+            'acceptance_criteria' => $validated['acceptanceCriteria'] ?? [],
+            'accountable_id' => $user->id,
+        ]);
+
+        // Optionally convert checklist items to tasks
+        if (($validated['convertChecklistToTasks'] ?? false) && ! empty($task->checklist_items)) {
+            foreach ($task->checklist_items as $item) {
+                Task::create([
+                    'team_id' => $task->team_id,
+                    'work_order_id' => $workOrder->id,
+                    'project_id' => $workOrder->project_id,
+                    'assigned_to_id' => $validated['assignedToId'] ?? $task->assigned_to_id,
+                    'title' => $item['text'],
+                    'description' => null,
+                    'status' => $item['completed'] ? TaskStatus::Done : TaskStatus::Todo,
+                    'due_date' => $validated['dueDate'] ?? $task->due_date,
+                    'estimated_hours' => 0,
+                    'checklist_items' => [],
+                ]);
+            }
+        }
+
+        // Handle the original task
+        match ($validated['originalTaskAction']) {
+            'cancel' => $task->update(['status' => TaskStatus::Cancelled]),
+            'delete' => $task->delete(),
+            'keep' => null, // Do nothing
+        };
+
+        return redirect()->route('work-orders.show', $workOrder->id);
     }
 
     /**
