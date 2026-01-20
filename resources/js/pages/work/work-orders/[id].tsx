@@ -34,6 +34,8 @@ import {
     RefreshCw,
     ArrowUpCircle,
     GripVertical,
+    List,
+    LayoutGrid,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -66,7 +68,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/work';
+import { TaskKanbanBoard } from '@/components/work/task-kanban';
 import { PromoteToWorkOrderDialog } from '@/components/work/promote-to-work-order-dialog';
 import { HoursProgressIndicator } from '@/components/time-tracking';
 import { CommunicationsPanel } from '@/components/communications';
@@ -400,6 +404,9 @@ export default function WorkOrderDetail({
     type TaskType = typeof tasks[0];
     const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
     const [taskTransitionDialogOpen, setTaskTransitionDialogOpen] = useState(false);
+
+    // Task view mode state (list vs board)
+    const [taskView, setTaskView] = useState<'list' | 'board'>('list');
     const [taskPromoteDialogOpen, setTaskPromoteDialogOpen] = useState(false);
     const [taskDeleteDialogOpen, setTaskDeleteDialogOpen] = useState(false);
     const [selectedTaskTransition, setSelectedTaskTransition] = useState<string | null>(null);
@@ -1198,143 +1205,168 @@ export default function WorkOrderDetail({
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-auto p-6">
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        {/* Tasks Section */}
-                        <div>
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-foreground text-lg font-bold">Tasks</h2>
-                                <Button size="sm" onClick={() => setCreateTaskDialogOpen(true)}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add Task
-                                </Button>
-                            </div>
-
-                            {localTasks.length === 0 ? (
-                                <div className="bg-muted/50 rounded-xl py-8 text-center">
-                                    <p className="text-muted-foreground mb-4">No tasks yet</p>
-                                    <Button onClick={() => setCreateTaskDialogOpen(true)}>
-                                        Create Task
-                                    </Button>
-                                </div>
-                            ) : (
-                                <DndContext
-                                    sensors={sensors}
-                                    collisionDetection={closestCenter}
-                                    onDragEnd={handleTaskDragEnd}
-                                >
-                                    <SortableContext
-                                        items={localTasks.map((t) => t.id)}
-                                        strategy={verticalListSortingStrategy}
-                                    >
-                                        <div className="space-y-3">
-                                            {localTasks.map((task) => (
-                                                <SortableTaskCard
-                                                    key={task.id}
-                                                    task={task}
-                                                    completingTaskId={completingTaskId}
-                                                    onQuickComplete={handleQuickTaskComplete}
-                                                    onStatusChange={handleTaskStatusChange}
-                                                    onPromote={handleTaskPromote}
-                                                    onDelete={handleTaskDelete}
-                                                    getStatusOptions={getTaskStatusOptions}
-                                                />
-                                            ))}
-                                        </div>
-                                    </SortableContext>
-                                </DndContext>
+                    {/* Tasks Header with View Tabs */}
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-foreground text-lg font-bold">Tasks</h2>
+                        <div className="flex items-center gap-4">
+                            {localTasks.length > 0 && (
+                                <Tabs value={taskView} onValueChange={(v) => setTaskView(v as 'list' | 'board')}>
+                                    <TabsList>
+                                        <TabsTrigger value="list">
+                                            <List className="mr-2 h-4 w-4" />
+                                            List
+                                        </TabsTrigger>
+                                        <TabsTrigger value="board">
+                                            <LayoutGrid className="mr-2 h-4 w-4" />
+                                            Board
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                             )}
+                            <Button size="sm" onClick={() => setCreateTaskDialogOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Task
+                            </Button>
+                        </div>
+                    </div>
 
-                            {/* Deliverables Section */}
-                            <div className="mt-6">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <h2 className="text-foreground text-lg font-bold">Deliverables</h2>
-                                    <Button variant="outline" size="sm" onClick={() => setCreateDeliverableDialogOpen(true)}>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Add
-                                    </Button>
-                                </div>
-
-                                {deliverables.length === 0 ? (
+                    {/* Conditional Layout Based on View */}
+                    {taskView === 'board' && localTasks.length > 0 ? (
+                        /* Full-width board view */
+                        <div className="h-[calc(100vh-320px)] min-h-[400px]">
+                            <TaskKanbanBoard tasks={localTasks} workOrderId={workOrder.id} />
+                        </div>
+                    ) : (
+                        /* 3-column grid layout for list view */
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            {/* Tasks Section */}
+                            <div>
+                                {localTasks.length === 0 ? (
                                     <div className="bg-muted/50 rounded-xl py-8 text-center">
-                                        <FileText className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
-                                        <p className="text-muted-foreground">No deliverables yet</p>
+                                        <p className="text-muted-foreground mb-4">No tasks yet</p>
+                                        <Button onClick={() => setCreateTaskDialogOpen(true)}>
+                                            Create Task
+                                        </Button>
                                     </div>
                                 ) : (
-                                    <div className="space-y-3">
-                                        {deliverables.map((d) => (
-                                            <div
-                                                key={d.id}
-                                                className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
-                                            >
-                                                <div className="flex items-start justify-between">
-                                                    <Link
-                                                        href={`/work/deliverables/${d.id}`}
-                                                        className="min-w-0 flex-1"
-                                                    >
-                                                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                                                            <span className="truncate font-medium">{d.title}</span>
-                                                            <StatusBadge status={d.status} type="deliverable" />
-                                                        </div>
-                                                        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-                                                            <span className="capitalize">{d.type}</span>
-                                                            <span>-</span>
-                                                            <span>v{d.version}</span>
-                                                        </div>
-                                                    </Link>
-                                                    <div className="ml-2 flex items-center gap-1">
-                                                        {d.status === 'draft' && (
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    handleDeliverableStatusChange(d.id, 'in_review');
-                                                                }}
-                                                            >
-                                                                Submit
-                                                            </Button>
-                                                        )}
-                                                        {d.fileUrl && (
-                                                            <Button variant="ghost" size="icon" asChild>
-                                                                <a href={d.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                                    <ExternalLink className="h-4 w-4" />
-                                                                </a>
-                                                            </Button>
-                                                        )}
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" onClick={(e) => e.preventDefault()}>
-                                                                    <MoreVertical className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuItem onClick={() => handleEditDeliverable(d)}>
-                                                                    <Edit className="mr-2 h-4 w-4" />
-                                                                    Edit
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSeparator />
-                                                                <DropdownMenuItem
-                                                                    onClick={() => {
-                                                                        setSelectedDeliverable(d);
-                                                                        setDeleteDeliverableDialogOpen(true);
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        onDragEnd={handleTaskDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={localTasks.map((t) => t.id)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            <div className="space-y-3">
+                                                {localTasks.map((task) => (
+                                                    <SortableTaskCard
+                                                        key={task.id}
+                                                        task={task}
+                                                        completingTaskId={completingTaskId}
+                                                        onQuickComplete={handleQuickTaskComplete}
+                                                        onStatusChange={handleTaskStatusChange}
+                                                        onPromote={handleTaskPromote}
+                                                        onDelete={handleTaskDelete}
+                                                        getStatusOptions={getTaskStatusOptions}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+                                )}
+
+                                {/* Deliverables Section */}
+                                <div className="mt-6">
+                                    <div className="mb-4 flex items-center justify-between">
+                                        <h2 className="text-foreground text-lg font-bold">Deliverables</h2>
+                                        <Button variant="outline" size="sm" onClick={() => setCreateDeliverableDialogOpen(true)}>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Add
+                                        </Button>
+                                    </div>
+
+                                    {deliverables.length === 0 ? (
+                                        <div className="bg-muted/50 rounded-xl py-8 text-center">
+                                            <FileText className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
+                                            <p className="text-muted-foreground">No deliverables yet</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {deliverables.map((d) => (
+                                                <div
+                                                    key={d.id}
+                                                    className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
+                                                >
+                                                    <div className="flex items-start justify-between">
+                                                        <Link
+                                                            href={`/work/deliverables/${d.id}`}
+                                                            className="min-w-0 flex-1"
+                                                        >
+                                                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                                                                <span className="truncate font-medium">{d.title}</span>
+                                                                <StatusBadge status={d.status} type="deliverable" />
+                                                            </div>
+                                                            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+                                                                <span className="capitalize">{d.type}</span>
+                                                                <span>-</span>
+                                                                <span>v{d.version}</span>
+                                                            </div>
+                                                        </Link>
+                                                        <div className="ml-2 flex items-center gap-1">
+                                                            {d.status === 'draft' && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        handleDeliverableStatusChange(d.id, 'in_review');
                                                                     }}
-                                                                    className="text-destructive"
                                                                 >
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Delete
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                                    Submit
+                                                                </Button>
+                                                            )}
+                                                            {d.fileUrl && (
+                                                                <Button variant="ghost" size="icon" asChild>
+                                                                    <a href={d.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                                        <ExternalLink className="h-4 w-4" />
+                                                                    </a>
+                                                                </Button>
+                                                            )}
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" onClick={(e) => e.preventDefault()}>
+                                                                        <MoreVertical className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => handleEditDeliverable(d)}>
+                                                                        <Edit className="mr-2 h-4 w-4" />
+                                                                        Edit
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => {
+                                                                            setSelectedDeliverable(d);
+                                                                            setDeleteDeliverableDialogOpen(true);
+                                                                        }}
+                                                                        className="text-destructive"
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Delete
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* RACI Assignments Section */}
+                            {/* RACI Assignments Section */}
                         <div>
                             <div className="mb-4 flex items-center gap-2">
                                 <Users className="text-muted-foreground h-5 w-5" />
@@ -1382,7 +1414,8 @@ export default function WorkOrderDetail({
                                 <TransitionHistory transitions={localTransitions} variant="work_order" />
                             </div>
                         </div>
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
