@@ -1205,30 +1205,23 @@ export default function WorkOrderDetail({
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-auto p-6">
-                    {/* Tasks Header with View Tabs */}
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-foreground text-lg font-bold">Tasks</h2>
-                        <div className="flex items-center gap-4">
-                            {localTasks.length > 0 && (
-                                <Tabs value={taskView} onValueChange={(v) => setTaskView(v as 'list' | 'board')}>
-                                    <TabsList>
-                                        <TabsTrigger value="list">
-                                            <List className="mr-2 h-4 w-4" />
-                                            List
-                                        </TabsTrigger>
-                                        <TabsTrigger value="board">
-                                            <LayoutGrid className="mr-2 h-4 w-4" />
-                                            Board
-                                        </TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                            )}
-                            <Button size="sm" onClick={() => setCreateTaskDialogOpen(true)}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Task
-                            </Button>
+                    {/* View Toggle Row (full width) */}
+                    {localTasks.length > 0 && (
+                        <div className="mb-4 flex justify-start">
+                            <Tabs value={taskView} onValueChange={(v) => setTaskView(v as 'list' | 'board')}>
+                                <TabsList>
+                                    <TabsTrigger value="list">
+                                        <List className="mr-2 h-4 w-4" />
+                                        List
+                                    </TabsTrigger>
+                                    <TabsTrigger value="board">
+                                        <LayoutGrid className="mr-2 h-4 w-4" />
+                                        Board
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
                         </div>
-                    </div>
+                    )}
 
                     {/* Conditional Layout Based on View */}
                     {taskView === 'board' && localTasks.length > 0 ? (
@@ -1241,6 +1234,13 @@ export default function WorkOrderDetail({
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             {/* Column 1: Tasks Section */}
                             <div>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-foreground text-lg font-bold">Tasks</h2>
+                                    <Button size="sm" onClick={() => setCreateTaskDialogOpen(true)}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add Task
+                                    </Button>
+                                </div>
                                 {localTasks.length === 0 ? (
                                     <div className="bg-muted/50 rounded-xl py-8 text-center">
                                         <p className="text-muted-foreground mb-4">No tasks yet</p>

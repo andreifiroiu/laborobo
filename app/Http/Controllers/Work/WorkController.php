@@ -33,7 +33,7 @@ class WorkController extends Controller
                 'teamMembers' => [],
                 'communicationThreads' => [],
                 'currentView' => 'all_projects',
-                'currentUserId' => $user->id,
+                'currentUserId' => (string) $user->id,
             ]);
         }
 
@@ -49,7 +49,7 @@ class WorkController extends Controller
             'teamMembers' => $this->getTeamMembers($team),
             'communicationThreads' => $this->getCommunicationThreads($team),
             'currentView' => $currentView,
-            'currentUserId' => $user->id,
+            'currentUserId' => (string) $user->id,
         ]);
     }
 
