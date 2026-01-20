@@ -327,6 +327,70 @@ class TaskController extends Controller
     }
 
     /**
+     * Add a new checklist item to the task.
+     */
+    public function addChecklistItem(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $validated = $request->validate([
+            'text' => 'required|string|max:255',
+        ]);
+
+        $checklistItems = $task->checklist_items ?? [];
+        $checklistItems[] = [
+            'id' => Str::uuid()->toString(),
+            'text' => $validated['text'],
+            'completed' => false,
+        ];
+
+        $task->update(['checklist_items' => $checklistItems]);
+
+        return back();
+    }
+
+    /**
+     * Update a checklist item's text.
+     */
+    public function updateChecklistItem(Request $request, Task $task, string $itemId): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $validated = $request->validate([
+            'text' => 'required|string|max:255',
+        ]);
+
+        $checklistItems = collect($task->checklist_items ?? [])->map(function ($item) use ($itemId, $validated) {
+            if ($item['id'] === $itemId) {
+                $item['text'] = $validated['text'];
+            }
+
+            return $item;
+        })->all();
+
+        $task->update(['checklist_items' => $checklistItems]);
+
+        return back();
+    }
+
+    /**
+     * Delete a checklist item from the task.
+     */
+    public function deleteChecklistItem(Task $task, string $itemId): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $checklistItems = collect($task->checklist_items ?? [])
+            ->filter(fn ($item) => $item['id'] !== $itemId)
+            ->values()
+            ->all();
+
+        $task->update(['checklist_items' => $checklistItems]);
+
+        return back();
+    }
+
+    /**
      * Promote a task to a work order.
      */
     public function promote(Request $request, Task $task): RedirectResponse

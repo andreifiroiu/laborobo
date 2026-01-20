@@ -1239,7 +1239,7 @@ export default function WorkOrderDetail({
                     ) : (
                         /* 3-column grid layout for list view */
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                            {/* Tasks Section */}
+                            {/* Column 1: Tasks Section */}
                             <div>
                                 {localTasks.length === 0 ? (
                                     <div className="bg-muted/50 rounded-xl py-8 text-center">
@@ -1275,145 +1275,146 @@ export default function WorkOrderDetail({
                                         </SortableContext>
                                     </DndContext>
                                 )}
+                            </div>
 
-                                {/* Deliverables Section */}
-                                <div className="mt-6">
-                                    <div className="mb-4 flex items-center justify-between">
-                                        <h2 className="text-foreground text-lg font-bold">Deliverables</h2>
-                                        <Button variant="outline" size="sm" onClick={() => setCreateDeliverableDialogOpen(true)}>
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Add
-                                        </Button>
+                            {/* Column 2: Deliverables Section */}
+                            <div>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-foreground text-lg font-bold">Deliverables</h2>
+                                    <Button variant="outline" size="sm" onClick={() => setCreateDeliverableDialogOpen(true)}>
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add
+                                    </Button>
+                                </div>
+
+                                {deliverables.length === 0 ? (
+                                    <div className="bg-muted/50 rounded-xl py-8 text-center">
+                                        <FileText className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
+                                        <p className="text-muted-foreground">No deliverables yet</p>
                                     </div>
-
-                                    {deliverables.length === 0 ? (
-                                        <div className="bg-muted/50 rounded-xl py-8 text-center">
-                                            <FileText className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
-                                            <p className="text-muted-foreground">No deliverables yet</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {deliverables.map((d) => (
-                                                <div
-                                                    key={d.id}
-                                                    className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
-                                                >
-                                                    <div className="flex items-start justify-between">
-                                                        <Link
-                                                            href={`/work/deliverables/${d.id}`}
-                                                            className="min-w-0 flex-1"
-                                                        >
-                                                            <div className="mb-1 flex flex-wrap items-center gap-2">
-                                                                <span className="truncate font-medium">{d.title}</span>
-                                                                <StatusBadge status={d.status} type="deliverable" />
-                                                            </div>
-                                                            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-                                                                <span className="capitalize">{d.type}</span>
-                                                                <span>-</span>
-                                                                <span>v{d.version}</span>
-                                                            </div>
-                                                        </Link>
-                                                        <div className="ml-2 flex items-center gap-1">
-                                                            {d.status === 'draft' && (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        handleDeliverableStatusChange(d.id, 'in_review');
-                                                                    }}
-                                                                >
-                                                                    Submit
-                                                                </Button>
-                                                            )}
-                                                            {d.fileUrl && (
-                                                                <Button variant="ghost" size="icon" asChild>
-                                                                    <a href={d.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                                        <ExternalLink className="h-4 w-4" />
-                                                                    </a>
-                                                                </Button>
-                                                            )}
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" onClick={(e) => e.preventDefault()}>
-                                                                        <MoreVertical className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end">
-                                                                    <DropdownMenuItem onClick={() => handleEditDeliverable(d)}>
-                                                                        <Edit className="mr-2 h-4 w-4" />
-                                                                        Edit
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuSeparator />
-                                                                    <DropdownMenuItem
-                                                                        onClick={() => {
-                                                                            setSelectedDeliverable(d);
-                                                                            setDeleteDeliverableDialogOpen(true);
-                                                                        }}
-                                                                        className="text-destructive"
-                                                                    >
-                                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                                        Delete
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {deliverables.map((d) => (
+                                            <div
+                                                key={d.id}
+                                                className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <Link
+                                                        href={`/work/deliverables/${d.id}`}
+                                                        className="min-w-0 flex-1"
+                                                    >
+                                                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                                                            <span className="truncate font-medium">{d.title}</span>
+                                                            <StatusBadge status={d.status} type="deliverable" />
                                                         </div>
+                                                        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+                                                            <span className="capitalize">{d.type}</span>
+                                                            <span>-</span>
+                                                            <span>v{d.version}</span>
+                                                        </div>
+                                                    </Link>
+                                                    <div className="ml-2 flex items-center gap-1">
+                                                        {d.status === 'draft' && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    handleDeliverableStatusChange(d.id, 'in_review');
+                                                                }}
+                                                            >
+                                                                Submit
+                                                            </Button>
+                                                        )}
+                                                        {d.fileUrl && (
+                                                            <Button variant="ghost" size="icon" asChild>
+                                                                <a href={d.fileUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                                                                    <ExternalLink className="h-4 w-4" />
+                                                                </a>
+                                                            </Button>
+                                                        )}
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" onClick={(e) => e.preventDefault()}>
+                                                                    <MoreVertical className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => handleEditDeliverable(d)}>
+                                                                    <Edit className="mr-2 h-4 w-4" />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {
+                                                                        setSelectedDeliverable(d);
+                                                                        setDeleteDeliverableDialogOpen(true);
+                                                                    }}
+                                                                    className="text-destructive"
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* RACI Assignments Section */}
-                        <div>
-                            <div className="mb-4 flex items-center gap-2">
-                                <Users className="text-muted-foreground h-5 w-5" />
-                                <h2 className="text-foreground text-lg font-bold">RACI Assignments</h2>
-                            </div>
-                            <div className="bg-card border-border rounded-xl border p-4">
-                                <RaciSelector
-                                    value={localRaciValue}
-                                    onChange={handleRaciChange}
-                                    users={raciUsers}
-                                    entityType="work_order"
-                                    disabled={isUpdatingRaci}
-                                    onConfirmationRequired={handleRaciConfirmationRequired}
-                                />
-                                {raciError && (
-                                    <p className="text-destructive mt-2 text-sm">{raciError}</p>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
 
-                            {/* Acceptance Criteria */}
-                            {workOrder.acceptanceCriteria.length > 0 && (
-                                <div className="mt-6">
-                                    <h3 className="text-foreground mb-3 text-sm font-bold">
-                                        Acceptance Criteria
-                                    </h3>
-                                    <ul className="space-y-2">
-                                        {workOrder.acceptanceCriteria.map((criteria, i) => (
-                                            <li key={i} className="flex items-start gap-2 text-sm">
-                                                <Checkbox disabled />
-                                                <span>{criteria}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                            {/* Column 3: RACI + Activity */}
+                            <div>
+                                {/* RACI Assignments Section */}
+                                <div className="mb-4 flex items-center gap-2">
+                                    <Users className="text-muted-foreground h-5 w-5" />
+                                    <h2 className="text-foreground text-lg font-bold">RACI Assignments</h2>
                                 </div>
-                            )}
-                        </div>
+                                <div className="bg-card border-border rounded-xl border p-4">
+                                    <RaciSelector
+                                        value={localRaciValue}
+                                        onChange={handleRaciChange}
+                                        users={raciUsers}
+                                        entityType="work_order"
+                                        disabled={isUpdatingRaci}
+                                        onConfirmationRequired={handleRaciConfirmationRequired}
+                                    />
+                                    {raciError && (
+                                        <p className="text-destructive mt-2 text-sm">{raciError}</p>
+                                    )}
+                                </div>
 
-                        {/* Transition History */}
-                        <div>
-                            <div className="mb-4 flex items-center gap-2">
-                                <History className="text-muted-foreground h-5 w-5" />
-                                <h2 className="text-foreground text-lg font-bold">Activity</h2>
+                                {/* Acceptance Criteria */}
+                                {workOrder.acceptanceCriteria.length > 0 && (
+                                    <div className="mt-6">
+                                        <h3 className="text-foreground mb-3 text-sm font-bold">
+                                            Acceptance Criteria
+                                        </h3>
+                                        <ul className="space-y-2">
+                                            {workOrder.acceptanceCriteria.map((criteria, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-sm">
+                                                    <Checkbox disabled />
+                                                    <span>{criteria}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Activity / Transition History */}
+                                <div className="mt-6">
+                                    <div className="mb-4 flex items-center gap-2">
+                                        <History className="text-muted-foreground h-5 w-5" />
+                                        <h2 className="text-foreground text-lg font-bold">Activity</h2>
+                                    </div>
+                                    <div className="bg-card border-border rounded-xl border p-4">
+                                        <TransitionHistory transitions={localTransitions} variant="work_order" />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="bg-card border-border rounded-xl border p-4">
-                                <TransitionHistory transitions={localTransitions} variant="work_order" />
-                            </div>
-                        </div>
                         </div>
                     )}
                 </div>

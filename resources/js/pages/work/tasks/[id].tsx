@@ -16,6 +16,9 @@ import {
     History,
     MessageSquare,
     ArrowUpCircle,
+    Pencil,
+    X,
+    Check,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -163,6 +166,12 @@ export default function TaskDetail({
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
     const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
 
+    // Checklist management state
+    const [isAddingChecklist, setIsAddingChecklist] = useState(false);
+    const [newChecklistText, setNewChecklistText] = useState('');
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const [editingItemText, setEditingItemText] = useState('');
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
         { title: task.workOrderTitle, href: `/work/work-orders/${task.workOrderId}` },
@@ -285,6 +294,86 @@ export default function TaskDetail({
             completed: !completed,
         });
     };
+
+    /**
+     * Add a new checklist item
+     */
+    const handleAddChecklistItem = useCallback(() => {
+        if (!newChecklistText.trim()) return;
+
+        router.post(`/work/tasks/${task.id}/checklist`, {
+            text: newChecklistText.trim(),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setNewChecklistText('');
+                setIsAddingChecklist(false);
+            },
+        });
+    }, [task.id, newChecklistText]);
+
+    /**
+     * Start editing a checklist item
+     */
+    const handleStartEditItem = useCallback((itemId: string, currentText: string) => {
+        setEditingItemId(itemId);
+        setEditingItemText(currentText);
+    }, []);
+
+    /**
+     * Save the edited checklist item
+     */
+    const handleSaveEditItem = useCallback(() => {
+        if (!editingItemId || !editingItemText.trim()) return;
+
+        router.patch(`/work/tasks/${task.id}/checklist/${editingItemId}/text`, {
+            text: editingItemText.trim(),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setEditingItemId(null);
+                setEditingItemText('');
+            },
+        });
+    }, [task.id, editingItemId, editingItemText]);
+
+    /**
+     * Cancel editing a checklist item
+     */
+    const handleCancelEditItem = useCallback(() => {
+        setEditingItemId(null);
+        setEditingItemText('');
+    }, []);
+
+    /**
+     * Delete a checklist item
+     */
+    const handleDeleteChecklistItem = useCallback((itemId: string) => {
+        router.delete(`/work/tasks/${task.id}/checklist/${itemId}`, {
+            preserveScroll: true,
+        });
+    }, [task.id]);
+
+    /**
+     * Handle keyboard events for checklist input
+     */
+    const handleChecklistKeyDown = useCallback((e: React.KeyboardEvent, action: 'add' | 'edit') => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (action === 'add') {
+                handleAddChecklistItem();
+            } else {
+                handleSaveEditItem();
+            }
+        } else if (e.key === 'Escape') {
+            if (action === 'add') {
+                setIsAddingChecklist(false);
+                setNewChecklistText('');
+            } else {
+                handleCancelEditItem();
+            }
+        }
+    }, [handleAddChecklistItem, handleSaveEditItem, handleCancelEditItem]);
 
     /**
      * Handle transition button click - open dialog for transitions that need confirmation
@@ -770,7 +859,19 @@ export default function TaskDetail({
 
                         {/* Checklist */}
                         <div>
-                            <h2 className="text-foreground mb-4 text-lg font-bold">Checklist</h2>
+                            <div className="mb-4 flex items-center justify-between">
+                                <h2 className="text-foreground text-lg font-bold">Checklist</h2>
+                                {!isAddingChecklist && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsAddingChecklist(true)}
+                                    >
+                                        <Plus className="mr-1 h-3 w-3" />
+                                        Add Item
+                                    </Button>
+                                )}
+                            </div>
 
                             {totalItems > 0 && (
                                 <div className="mb-4">
@@ -782,26 +883,113 @@ export default function TaskDetail({
                                 </div>
                             )}
 
-                            {totalItems === 0 ? (
+                            {/* Add new item form */}
+                            {isAddingChecklist && (
+                                <div className="bg-card border-border mb-3 flex items-center gap-2 rounded-lg border p-3">
+                                    <Input
+                                        autoFocus
+                                        value={newChecklistText}
+                                        onChange={(e) => setNewChecklistText(e.target.value)}
+                                        onKeyDown={(e) => handleChecklistKeyDown(e, 'add')}
+                                        placeholder="Enter checklist item..."
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={handleAddChecklistItem}
+                                        disabled={!newChecklistText.trim()}
+                                    >
+                                        <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => {
+                                            setIsAddingChecklist(false);
+                                            setNewChecklistText('');
+                                        }}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+
+                            {totalItems === 0 && !isAddingChecklist ? (
                                 <div className="bg-muted/50 rounded-xl py-8 text-center">
-                                    <p className="text-muted-foreground">No checklist items</p>
+                                    <p className="text-muted-foreground mb-3">No checklist items</p>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsAddingChecklist(true)}
+                                    >
+                                        <Plus className="mr-1 h-3 w-3" />
+                                        Add your first item
+                                    </Button>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {task.checklistItems.map((item) => (
                                         <div
                                             key={item.id}
-                                            className="bg-card border-border flex items-center gap-3 rounded-lg border p-3"
+                                            className="bg-card border-border group flex items-center gap-3 rounded-lg border p-3"
                                         >
-                                            <Checkbox
-                                                checked={item.completed}
-                                                onCheckedChange={() => handleToggleChecklist(item.id, item.completed)}
-                                            />
-                                            <span
-                                                className={item.completed ? 'text-muted-foreground line-through' : ''}
-                                            >
-                                                {item.text}
-                                            </span>
+                                            {editingItemId === item.id ? (
+                                                <>
+                                                    <Input
+                                                        autoFocus
+                                                        value={editingItemText}
+                                                        onChange={(e) => setEditingItemText(e.target.value)}
+                                                        onKeyDown={(e) => handleChecklistKeyDown(e, 'edit')}
+                                                        className="flex-1"
+                                                    />
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={handleSaveEditItem}
+                                                        disabled={!editingItemText.trim()}
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={handleCancelEditItem}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Checkbox
+                                                        checked={item.completed}
+                                                        onCheckedChange={() => handleToggleChecklist(item.id, item.completed)}
+                                                    />
+                                                    <span
+                                                        className={`flex-1 ${item.completed ? 'text-muted-foreground line-through' : ''}`}
+                                                    >
+                                                        {item.text}
+                                                    </span>
+                                                    <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-7 w-7"
+                                                            onClick={() => handleStartEditItem(item.id, item.text)}
+                                                        >
+                                                            <Pencil className="h-3 w-3" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="text-destructive h-7 w-7"
+                                                            onClick={() => handleDeleteChecklistItem(item.id)}
+                                                        >
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
