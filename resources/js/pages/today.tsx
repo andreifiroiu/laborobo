@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { useTodayData } from '@/hooks/use-today-data';
-import type { TodayApproval, TodayTask, TodayBlocker, QuickCaptureData } from '@/types/today';
+import { Head, router } from '@inertiajs/react';
+import type { TodayApproval, TodayTask, TodayBlocker, QuickCaptureData, TodayPageProps } from '@/types/today';
 import {
     DailySummaryCard,
     MetricsBar,
@@ -20,9 +19,15 @@ import {
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Today', href: '/today' }];
 
-export default function Today() {
-    // Get mock data (will be replaced with Inertia props from backend)
-    const data = useTodayData();
+export default function Today({
+    dailySummary,
+    approvals,
+    tasks,
+    blockers,
+    upcomingDeadlines,
+    activities,
+    metrics,
+}: TodayPageProps) {
 
     // Local state for selected items
     const [selectedApproval, setSelectedApproval] = useState<TodayApproval | null>(null);
@@ -31,7 +36,7 @@ export default function Today() {
 
     // Handlers for approvals
     const handleViewApproval = (id: string) => {
-        const approval = data.approvals.find((a) => a.id === id);
+        const approval = approvals.find((a) => a.id === id);
         if (approval) {
             setSelectedApproval(approval);
         }
@@ -49,7 +54,7 @@ export default function Today() {
 
     // Handlers for tasks
     const handleViewTask = (id: string) => {
-        const task = data.tasks.find((t) => t.id === id);
+        const task = tasks.find((t) => t.id === id);
         if (task) {
             setSelectedTask(task);
         }
@@ -67,7 +72,7 @@ export default function Today() {
 
     // Handlers for blockers
     const handleViewBlocker = (id: string) => {
-        const blocker = data.blockers.find((b) => b.id === id);
+        const blocker = blockers.find((b) => b.id === id);
         if (blocker) {
             setSelectedBlocker(blocker);
         }
@@ -103,8 +108,7 @@ export default function Today() {
 
     // Handler for refreshing summary
     const handleRefreshSummary = () => {
-        // TODO: Implement API call to refresh AI summary
-        console.log('Refreshing summary...');
+        router.reload({ only: ['dailySummary'] });
     };
 
     return (
@@ -124,24 +128,24 @@ export default function Today() {
                 {/* Main content */}
                 <div className="space-y-6">
                     {/* Daily summary - full width at top */}
-                    <DailySummaryCard summary={data.dailySummary} onRefresh={handleRefreshSummary} />
+                    <DailySummaryCard summary={dailySummary} onRefresh={handleRefreshSummary} />
 
                     {/* Metrics bar - full width */}
-                    <MetricsBar metrics={data.metrics} />
+                    <MetricsBar metrics={metrics} />
 
                     {/* Dashboard grid - responsive 2 column layout */}
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         {/* Left column */}
                         <div className="space-y-6">
-                            <ApprovalsCard approvals={data.approvals} onViewApproval={handleViewApproval} />
-                            <TasksCard tasks={data.tasks} onViewTask={handleViewTask} />
-                            <BlockersCard blockers={data.blockers} onViewBlocker={handleViewBlocker} />
+                            <ApprovalsCard approvals={approvals} onViewApproval={handleViewApproval} />
+                            <TasksCard tasks={tasks} onViewTask={handleViewTask} />
+                            <BlockersCard blockers={blockers} onViewBlocker={handleViewBlocker} />
                         </div>
 
                         {/* Right column */}
                         <div className="space-y-6">
-                            <UpcomingDeadlinesCard deadlines={data.upcomingDeadlines} onViewWorkOrder={handleViewWorkOrder} />
-                            <ActivityFeed activities={data.activities} onViewActivity={handleViewActivity} />
+                            <UpcomingDeadlinesCard deadlines={upcomingDeadlines} onViewWorkOrder={handleViewWorkOrder} />
+                            <ActivityFeed activities={activities} onViewActivity={handleViewActivity} />
                         </div>
                     </div>
                 </div>
