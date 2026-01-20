@@ -16,6 +16,13 @@ export { CalendarView } from './calendar-view';
 export { ArchiveProjectCard } from './archive-project-card';
 export { ArchiveView } from './archive-view';
 
+// Work Order List Components
+export { WorkOrderListSection } from './work-order-list-section';
+export { WorkOrderListGroup } from './work-order-list-group';
+export { WorkOrderListItem } from './work-order-list-item';
+export { CreateListDialog } from './create-list-dialog';
+export { EditListDialog } from './edit-list-dialog';
+
 // File Management Components
 export { FilePreview } from './file-preview';
 export { FileUploader } from './file-uploader';

@@ -30,6 +30,10 @@ export function KanbanView({ workOrders, onCreateWorkOrder }: KanbanViewProps) {
                 const aPriority = priorityOrder[a.priority];
                 const bPriority = priorityOrder[b.priority];
                 if (aPriority !== bPriority) return aPriority - bPriority;
+                // Work orders without due date go to the end
+                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
                 return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
             }),
     }));

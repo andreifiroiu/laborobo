@@ -15,6 +15,7 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation';
  * enabling correlation with backend traces via propagated trace context.
  */
 
+const OTEL_ENABLED = import.meta.env.VITE_OTEL_ENABLED !== 'false' && import.meta.env.VITE_OTEL_ENABLED !== false;
 const OTEL_ENDPOINT = import.meta.env.VITE_OTEL_EXPORTER_ENDPOINT || 'http://localhost:4318';
 const SERVICE_NAME = import.meta.env.VITE_OTEL_SERVICE_NAME || 'laborobo-frontend';
 const SERVICE_VERSION = import.meta.env.VITE_APP_VERSION || '1.0.0';
@@ -31,6 +32,10 @@ let tracer: Tracer | null = null;
 export function initTelemetry(): void {
     // Skip in SSR or if already initialized
     if (typeof window === 'undefined' || provider !== null) {
+        return;
+    }
+
+    if (!OTEL_ENABLED) {
         return;
     }
 

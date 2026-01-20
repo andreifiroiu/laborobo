@@ -46,7 +46,7 @@ export interface WorkOrder {
     assignedToName: string;
     status: 'draft' | 'active' | 'in_review' | 'approved' | 'delivered';
     priority: 'low' | 'medium' | 'high' | 'urgent';
-    dueDate: string;
+    dueDate: string | null;
     estimatedHours: number;
     actualHours: number;
     acceptanceCriteria: string[];
@@ -55,6 +55,29 @@ export interface WorkOrder {
     partyContactId: string | null;
     createdBy: string;
     createdByName: string;
+    workOrderListId?: string | null;
+    positionInList?: number;
+}
+
+export interface WorkOrderInList {
+    id: string;
+    title: string;
+    status: 'draft' | 'active' | 'in_review' | 'approved' | 'delivered';
+    priority: 'low' | 'medium' | 'high' | 'urgent';
+    dueDate: string | null;
+    assignedToName: string;
+    tasksCount: number;
+    completedTasksCount: number;
+    positionInList: number;
+}
+
+export interface WorkOrderList {
+    id: string;
+    name: string;
+    description: string | null;
+    color: string | null;
+    position: number;
+    workOrders: WorkOrderInList[];
 }
 
 export interface ChecklistItem {
@@ -72,6 +95,8 @@ export interface Task {
     projectId: string;
     assignedToId: string | null;
     assignedToName: string;
+    assignedAgentId: string | null;
+    assignedAgentName: string | null;
     status: 'todo' | 'in_progress' | 'done';
     dueDate: string;
     estimatedHours: number;
@@ -245,11 +270,15 @@ export interface ProjectDetailProps {
         title: string;
         status: string;
         priority: string;
-        dueDate: string;
+        dueDate: string | null;
         assignedToName: string;
         tasksCount: number;
         completedTasksCount: number;
+        workOrderListId: string | null;
+        positionInList: number;
     }>;
+    workOrderLists: WorkOrderList[];
+    ungroupedWorkOrders: WorkOrderInList[];
     documents: Document[];
     communicationThread: {
         id: string;

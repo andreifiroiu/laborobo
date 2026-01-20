@@ -21,6 +21,8 @@ class WorkOrder extends Model
     protected $fillable = [
         'team_id',
         'project_id',
+        'work_order_list_id',
+        'position_in_list',
         'assigned_to_id',
         'created_by_id',
         'accountable_id',
@@ -51,6 +53,7 @@ class WorkOrder extends Model
         'sop_attached' => 'boolean',
         'consulted_ids' => 'array',
         'informed_ids' => 'array',
+        'position_in_list' => 'integer',
     ];
 
     public function team(): BelongsTo
@@ -61,6 +64,11 @@ class WorkOrder extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function workOrderList(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrderList::class);
     }
 
     public function assignedTo(): BelongsTo
@@ -144,6 +152,21 @@ class WorkOrder extends Model
     public function scopeWithStatus($query, WorkOrderStatus $status)
     {
         return $query->where('status', $status);
+    }
+
+    public function scopeInList($query, ?int $listId)
+    {
+        return $query->where('work_order_list_id', $listId);
+    }
+
+    public function scopeOrderedInList($query)
+    {
+        return $query->orderBy('position_in_list');
+    }
+
+    public function scopeUngrouped($query)
+    {
+        return $query->whereNull('work_order_list_id');
     }
 
     public function getTasksCountAttribute(): int

@@ -176,6 +176,17 @@ class WorkflowTransitionService
             $item->status = $toStatus;
             $item->save();
 
+            // Auto-assign user when transitioning task to in_progress
+            // Only auto-assign if BOTH assignment fields are null
+            if ($toStatus->value === 'in_progress'
+                && $item instanceof Task
+                && $item->assigned_to_id === null
+                && $item->assigned_agent_id === null
+                && $actor instanceof User) {
+                $item->assigned_to_id = $actor->id;
+                $item->save();
+            }
+
             // Log to AuditLog
             $this->logToAuditLog($item, $actor, $fromStatus, $toStatus, $comment);
 
@@ -234,6 +245,13 @@ class WorkflowTransitionService
             // Update the model status
             $task->status = $toStatus;
             $task->save();
+
+            // Auto-assign user when transitioning task to in_progress
+            // Only auto-assign if BOTH assignment fields are null
+            if ($task->assigned_to_id === null && $task->assigned_agent_id === null) {
+                $task->assigned_to_id = $user->id;
+                $task->save();
+            }
 
             // Log to AuditLog
             $this->logToAuditLog(

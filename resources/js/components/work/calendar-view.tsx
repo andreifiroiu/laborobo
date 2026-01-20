@@ -68,7 +68,7 @@ export function CalendarView({ projects, workOrders }: CalendarViewProps) {
         });
 
         const workOrdersOnDate = workOrders.filter((wo) => {
-            return wo.dueDate.startsWith(dateStr);
+            return wo.dueDate?.startsWith(dateStr);
         });
 
         return { projects: projectsOnDate, workOrders: workOrdersOnDate };
@@ -103,7 +103,7 @@ export function CalendarView({ projects, workOrders }: CalendarViewProps) {
     const totalItems = projects.length + workOrders.length;
     const overdueItems = [
         ...projects.filter((p) => p.targetEndDate && new Date(p.targetEndDate) < new Date()),
-        ...workOrders.filter((wo) => new Date(wo.dueDate) < new Date()),
+        ...workOrders.filter((wo) => wo.dueDate && new Date(wo.dueDate) < new Date()),
     ].length;
 
     return (

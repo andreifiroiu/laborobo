@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ArrowRightIcon, MessageSquareIcon } from 'lucide-react';
+import { ArrowRightIcon, MessageSquareIcon, UserIcon, BotIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -32,12 +32,25 @@ export interface TransitionUser {
 }
 
 /**
+ * Assignee information (user or agent)
+ */
+export interface Assignee {
+    id: number;
+    name: string;
+}
+
+/**
  * Status transition record from the backend
  */
 export interface StatusTransition {
     id: number;
+    actionType: 'status_change' | 'assignment_change';
     fromStatus: string;
     toStatus: string;
+    fromAssignedTo: Assignee | null;
+    toAssignedTo: Assignee | null;
+    fromAssignedAgent: Assignee | null;
+    toAssignedAgent: Assignee | null;
     user: TransitionUser;
     createdAt: string;
     comment: string | null;
@@ -135,6 +148,37 @@ function getInitials(name: string): string {
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
+/**
+ * Get assignment description for an assignment change
+ */
+function getAssignmentDescription(transition: StatusTransition): {
+    from: { name: string; type: 'user' | 'agent' | 'unassigned' };
+    to: { name: string; type: 'user' | 'agent' | 'unassigned' };
+} {
+    let from: { name: string; type: 'user' | 'agent' | 'unassigned' };
+    let to: { name: string; type: 'user' | 'agent' | 'unassigned' };
+
+    // Determine "from" assignment
+    if (transition.fromAssignedTo) {
+        from = { name: transition.fromAssignedTo.name, type: 'user' };
+    } else if (transition.fromAssignedAgent) {
+        from = { name: transition.fromAssignedAgent.name, type: 'agent' };
+    } else {
+        from = { name: 'Unassigned', type: 'unassigned' };
+    }
+
+    // Determine "to" assignment
+    if (transition.toAssignedTo) {
+        to = { name: transition.toAssignedTo.name, type: 'user' };
+    } else if (transition.toAssignedAgent) {
+        to = { name: transition.toAssignedAgent.name, type: 'agent' };
+    } else {
+        to = { name: 'Unassigned', type: 'unassigned' };
+    }
+
+    return { from, to };
+}
+
 interface TransitionHistoryItemProps {
     transition: StatusTransition;
     variant: 'task' | 'work_order';
@@ -142,11 +186,40 @@ interface TransitionHistoryItemProps {
 }
 
 /**
+ * AssignmentBadge displays an assignment with appropriate icon
+ */
+function AssignmentBadge({
+    name,
+    type,
+}: {
+    name: string;
+    type: 'user' | 'agent' | 'unassigned';
+}) {
+    const Icon = type === 'agent' ? BotIcon : UserIcon;
+    const badgeClassName =
+        type === 'unassigned'
+            ? 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+            : type === 'agent'
+              ? 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900 dark:text-violet-300 dark:border-violet-800'
+              : 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800';
+
+    return (
+        <Badge variant="outline" className={cn('gap-1 text-xs font-normal', badgeClassName)}>
+            <Icon className="size-3" aria-hidden="true" />
+            {name}
+        </Badge>
+    );
+}
+
+/**
  * TransitionHistoryItem displays a single transition with avatar, status badges, timestamp, and comment.
  */
 function TransitionHistoryItem({ transition, variant, isLast }: TransitionHistoryItemProps) {
-    const isRejection = isRejectionTransition(transition.toStatus);
+    const isAssignmentChange = transition.actionType === 'assignment_change';
+    const isRejection = !isAssignmentChange && isRejectionTransition(transition.toStatus);
     const hasComment = transition.comment !== null && transition.comment.trim().length > 0;
+
+    const assignmentInfo = isAssignmentChange ? getAssignmentDescription(transition) : null;
 
     return (
         <li
@@ -182,22 +255,41 @@ function TransitionHistoryItem({ transition, variant, isLast }: TransitionHistor
                     </span>
                 </div>
 
-                {/* Status transition badges */}
+                {/* Status transition badges or assignment change */}
                 <div className="flex flex-wrap items-center gap-1.5">
-                    <StatusBadge
-                        status={transition.fromStatus as Status}
-                        variant={variant}
-                        size="sm"
-                    />
-                    <ArrowRightIcon
-                        className="text-muted-foreground size-3 shrink-0"
-                        aria-label="transitioned to"
-                    />
-                    <StatusBadge
-                        status={transition.toStatus as Status}
-                        variant={variant}
-                        size="sm"
-                    />
+                    {isAssignmentChange && assignmentInfo ? (
+                        <>
+                            <AssignmentBadge
+                                name={assignmentInfo.from.name}
+                                type={assignmentInfo.from.type}
+                            />
+                            <ArrowRightIcon
+                                className="text-muted-foreground size-3 shrink-0"
+                                aria-label="reassigned to"
+                            />
+                            <AssignmentBadge
+                                name={assignmentInfo.to.name}
+                                type={assignmentInfo.to.type}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <StatusBadge
+                                status={transition.fromStatus as Status}
+                                variant={variant}
+                                size="sm"
+                            />
+                            <ArrowRightIcon
+                                className="text-muted-foreground size-3 shrink-0"
+                                aria-label="transitioned to"
+                            />
+                            <StatusBadge
+                                status={transition.toStatus as Status}
+                                variant={variant}
+                                size="sm"
+                            />
+                        </>
+                    )}
                 </div>
 
                 {/* Comment section */}

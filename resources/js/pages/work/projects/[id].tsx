@@ -46,7 +46,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
-import { StatusBadge, ProgressBar, ProjectTeamSection } from '@/components/work';
+import { StatusBadge, ProgressBar, ProjectTeamSection, WorkOrderListSection } from '@/components/work';
 import { CommunicationsPanel } from '@/components/communications';
 import { useState, useRef } from 'react';
 import type { ProjectDetailProps } from '@/types/work';
@@ -55,6 +55,8 @@ import type { BreadcrumbItem } from '@/types';
 export default function ProjectDetail({
     project,
     workOrders,
+    workOrderLists,
+    ungroupedWorkOrders,
     documents,
     communicationThread,
     messages,
@@ -63,6 +65,7 @@ export default function ProjectDetail({
 }: ProjectDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
+    const [selectedListId, setSelectedListId] = useState<string | undefined>(undefined);
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +90,7 @@ export default function ProjectDetail({
         description: '',
         priority: 'medium' as const,
         dueDate: '',
+        workOrderListId: undefined as string | undefined,
     });
 
     const handleUpdateProject = (e: React.FormEvent) => {
@@ -97,12 +101,19 @@ export default function ProjectDetail({
         });
     };
 
+    const handleOpenCreateWorkOrderDialog = (listId?: string) => {
+        setSelectedListId(listId);
+        workOrderForm.setData('workOrderListId', listId);
+        setCreateWorkOrderDialogOpen(true);
+    };
+
     const handleCreateWorkOrder = (e: React.FormEvent) => {
         e.preventDefault();
         workOrderForm.post('/work/work-orders', {
             preserveScroll: true,
             onSuccess: () => {
                 workOrderForm.reset();
+                setSelectedListId(undefined);
                 setCreateWorkOrderDialogOpen(false);
             },
         });
@@ -293,67 +304,13 @@ export default function ProjectDetail({
                     />
 
                     {/* Work Orders Section */}
-                    <div className="mb-8">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-foreground">
-                                Work Orders ({workOrders.length})
-                            </h2>
-                            <Button
-                                size="sm"
-                                onClick={() => setCreateWorkOrderDialogOpen(true)}
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Work Order
-                            </Button>
-                        </div>
-
-                        {workOrders.length === 0 ? (
-                            <div className="text-center py-12 bg-muted/50 rounded-xl">
-                                <p className="text-muted-foreground mb-4">
-                                    No work orders yet. Create one to get started.
-                                </p>
-                                <Button onClick={() => setCreateWorkOrderDialogOpen(true)}>
-                                    Create Work Order
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {workOrders.map((wo) => (
-                                    <Link
-                                        key={wo.id}
-                                        href={`/work/work-orders/${wo.id}`}
-                                        className="block p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors"
-                                    >
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-medium">{wo.title}</span>
-                                                    <Badge variant="outline">{wo.status}</Badge>
-                                                    <Badge
-                                                        variant={
-                                                            wo.priority === 'urgent'
-                                                                ? 'destructive'
-                                                                : wo.priority === 'high'
-                                                                  ? 'default'
-                                                                  : 'secondary'
-                                                        }
-                                                    >
-                                                        {wo.priority}
-                                                    </Badge>
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">
-                                                    {wo.assignedToName} •{' '}
-                                                    {wo.completedTasksCount}/{wo.tasksCount} tasks •
-                                                    Due{' '}
-                                                    {new Date(wo.dueDate).toLocaleDateString()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <WorkOrderListSection
+                        projectId={project.id}
+                        projectName={project.name}
+                        workOrderLists={workOrderLists}
+                        ungroupedWorkOrders={ungroupedWorkOrders}
+                        onCreateWorkOrder={handleOpenCreateWorkOrderDialog}
+                    />
 
                     {/* Documents Section */}
                     <div>
@@ -593,6 +550,40 @@ export default function ProjectDetail({
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {workOrderLists.length > 0 && (
+                                <div className="grid gap-2">
+                                    <Label>List (optional)</Label>
+                                    <Select
+                                        value={workOrderForm.data.workOrderListId || 'none'}
+                                        onValueChange={(value) =>
+                                            workOrderForm.setData(
+                                                'workOrderListId',
+                                                value === 'none' ? undefined : value
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a list" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Ungrouped</SelectItem>
+                                            {workOrderLists.map((list) => (
+                                                <SelectItem key={list.id} value={list.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        {list.color && (
+                                                            <div
+                                                                className="w-2 h-2 rounded-full"
+                                                                style={{ backgroundColor: list.color }}
+                                                            />
+                                                        )}
+                                                        {list.name}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                             <div className="grid gap-2">
                                 <Label>Description</Label>
                                 <Input

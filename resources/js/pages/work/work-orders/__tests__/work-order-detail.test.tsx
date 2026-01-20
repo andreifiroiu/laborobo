@@ -75,8 +75,13 @@ const mockTeamMembers = [
 const mockStatusTransitions = [
     {
         id: 1,
+        actionType: 'status_change' as const,
         fromStatus: 'draft',
         toStatus: 'active',
+        fromAssignedTo: null,
+        toAssignedTo: null,
+        fromAssignedAgent: null,
+        toAssignedAgent: null,
         user: { id: 1, name: 'Admin User', email: 'admin@test.com' },
         createdAt: '2024-12-01T10:00:00Z',
         comment: null,
@@ -432,8 +437,13 @@ describe('WorkOrderDetail - Transition History', () => {
             ...mockStatusTransitions,
             {
                 id: 2,
+                actionType: 'status_change' as const,
                 fromStatus: 'in_review',
                 toStatus: 'revision_requested',
+                fromAssignedTo: null,
+                toAssignedTo: null,
+                fromAssignedAgent: null,
+                toAssignedAgent: null,
                 user: { id: 1, name: 'Reviewer User', email: 'reviewer@test.com' },
                 createdAt: '2024-12-05T10:00:00Z',
                 comment: 'Please fix the formatting issues',

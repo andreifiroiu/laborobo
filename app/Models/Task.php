@@ -23,6 +23,7 @@ class Task extends Model
         'work_order_id',
         'project_id',
         'assigned_to_id',
+        'assigned_agent_id',
         'created_by_id',
         'reviewer_id',
         'title',
@@ -83,6 +84,38 @@ class Task extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    /**
+     * Get the AI agent assigned to this task.
+     */
+    public function assignedAgent(): BelongsTo
+    {
+        return $this->belongsTo(AIAgent::class, 'assigned_agent_id');
+    }
+
+    /**
+     * Get the assignee (User or AIAgent) for this task.
+     */
+    public function getAssignee(): User|AIAgent|null
+    {
+        if ($this->assigned_to_id !== null) {
+            return $this->assignedTo;
+        }
+
+        if ($this->assigned_agent_id !== null) {
+            return $this->assignedAgent;
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if the task is assigned to an AI agent.
+     */
+    public function isAssignedToAgent(): bool
+    {
+        return $this->assigned_agent_id !== null;
     }
 
     public function timeEntries(): HasMany

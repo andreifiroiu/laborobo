@@ -11,6 +11,7 @@ use App\Models\Party;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderList;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -62,6 +63,8 @@ class ProjectController extends Controller
             'workOrders.responsible', 'workOrders.reviewer',
             'workOrders.tasks.assignedTo', 'workOrders.tasks.reviewer',
             'documents',
+            'workOrderLists.workOrders.tasks',
+            'workOrderLists.workOrders.assignedTo',
         ]);
 
         // Get communication thread and messages
@@ -90,11 +93,45 @@ class ProjectController extends Controller
                 'title' => $wo->title,
                 'status' => $wo->status->value,
                 'priority' => $wo->priority->value,
-                'dueDate' => $wo->due_date->format('Y-m-d'),
+                'dueDate' => $wo->due_date?->format('Y-m-d'),
                 'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
                 'tasksCount' => $wo->tasks->count(),
                 'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
+                'workOrderListId' => $wo->work_order_list_id ? (string) $wo->work_order_list_id : null,
+                'positionInList' => $wo->position_in_list,
             ]),
+            'workOrderLists' => $project->workOrderLists->map(fn (WorkOrderList $list) => [
+                'id' => (string) $list->id,
+                'name' => $list->name,
+                'description' => $list->description,
+                'color' => $list->color,
+                'position' => $list->position,
+                'workOrders' => $list->workOrders->map(fn (WorkOrder $wo) => [
+                    'id' => (string) $wo->id,
+                    'title' => $wo->title,
+                    'status' => $wo->status->value,
+                    'priority' => $wo->priority->value,
+                    'dueDate' => $wo->due_date?->format('Y-m-d'),
+                    'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                    'tasksCount' => $wo->tasks->count(),
+                    'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
+                    'positionInList' => $wo->position_in_list,
+                ]),
+            ]),
+            'ungroupedWorkOrders' => $project->ungroupedWorkOrders()
+                ->with(['tasks', 'assignedTo'])
+                ->get()
+                ->map(fn (WorkOrder $wo) => [
+                    'id' => (string) $wo->id,
+                    'title' => $wo->title,
+                    'status' => $wo->status->value,
+                    'priority' => $wo->priority->value,
+                    'dueDate' => $wo->due_date?->format('Y-m-d'),
+                    'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                    'tasksCount' => $wo->tasks->count(),
+                    'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
+                    'positionInList' => $wo->position_in_list,
+                ]),
             'documents' => $project->documents->map(fn (Document $doc) => [
                 'id' => (string) $doc->id,
                 'name' => $doc->name,

@@ -84,6 +84,18 @@ class Project extends Model
         return $this->hasMany(WorkOrder::class);
     }
 
+    public function workOrderLists(): HasMany
+    {
+        return $this->hasMany(WorkOrderList::class)->orderBy('position');
+    }
+
+    public function ungroupedWorkOrders(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class)
+            ->whereNull('work_order_list_id')
+            ->orderBy('position_in_list');
+    }
+
     public function tasks(): HasManyThrough
     {
         return $this->hasManyThrough(Task::class, WorkOrder::class);

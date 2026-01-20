@@ -9,6 +9,7 @@ export {
     getInitials,
     type StatusTransition,
     type TransitionUser,
+    type Assignee,
     type CommentCategory,
     type TransitionHistoryProps,
 } from './transition-history';

@@ -26,18 +26,34 @@ class WorkOrderController extends Controller
             'projectId' => 'required|exists:projects,id',
             'assignedToId' => 'nullable|exists:users,id',
             'priority' => 'required|string|in:low,medium,high,urgent',
-            'dueDate' => 'required|date',
+            'dueDate' => 'nullable|date',
             'estimatedHours' => 'nullable|numeric|min:0',
             'acceptanceCriteria' => 'nullable|array',
+            'workOrderListId' => 'nullable|exists:work_order_lists,id',
         ]);
 
         $user = $request->user();
         $team = $user->currentTeam;
         $project = Project::findOrFail($validated['projectId']);
 
+        // Calculate position in list
+        $listId = $validated['workOrderListId'] ?? null;
+        $positionInList = 0;
+        if ($listId) {
+            $maxPosition = WorkOrder::where('work_order_list_id', $listId)->max('position_in_list') ?? 0;
+            $positionInList = $maxPosition + 100;
+        } else {
+            $maxPosition = WorkOrder::where('project_id', $validated['projectId'])
+                ->whereNull('work_order_list_id')
+                ->max('position_in_list') ?? 0;
+            $positionInList = $maxPosition + 100;
+        }
+
         WorkOrder::create([
             'team_id' => $team->id,
             'project_id' => $validated['projectId'],
+            'work_order_list_id' => $listId,
+            'position_in_list' => $positionInList,
             'assigned_to_id' => $validated['assignedToId'] ?? null,
             'created_by_id' => $user->id,
             'party_contact_id' => $project->party_id,
@@ -45,7 +61,7 @@ class WorkOrderController extends Controller
             'description' => $validated['description'] ?? null,
             'status' => WorkOrderStatus::Draft,
             'priority' => Priority::from($validated['priority']),
-            'due_date' => $validated['dueDate'],
+            'due_date' => $validated['dueDate'] ?? null,
             'estimated_hours' => $validated['estimatedHours'] ?? 0,
             'acceptance_criteria' => $validated['acceptanceCriteria'] ?? [],
             'accountable_id' => $user->id, // Creator is initially accountable (RACI)
@@ -81,7 +97,7 @@ class WorkOrderController extends Controller
                 'assignedToName' => $workOrder->assignedTo?->name ?? 'Unassigned',
                 'status' => $workOrder->status->value,
                 'priority' => $workOrder->priority->value,
-                'dueDate' => $workOrder->due_date->format('Y-m-d'),
+                'dueDate' => $workOrder->due_date?->format('Y-m-d'),
                 'estimatedHours' => (float) $workOrder->estimated_hours,
                 'actualHours' => (float) $workOrder->actual_hours,
                 'acceptanceCriteria' => $workOrder->acceptance_criteria ?? [],
@@ -140,10 +156,16 @@ class WorkOrderController extends Controller
                 'content' => $msg->content,
                 'type' => $msg->type->value,
             ]),
-            'teamMembers' => $workOrder->project->team->users->map(fn ($user) => [
-                'id' => (string) $user->id,
-                'name' => $user->name,
-            ]),
+            'teamMembers' => $workOrder->project->team->users
+                ->push($workOrder->project->team->owner)
+                ->push($request->user())
+                ->unique('id')
+                ->filter()
+                ->values()
+                ->map(fn ($user) => [
+                    'id' => (string) $user->id,
+                    'name' => $user->name,
+                ]),
             'statusTransitions' => $workOrder->statusTransitions->map(fn ($transition) => [
                 'id' => $transition->id,
                 'fromStatus' => $transition->from_status,

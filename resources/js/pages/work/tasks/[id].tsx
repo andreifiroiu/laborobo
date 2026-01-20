@@ -3,6 +3,7 @@ import {
     ArrowLeft,
     Clock,
     User,
+    Bot,
     MoreVertical,
     Edit,
     Trash2,
@@ -31,6 +32,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -41,7 +43,9 @@ import {
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
@@ -75,6 +79,8 @@ interface TaskWithWorkflow {
     projectName?: string;
     assignedToId: string | null;
     assignedToName: string;
+    assignedAgentId: string | null;
+    assignedAgentName: string | null;
     status: string;
     dueDate: string;
     estimatedHours: number;
@@ -124,6 +130,7 @@ interface TaskDetailProps {
     timeEntries: TimeEntryDisplay[];
     activeTimer: { id: string; startedAt: string } | null;
     teamMembers: Array<{ id: string; name: string }>;
+    availableAgents?: Array<{ id: string; name: string }>;
     statusTransitions?: StatusTransition[];
     allowedTransitions?: TransitionOption[];
     rejectionFeedback?: RejectionFeedback | null;
@@ -135,6 +142,7 @@ export default function TaskDetail({
     timeEntries,
     activeTimer,
     teamMembers,
+    availableAgents = [],
     statusTransitions = [],
     allowedTransitions = [],
     rejectionFeedback = null,
@@ -161,11 +169,19 @@ export default function TaskDetail({
         { title: task.title, href: `/work/tasks/${task.id}` },
     ];
 
+    // Determine the initial assignment value for the unified dropdown
+    // Format: 'user:{id}', 'agent:{id}', or 'unassigned' for no assignment
+    const getInitialAssignment = () => {
+        if (task.assignedToId) return `user:${task.assignedToId}`;
+        if (task.assignedAgentId) return `agent:${task.assignedAgentId}`;
+        return 'unassigned';
+    };
+
     const editForm = useForm({
         title: task.title,
         description: task.description || '',
         status: task.status,
-        assigned_to_id: task.assignedToId || '',
+        assignment: getInitialAssignment(),
         due_date: task.dueDate,
         estimated_hours: task.estimatedHours.toString(),
     });
@@ -217,10 +233,50 @@ export default function TaskDetail({
 
     const handleUpdateTask = (e: React.FormEvent) => {
         e.preventDefault();
-        editForm.patch(`/work/tasks/${task.id}`, {
+
+        // Parse the unified assignment value into separate fields
+        const assignment = editForm.data.assignment;
+        let assignedToId: string | null = null;
+        let assignedAgentId: string | null = null;
+
+        if (assignment.startsWith('user:')) {
+            assignedToId = assignment.replace('user:', '');
+        } else if (assignment.startsWith('agent:')) {
+            assignedAgentId = assignment.replace('agent:', '');
+        }
+        // 'unassigned' value means both should be null (already set above)
+
+        // Manually construct the data to send
+        router.patch(`/work/tasks/${task.id}`, {
+            title: editForm.data.title,
+            description: editForm.data.description,
+            assignedToId,
+            assignedAgentId,
+            dueDate: editForm.data.due_date,
+            estimatedHours: editForm.data.estimated_hours,
+        }, {
             preserveScroll: true,
             onSuccess: () => setEditDialogOpen(false),
         });
+    };
+
+    /**
+     * Handle quick assignment change from header dropdown
+     */
+    const handleAssignmentChange = (value: string) => {
+        let assignedToId: string | null = null;
+        let assignedAgentId: string | null = null;
+
+        if (value.startsWith('user:')) {
+            assignedToId = value.replace('user:', '');
+        } else if (value.startsWith('agent:')) {
+            assignedAgentId = value.replace('agent:', '');
+        }
+
+        router.patch(`/work/tasks/${task.id}`, {
+            assignedToId,
+            assignedAgentId,
+        }, { preserveScroll: true });
     };
 
     const handleToggleChecklist = (itemId: string, completed: boolean) => {
@@ -515,6 +571,58 @@ export default function TaskDetail({
                             />
                         )}
 
+                        {/* Assignment Selector */}
+                        <Select
+                            value={task.assignedAgentId ? `agent:${task.assignedAgentId}` :
+                                   task.assignedToId ? `user:${task.assignedToId}` : 'unassigned'}
+                            onValueChange={handleAssignmentChange}
+                        >
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue>
+                                    {task.assignedAgentId ? (
+                                        <span className="flex items-center gap-2">
+                                            <Bot className="h-3 w-3" />
+                                            {task.assignedAgentName}
+                                        </span>
+                                    ) : task.assignedToId ? (
+                                        <span className="flex items-center gap-2">
+                                            <User className="h-3 w-3" />
+                                            {task.assignedToName}
+                                        </span>
+                                    ) : (
+                                        <span className="text-muted-foreground">Unassigned</span>
+                                    )}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                <SelectGroup>
+                                    <SelectLabel>Team Members</SelectLabel>
+                                    {teamMembers.map((m) => (
+                                        <SelectItem key={`user:${m.id}`} value={`user:${m.id}`}>
+                                            <span className="flex items-center gap-2">
+                                                <User className="h-3 w-3" />
+                                                {m.name}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                                {availableAgents.length > 0 && (
+                                    <SelectGroup>
+                                        <SelectLabel>AI Agents</SelectLabel>
+                                        {availableAgents.map((agent) => (
+                                            <SelectItem key={`agent:${agent.id}`} value={`agent:${agent.id}`}>
+                                                <span className="flex items-center gap-2">
+                                                    <Bot className="h-3 w-3" />
+                                                    {agent.name}
+                                                </span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                )}
+                            </SelectContent>
+                        </Select>
+
                         {/* Communications Button */}
                         <Button
                             variant="outline"
@@ -553,10 +661,16 @@ export default function TaskDetail({
                     {/* Task Stats */}
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                         <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
-                            <User className="text-muted-foreground h-5 w-5" />
+                            {task.assignedAgentId ? (
+                                <Bot className="text-muted-foreground h-5 w-5" />
+                            ) : (
+                                <User className="text-muted-foreground h-5 w-5" />
+                            )}
                             <div>
                                 <div className="text-muted-foreground text-xs">Assigned To</div>
-                                <div className="font-medium">{task.assignedToName || 'Unassigned'}</div>
+                                <div className="font-medium">
+                                    {task.assignedAgentName || task.assignedToName || 'Unassigned'}
+                                </div>
                             </div>
                         </div>
                         <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
@@ -762,6 +876,9 @@ export default function TaskDetail({
                     <form onSubmit={handleUpdateTask}>
                         <DialogHeader>
                             <DialogTitle>Edit Task</DialogTitle>
+                            <VisuallyHidden>
+                                <DialogDescription>Update task details including title, assignment, and due date</DialogDescription>
+                            </VisuallyHidden>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
@@ -776,18 +893,46 @@ export default function TaskDetail({
                                 <div className="grid gap-2">
                                     <Label>Assigned To</Label>
                                     <Select
-                                        value={editForm.data.assigned_to_id}
-                                        onValueChange={(v) => editForm.setData('assigned_to_id', v)}
+                                        value={editForm.data.assignment}
+                                        onValueChange={(v) => editForm.setData('assignment', v)}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select..." />
+                                            <SelectValue placeholder="Unassigned" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {teamMembers.map((m) => (
-                                                <SelectItem key={m.id} value={m.id}>
-                                                    {m.name}
-                                                </SelectItem>
-                                            ))}
+                                            <SelectItem value="unassigned">
+                                                <span className="text-muted-foreground">Unassigned</span>
+                                            </SelectItem>
+                                            <SelectGroup>
+                                                <SelectLabel className="flex items-center gap-2">
+                                                    <User className="h-3 w-3" />
+                                                    Team Members
+                                                </SelectLabel>
+                                                {teamMembers.map((m) => (
+                                                    <SelectItem key={`user:${m.id}`} value={`user:${m.id}`}>
+                                                        <span className="flex items-center gap-2">
+                                                            <User className="h-3 w-3" />
+                                                            {m.name}
+                                                        </span>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                            {availableAgents.length > 0 && (
+                                                <SelectGroup>
+                                                    <SelectLabel className="flex items-center gap-2">
+                                                        <Bot className="h-3 w-3" />
+                                                        AI Agents
+                                                    </SelectLabel>
+                                                    {availableAgents.map((agent) => (
+                                                        <SelectItem key={`agent:${agent.id}`} value={`agent:${agent.id}`}>
+                                                            <span className="flex items-center gap-2">
+                                                                <Bot className="h-3 w-3" />
+                                                                {agent.name}
+                                                            </span>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </div>

@@ -6,6 +6,8 @@ use App\Enums\Priority;
 use App\Enums\TaskStatus;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AIAgent;
+use App\Models\StatusTransition;
 use App\Models\Task;
 use App\Models\TimeEntry;
 use App\Models\WorkOrder;
@@ -47,6 +49,7 @@ class TaskController extends Controller
                     'completed' => false,
                 ];
             }
+
             return $item;
         })->all();
 
@@ -74,9 +77,14 @@ class TaskController extends Controller
             'workOrder',
             'project',
             'assignedTo',
+            'assignedAgent',
             'timeEntries.user',
             'documents',
             'statusTransitions.user',
+            'statusTransitions.fromAssignedTo',
+            'statusTransitions.toAssignedTo',
+            'statusTransitions.fromAssignedAgent',
+            'statusTransitions.toAssignedAgent',
         ]);
 
         // Get active timer if any
@@ -92,6 +100,18 @@ class TaskController extends Controller
         // Get rejection feedback if applicable (status is InProgress and previous transition was from RevisionRequested)
         $rejectionFeedback = $this->getRejectionFeedback($task);
 
+        // Get available AI agents for the team
+        $availableAgents = AIAgent::query()
+            ->whereHas('configurations', function ($query) use ($task) {
+                $query->where('team_id', $task->team_id)
+                    ->where('enabled', true);
+            })
+            ->get()
+            ->map(fn (AIAgent $agent) => [
+                'id' => (string) $agent->id,
+                'name' => $agent->name,
+            ]);
+
         return Inertia::render('work/tasks/[id]', [
             'task' => [
                 'id' => (string) $task->id,
@@ -103,6 +123,8 @@ class TaskController extends Controller
                 'projectName' => $task->project?->name ?? 'Unknown',
                 'assignedToId' => $task->assigned_to_id ? (string) $task->assigned_to_id : null,
                 'assignedToName' => $task->assignedTo?->name ?? 'Unassigned',
+                'assignedAgentId' => $task->assigned_agent_id ? (string) $task->assigned_agent_id : null,
+                'assignedAgentName' => $task->assignedAgent?->name ?? null,
                 'status' => $task->status->value,
                 'dueDate' => $task->due_date->format('Y-m-d'),
                 'estimatedHours' => (float) $task->estimated_hours,
@@ -126,14 +148,38 @@ class TaskController extends Controller
                 'id' => (string) $activeTimer->id,
                 'startedAt' => $activeTimer->started_at->toIso8601String(),
             ] : null,
-            'teamMembers' => $task->project->team->users->map(fn ($user) => [
-                'id' => (string) $user->id,
-                'name' => $user->name,
-            ]),
+            'teamMembers' => $task->project->team->users
+                ->push($task->project->team->owner)
+                ->push($request->user())
+                ->unique('id')
+                ->filter()
+                ->values()
+                ->map(fn ($user) => [
+                    'id' => (string) $user->id,
+                    'name' => $user->name,
+                ]),
+            'availableAgents' => $availableAgents,
             'statusTransitions' => $task->statusTransitions->map(fn ($transition) => [
                 'id' => $transition->id,
+                'actionType' => $transition->action_type ?? 'status_change',
                 'fromStatus' => $transition->from_status,
                 'toStatus' => $transition->to_status,
+                'fromAssignedTo' => $transition->fromAssignedTo ? [
+                    'id' => $transition->fromAssignedTo->id,
+                    'name' => $transition->fromAssignedTo->name,
+                ] : null,
+                'toAssignedTo' => $transition->toAssignedTo ? [
+                    'id' => $transition->toAssignedTo->id,
+                    'name' => $transition->toAssignedTo->name,
+                ] : null,
+                'fromAssignedAgent' => $transition->fromAssignedAgent ? [
+                    'id' => $transition->fromAssignedAgent->id,
+                    'name' => $transition->fromAssignedAgent->name,
+                ] : null,
+                'toAssignedAgent' => $transition->toAssignedAgent ? [
+                    'id' => $transition->toAssignedAgent->id,
+                    'name' => $transition->toAssignedAgent->name,
+                ] : null,
                 'user' => $transition->user ? [
                     'id' => $transition->user->id,
                     'name' => $transition->user->name,
@@ -157,22 +203,83 @@ class TaskController extends Controller
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'assignedToId' => 'nullable|exists:users,id',
+            'assignedAgentId' => 'nullable|exists:ai_agents,id',
             'dueDate' => 'sometimes|required|date',
             'estimatedHours' => 'nullable|numeric|min:0',
             'checklistItems' => 'nullable|array',
             'isBlocked' => 'sometimes|boolean',
         ]);
 
+        // Validate mutual exclusivity: can't assign to both user and agent
+        if (! empty($validated['assignedToId']) && ! empty($validated['assignedAgentId'])) {
+            return back()->withErrors([
+                'assignedToId' => 'Cannot assign to both a user and an AI agent.',
+            ]);
+        }
+
+        // Capture current assignment values before update
+        $oldAssignedToId = $task->assigned_to_id;
+        $oldAssignedAgentId = $task->assigned_agent_id;
+
         $updateData = [];
-        if (isset($validated['title'])) $updateData['title'] = $validated['title'];
-        if (array_key_exists('description', $validated)) $updateData['description'] = $validated['description'];
-        if (array_key_exists('assignedToId', $validated)) $updateData['assigned_to_id'] = $validated['assignedToId'];
-        if (isset($validated['dueDate'])) $updateData['due_date'] = $validated['dueDate'];
-        if (array_key_exists('estimatedHours', $validated)) $updateData['estimated_hours'] = $validated['estimatedHours'] ?? 0;
-        if (isset($validated['checklistItems'])) $updateData['checklist_items'] = $validated['checklistItems'];
-        if (isset($validated['isBlocked'])) $updateData['is_blocked'] = $validated['isBlocked'];
+        if (isset($validated['title'])) {
+            $updateData['title'] = $validated['title'];
+        }
+        if (array_key_exists('description', $validated)) {
+            $updateData['description'] = $validated['description'];
+        }
+
+        // Handle mutual exclusivity for assignments
+        if (array_key_exists('assignedToId', $validated)) {
+            $updateData['assigned_to_id'] = $validated['assignedToId'];
+            // Clear agent assignment if assigning to user
+            if (! empty($validated['assignedToId'])) {
+                $updateData['assigned_agent_id'] = null;
+            }
+        }
+        if (array_key_exists('assignedAgentId', $validated)) {
+            $updateData['assigned_agent_id'] = $validated['assignedAgentId'];
+            // Clear user assignment if assigning to agent
+            if (! empty($validated['assignedAgentId'])) {
+                $updateData['assigned_to_id'] = null;
+            }
+        }
+
+        if (isset($validated['dueDate'])) {
+            $updateData['due_date'] = $validated['dueDate'];
+        }
+        if (array_key_exists('estimatedHours', $validated)) {
+            $updateData['estimated_hours'] = $validated['estimatedHours'] ?? 0;
+        }
+        if (isset($validated['checklistItems'])) {
+            $updateData['checklist_items'] = $validated['checklistItems'];
+        }
+        if (isset($validated['isBlocked'])) {
+            $updateData['is_blocked'] = $validated['isBlocked'];
+        }
 
         $task->update($updateData);
+
+        // Determine new assignment values (accounting for mutual exclusivity logic)
+        $newAssignedToId = $updateData['assigned_to_id'] ?? $task->assigned_to_id;
+        $newAssignedAgentId = $updateData['assigned_agent_id'] ?? $task->assigned_agent_id;
+
+        // Check if assignment changed
+        $assignmentChanged = $oldAssignedToId !== $newAssignedToId
+            || $oldAssignedAgentId !== $newAssignedAgentId;
+
+        if ($assignmentChanged) {
+            StatusTransition::create([
+                'transitionable_type' => Task::class,
+                'transitionable_id' => $task->id,
+                'user_id' => $request->user()->id,
+                'action_type' => 'assignment_change',
+                'from_assigned_to_id' => $oldAssignedToId,
+                'to_assigned_to_id' => $newAssignedToId,
+                'from_assigned_agent_id' => $oldAssignedAgentId,
+                'to_assigned_agent_id' => $newAssignedAgentId,
+            ]);
+        }
 
         return back();
     }

@@ -222,6 +222,9 @@ export default function WorkOrderDetail({
         newUserId: number | null;
     } | null>(null);
 
+    // Quick task completion state
+    const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
         { title: workOrder.projectName, href: `/work/projects/${workOrder.projectId}` },
@@ -615,6 +618,31 @@ export default function WorkOrderDetail({
         setPendingAssignmentChange(null);
     }, []);
 
+    /**
+     * Quick task completion - mark task as done from work order view
+     */
+    const handleQuickTaskComplete = useCallback(
+        (taskId: string, currentStatus: string, e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Only allow completing tasks that aren't already done or cancelled
+            if (currentStatus === 'done' || currentStatus === 'cancelled') return;
+
+            setCompletingTaskId(taskId);
+
+            router.post(
+                `/work/tasks/${taskId}/transition`,
+                { status: 'done' },
+                {
+                    preserveScroll: true,
+                    onFinish: () => setCompletingTaskId(null),
+                }
+            );
+        },
+        []
+    );
+
     // Helper functions for assignment confirmation dialog
     const getCurrentAssignmentForDialog = (): AssignmentChange | null => {
         if (!pendingAssignmentChange) return null;
@@ -838,17 +866,25 @@ export default function WorkOrderDetail({
                                             className="bg-card border-border hover:border-primary/50 block rounded-lg border p-4 transition-colors"
                                         >
                                             <div className="flex items-start gap-3">
-                                                <div
-                                                    className={`mt-1 flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleQuickTaskComplete(task.id, task.status, e)}
+                                                    disabled={task.status === 'done' || task.status === 'cancelled' || completingTaskId === task.id}
+                                                    className={`mt-1 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
                                                         task.status === 'done'
                                                             ? 'bg-primary border-primary'
-                                                            : 'border-muted-foreground'
+                                                            : task.status === 'cancelled'
+                                                              ? 'border-muted bg-muted cursor-not-allowed'
+                                                              : completingTaskId === task.id
+                                                                ? 'border-primary animate-pulse'
+                                                                : 'border-muted-foreground hover:border-primary hover:bg-primary/10 cursor-pointer'
                                                     }`}
+                                                    aria-label={task.status === 'done' ? 'Task completed' : 'Mark task as done'}
                                                 >
                                                     {task.status === 'done' && (
                                                         <CheckCircle2 className="text-primary-foreground h-3 w-3" />
                                                     )}
-                                                </div>
+                                                </button>
                                                 <div className="flex-1">
                                                     <div className="mb-1 flex items-center gap-2">
                                                         <span

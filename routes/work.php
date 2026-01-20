@@ -13,6 +13,7 @@ use App\Http\Controllers\Work\TaskTransitionController;
 use App\Http\Controllers\Work\TimeEntryController;
 use App\Http\Controllers\Work\WorkController;
 use App\Http\Controllers\Work\WorkOrderController;
+use App\Http\Controllers\Work\WorkOrderListController;
 use App\Http\Controllers\Work\WorkOrderTransitionController;
 use App\Http\Controllers\WorkOrderRaciController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,15 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/projects/{project}/files', [ProjectController::class, 'uploadFile'])->name('projects.files.upload');
     Route::delete('/projects/{project}/files/{document}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
     Route::patch('/projects/{project}/raci', [ProjectRaciController::class, 'update'])->name('projects.raci');
+
+    // Work Order Lists
+    Route::post('/work-order-lists', [WorkOrderListController::class, 'store'])->name('work-order-lists.store');
+    Route::patch('/work-order-lists/{workOrderList}', [WorkOrderListController::class, 'update'])->name('work-order-lists.update');
+    Route::delete('/work-order-lists/{workOrderList}', [WorkOrderListController::class, 'destroy'])->name('work-order-lists.destroy');
+    Route::post('/work-order-lists/{workOrderList}/move-work-order', [WorkOrderListController::class, 'moveWorkOrder'])->name('work-order-lists.move-work-order');
+    Route::post('/work-orders/{workOrder}/remove-from-list', [WorkOrderListController::class, 'removeFromList'])->name('work-orders.remove-from-list');
+    Route::post('/projects/{project}/lists/reorder', [WorkOrderListController::class, 'reorder'])->name('projects.lists.reorder');
+    Route::post('/projects/{project}/work-orders/reorder', [WorkOrderListController::class, 'reorderWorkOrders'])->name('projects.work-orders.reorder');
 
     // Work Orders
     Route::post('/work-orders', [WorkOrderController::class, 'store'])->name('work-orders.store');
