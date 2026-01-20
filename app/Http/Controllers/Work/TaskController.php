@@ -127,7 +127,7 @@ class TaskController extends Controller
                 'assignedAgentId' => $task->assigned_agent_id ? (string) $task->assigned_agent_id : null,
                 'assignedAgentName' => $task->assignedAgent?->name ?? null,
                 'status' => $task->status->value,
-                'dueDate' => $task->due_date->format('Y-m-d'),
+                'dueDate' => $task->due_date?->format('Y-m-d'),
                 'estimatedHours' => (float) $task->estimated_hours,
                 'actualHours' => (float) $task->actual_hours,
                 'checklistItems' => $task->checklist_items ?? [],

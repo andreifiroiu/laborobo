@@ -118,7 +118,7 @@ class WorkOrderController extends Controller
                 'title' => $task->title,
                 'description' => $task->description,
                 'status' => $task->status->value,
-                'dueDate' => $task->due_date->format('Y-m-d'),
+                'dueDate' => $task->due_date?->format('Y-m-d'),
                 'assignedToId' => $task->assigned_to_id ? (string) $task->assigned_to_id : null,
                 'assignedToName' => $task->assignedTo?->name ?? 'Unassigned',
                 'estimatedHours' => (float) $task->estimated_hours,
