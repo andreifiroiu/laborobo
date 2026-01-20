@@ -68,7 +68,12 @@ class WorkController extends Controller
     private function getProjects(Team $team): array
     {
         return Project::forTeam($team->id)
-            ->with(['party', 'owner'])
+            ->with([
+                'party',
+                'owner',
+                'workOrderLists.workOrders.tasks',
+                'workOrderLists.workOrders.assignedTo',
+            ])
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(fn (Project $project) => [
@@ -86,6 +91,37 @@ class WorkController extends Controller
                 'actualHours' => (float) $project->actual_hours,
                 'progress' => $project->progress,
                 'tags' => $project->tags ?? [],
+                'workOrderLists' => $project->workOrderLists->map(fn ($list) => [
+                    'id' => (string) $list->id,
+                    'name' => $list->name,
+                    'color' => $list->color,
+                    'position' => $list->position,
+                    'workOrders' => $list->workOrders->map(fn ($wo) => [
+                        'id' => (string) $wo->id,
+                        'title' => $wo->title,
+                        'status' => $wo->status->value,
+                        'priority' => $wo->priority->value,
+                        'dueDate' => $wo->due_date?->format('Y-m-d'),
+                        'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                        'tasksCount' => $wo->tasks->count(),
+                        'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
+                        'positionInList' => $wo->position_in_list,
+                    ])->all(),
+                ])->all(),
+                'ungroupedWorkOrders' => $project->ungroupedWorkOrders()
+                    ->with(['tasks', 'assignedTo'])
+                    ->get()
+                    ->map(fn ($wo) => [
+                        'id' => (string) $wo->id,
+                        'title' => $wo->title,
+                        'status' => $wo->status->value,
+                        'priority' => $wo->priority->value,
+                        'dueDate' => $wo->due_date?->format('Y-m-d'),
+                        'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                        'tasksCount' => $wo->tasks->count(),
+                        'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
+                        'positionInList' => $wo->position_in_list,
+                    ])->all(),
             ])
             ->all();
     }

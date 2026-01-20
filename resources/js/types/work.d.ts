@@ -34,6 +34,8 @@ export interface Project {
     actualHours: number;
     progress: number;
     tags: string[];
+    workOrderLists: WorkOrderList[];
+    ungroupedWorkOrders: WorkOrderInList[];
 }
 
 export interface WorkOrder {
