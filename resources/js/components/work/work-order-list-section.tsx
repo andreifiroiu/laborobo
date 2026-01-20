@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import {
     DndContext,
     DragOverlay,
-    pointerWithin,
+    rectIntersection,
     KeyboardSensor,
     PointerSensor,
     useSensor,
@@ -11,6 +11,7 @@ import {
     DragStartEvent,
     DragEndEvent,
     DragOverEvent,
+    DragCancelEvent,
 } from '@dnd-kit/core';
 import {
     SortableContext,
@@ -43,17 +44,27 @@ export function WorkOrderListSection({
     const [activeItem, setActiveItem] = useState<WorkOrderInList | null>(null);
     const [lists, setLists] = useState(workOrderLists);
     const [ungrouped, setUngrouped] = useState(ungroupedWorkOrders);
+    // Track which container is being hovered over for visual highlighting
+    const [overContainerId, setOverContainerId] = useState<string | null>(null);
 
     // Track the original container when drag starts (for cross-container moves)
     const sourceContainerRef = useRef<string | null>(null);
+    // Track the current container during drag (to handle rapid dragOver calls)
+    const currentContainerRef = useRef<string | null>(null);
+    // Track whether we're currently dragging (to prevent state sync during drag)
+    const isDraggingRef = useRef(false);
 
-    // Sync props to local state when Inertia updates them
+    // Sync props to local state when Inertia updates them (only when not dragging)
     useEffect(() => {
-        setLists(workOrderLists);
+        if (!isDraggingRef.current) {
+            setLists(workOrderLists);
+        }
     }, [workOrderLists]);
 
     useEffect(() => {
-        setUngrouped(ungroupedWorkOrders);
+        if (!isDraggingRef.current) {
+            setUngrouped(ungroupedWorkOrders);
+        }
     }, [ungroupedWorkOrders]);
 
     const sensors = useSensors(
@@ -69,8 +80,13 @@ export function WorkOrderListSection({
         const { active } = event;
         const activeId = String(active.id);
 
+        // Mark that we're dragging (prevents prop sync during drag)
+        isDraggingRef.current = true;
+
         // Find and store the source container
-        sourceContainerRef.current = findContainer(activeId);
+        const container = findContainer(activeId);
+        sourceContainerRef.current = container;
+        currentContainerRef.current = container;
 
         // Find the item being dragged
         for (const list of lists) {
@@ -89,13 +105,17 @@ export function WorkOrderListSection({
 
     const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
-        if (!over || !activeItem) return;
+        if (!over || !activeItem) {
+            setOverContainerId(null);
+            return;
+        }
 
         const activeId = String(active.id);
         const overId = String(over.id);
 
-        // Find current container of the active item
-        const activeContainer = findContainer(activeId);
+        // Use the ref for current container (more reliable than findContainer during rapid updates)
+        const activeContainer = currentContainerRef.current;
+
         // Find destination container
         let overContainer = findContainer(overId);
 
@@ -104,9 +124,15 @@ export function WorkOrderListSection({
             overContainer = overId;
         }
 
+        // Update the visual highlight (for which container we're over)
+        setOverContainerId(overContainer);
+
         if (!activeContainer || !overContainer || activeContainer === overContainer) {
             return;
         }
+
+        // Update the current container ref BEFORE state updates
+        currentContainerRef.current = overContainer;
 
         // Move item between containers (optimistic UI update)
         // Remove from source
@@ -122,16 +148,21 @@ export function WorkOrderListSection({
             );
         }
 
-        // Add to destination
+        // Add to destination (with duplicate prevention)
         if (overContainer === 'ungrouped') {
-            setUngrouped((prev) => [...prev, activeItem]);
+            setUngrouped((prev) => {
+                // Prevent duplicates
+                if (prev.some((wo) => wo.id === activeItem.id)) return prev;
+                return [...prev, activeItem];
+            });
         } else {
             setLists((prevLists) =>
-                prevLists.map((l) =>
-                    l.id === overContainer
-                        ? { ...l, workOrders: [...l.workOrders, activeItem] }
-                        : l
-                )
+                prevLists.map((l) => {
+                    if (l.id !== overContainer) return l;
+                    // Prevent duplicates
+                    if (l.workOrders.some((wo) => wo.id === activeItem.id)) return l;
+                    return { ...l, workOrders: [...l.workOrders, activeItem] };
+                })
             );
         }
     };
@@ -140,17 +171,19 @@ export function WorkOrderListSection({
         const { active, over } = event;
         const draggedItem = activeItem;
         const originalContainer = sourceContainerRef.current;
+        const currentContainer = currentContainerRef.current;
 
         setActiveItem(null);
+        setOverContainerId(null);
         sourceContainerRef.current = null;
+        currentContainerRef.current = null;
+        isDraggingRef.current = false;
 
         if (!over || !draggedItem) return;
 
         const activeId = String(active.id);
         const overId = String(over.id);
 
-        // Find current container (after any DragOver moves)
-        const currentContainer = findContainer(activeId);
         let overContainer = findContainer(overId);
 
         // If dropping on a container directly
@@ -195,6 +228,18 @@ export function WorkOrderListSection({
             // Save the work order to the new list
             saveWorkOrderMove(activeId, currentContainer === 'ungrouped' ? null : currentContainer);
         }
+    };
+
+    const handleDragCancel = () => {
+        setActiveItem(null);
+        setOverContainerId(null);
+        sourceContainerRef.current = null;
+        currentContainerRef.current = null;
+        isDraggingRef.current = false;
+
+        // Resync from props since we cancelled
+        setLists(workOrderLists);
+        setUngrouped(ungroupedWorkOrders);
     };
 
     const saveWorkOrderMove = (workOrderId: string, newListId: string | null) => {
@@ -280,10 +325,11 @@ export function WorkOrderListSection({
             ) : (
                 <DndContext
                     sensors={sensors}
-                    collisionDetection={pointerWithin}
+                    collisionDetection={rectIntersection}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}
+                    onDragCancel={handleDragCancel}
                 >
                     <div className="space-y-4">
                         {lists.map((list) => (
@@ -292,6 +338,7 @@ export function WorkOrderListSection({
                                 list={list}
                                 projectId={projectId}
                                 onCreateWorkOrder={() => onCreateWorkOrder(list.id)}
+                                isDropTarget={overContainerId === list.id}
                             />
                         ))}
 
@@ -308,6 +355,7 @@ export function WorkOrderListSection({
                             projectId={projectId}
                             onCreateWorkOrder={() => onCreateWorkOrder()}
                             isUngrouped
+                            isDropTarget={overContainerId === 'ungrouped'}
                         />
                     </div>
 

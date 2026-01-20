@@ -190,6 +190,7 @@ export default function TaskDetail({
         hours: '',
         date: new Date().toISOString().split('T')[0],
         note: '',
+        taskId: task.id,
     });
 
     // Timer logic
@@ -488,10 +489,6 @@ export default function TaskDetail({
     const handleLogTime = (e: React.FormEvent) => {
         e.preventDefault();
         timeForm.post('/work/time-entries', {
-            data: {
-                ...timeForm.data,
-                taskId: task.id,
-            },
             preserveScroll: true,
             onSuccess: () => {
                 timeForm.reset();
@@ -859,6 +856,7 @@ export default function TaskDetail({
                 onConfirm={handleTransitionConfirm}
                 onCancel={handleTransitionCancel}
                 isLoading={isTransitioning}
+                error={transitionError}
             />
 
             {/* Timer Confirmation Dialog */}

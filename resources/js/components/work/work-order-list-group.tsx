@@ -34,6 +34,7 @@ interface WorkOrderListGroupProps {
     projectId: string;
     onCreateWorkOrder: () => void;
     isUngrouped?: boolean;
+    isDropTarget?: boolean;
 }
 
 export function WorkOrderListGroup({
@@ -41,6 +42,7 @@ export function WorkOrderListGroup({
     projectId,
     onCreateWorkOrder,
     isUngrouped = false,
+    isDropTarget = false,
 }: WorkOrderListGroupProps) {
     const [isOpen, setIsOpen] = useState(true);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -48,6 +50,9 @@ export function WorkOrderListGroup({
     const { setNodeRef, isOver } = useDroppable({
         id: list.id,
     });
+
+    // Use either the prop-based highlight or the native useDroppable isOver
+    const showDropHighlight = isDropTarget || isOver;
 
     const handleDelete = () => {
         if (
@@ -67,7 +72,7 @@ export function WorkOrderListGroup({
                 ref={setNodeRef}
                 className={cn(
                     'border border-border rounded-lg overflow-hidden transition-colors',
-                    isOver && 'border-primary bg-primary/5'
+                    showDropHighlight && 'border-primary bg-primary/5'
                 )}
             >
                 {/* Header */}

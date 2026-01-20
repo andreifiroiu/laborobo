@@ -949,14 +949,14 @@ export default function WorkOrderDetail({
             e.preventDefault();
             e.stopPropagation();
 
-            // Only allow completing tasks that can be directly marked as done
-            // Tasks in 'in_review' or 'blocked' require proper workflow transitions
-            const nonCompletableStatuses = ['done', 'cancelled', 'in_review', 'blocked'];
+            // Only allow completing tasks that can be marked as done
+            // Tasks in 'in_review', 'blocked', 'done', 'cancelled', or 'approved' cannot be quick-completed
+            const nonCompletableStatuses = ['done', 'cancelled', 'in_review', 'blocked', 'approved'];
             if (nonCompletableStatuses.includes(currentStatus)) return;
 
             setCompletingTaskId(taskId);
 
-            try {
+            const transitionTo = async (status: string): Promise<{ ok: boolean; message?: string }> => {
                 const response = await fetch(`/work/tasks/${taskId}/transition`, {
                     method: 'POST',
                     headers: {
@@ -965,15 +965,33 @@ export default function WorkOrderDetail({
                         'X-CSRF-TOKEN':
                             document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                     },
-                    body: JSON.stringify({ status: 'done' }),
+                    body: JSON.stringify({ status }),
                 });
 
-                if (response.ok) {
-                    // Reload page data to reflect the change
+                if (!response.ok) {
+                    const data = await response.json();
+                    return { ok: false, message: data.message };
+                }
+                return { ok: true };
+            };
+
+            try {
+                // For 'todo' tasks, first transition to 'in_progress'
+                // Workflow rules: todo → in_progress → done
+                if (currentStatus === 'todo') {
+                    const result = await transitionTo('in_progress');
+                    if (!result.ok) {
+                        console.error('Task transition failed:', result.message);
+                        return;
+                    }
+                }
+
+                // Then transition to 'done'
+                const result = await transitionTo('done');
+                if (result.ok) {
                     router.reload({ only: ['tasks'] });
                 } else {
-                    const data = await response.json();
-                    console.error('Task transition failed:', data.message);
+                    console.error('Task transition failed:', result.message);
                 }
             } catch (error) {
                 console.error('Task transition error:', error);
