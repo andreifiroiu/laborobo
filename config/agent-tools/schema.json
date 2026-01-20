@@ -1,0 +1,75 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Agent Tool Definition",
+    "description": "Schema for defining agent tools that can be executed through the Tool Gateway",
+    "type": "object",
+    "required": ["name", "description", "category"],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Unique identifier for the tool (kebab-case recommended)",
+            "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "description": {
+            "type": "string",
+            "description": "Human-readable description of what the tool does"
+        },
+        "category": {
+            "type": "string",
+            "description": "Category for permission grouping",
+            "enum": [
+                "tasks",
+                "work_orders",
+                "client_data",
+                "email",
+                "deliverables",
+                "financial",
+                "playbooks",
+                "general"
+            ]
+        },
+        "parameters": {
+            "type": "object",
+            "description": "Parameter definitions for the tool",
+            "additionalProperties": {
+                "type": "object",
+                "required": ["type", "description", "required"],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": ["string", "integer", "float", "boolean", "array", "object"]
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "default": {
+                        "description": "Default value if not provided"
+                    }
+                }
+            }
+        },
+        "required_permissions": {
+            "type": "array",
+            "description": "List of permission keys required to use this tool",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "can_create_work_orders",
+                    "can_modify_tasks",
+                    "can_access_client_data",
+                    "can_send_emails",
+                    "can_modify_deliverables",
+                    "can_access_financial_data",
+                    "can_modify_playbooks"
+                ]
+            }
+        },
+        "implementation_class": {
+            "type": "string",
+            "description": "Fully qualified class name of the tool implementation"
+        }
+    }
+}

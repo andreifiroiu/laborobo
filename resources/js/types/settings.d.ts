@@ -26,6 +26,9 @@ export interface AgentPermissions {
     canModifyTasks: boolean;
     canAccessClientData: boolean;
     canSendEmails: boolean;
+    canModifyDeliverables?: boolean;
+    canAccessFinancialData?: boolean;
+    canModifyPlaybooks?: boolean;
     requiresApproval: boolean;
 }
 
@@ -41,8 +44,10 @@ export interface AgentConfiguration {
     weeklyRunLimit: number;
     monthlyBudgetCap: number;
     currentMonthSpend: number;
+    dailySpend?: number;
     permissions: AgentPermissions;
     behaviorSettings: AgentBehaviorSettings;
+    toolPermissions?: Record<string, boolean>;
 }
 
 export interface AIAgent {
@@ -54,6 +59,8 @@ export interface AIAgent {
     capabilities: string[];
     status: 'enabled' | 'disabled';
     configuration: AgentConfiguration | null;
+    templateId?: number | null;
+    isCustom?: boolean;
 }
 
 export interface ApprovalRequirements {
@@ -69,6 +76,18 @@ export interface GlobalAISettings {
     currentMonthSpend: number;
     perProjectBudgetCap: number;
     approvalRequirements: ApprovalRequirements;
+    retentionDays?: number;
+    requireApprovalExternalSends?: boolean;
+    requireApprovalFinancial?: boolean;
+    requireApprovalContracts?: boolean;
+    requireApprovalScopeChanges?: boolean;
+}
+
+export interface ToolCall {
+    name: string;
+    params: Record<string, unknown>;
+    result: Record<string, unknown> | string | null;
+    durationMs: number;
 }
 
 export interface AgentActivityLog {
@@ -85,6 +104,53 @@ export interface AgentActivityLog {
     approvedBy: number | null;
     approvedAt: string | null;
     error: string | null;
+    toolCalls?: ToolCall[];
+    contextAccessed?: string[];
+    workflowStateId?: number | null;
+    durationMs?: number;
+}
+
+export interface AgentTemplate {
+    id: number;
+    code: string;
+    name: string;
+    type: string;
+    description: string;
+    defaultInstructions?: string;
+    defaultTools: string[];
+    defaultPermissions: string[];
+    isActive: boolean;
+}
+
+export interface AgentTool {
+    name: string;
+    description: string;
+    category: string;
+    requiredPermissions: string[];
+    enabled: boolean;
+    parameters?: Record<string, {
+        type: string;
+        description: string;
+        required: boolean;
+        default?: unknown;
+    }>;
+}
+
+export interface AgentWorkflowApproval {
+    id: number;
+    workflowStateId: number;
+    agentId: number;
+    agentName: string;
+    agentCode: string;
+    actionDescription: string;
+    contextPreview: string;
+    pauseReason: string;
+    relatedEntityType: string | null;
+    relatedEntityId: number | null;
+    relatedEntityName: string | null;
+    createdAt: string;
+    waitingHours: number;
+    urgency: 'urgent' | 'high' | 'normal';
 }
 
 export interface NotificationCategory {
@@ -173,6 +239,8 @@ export interface SettingsPageProps {
     aiAgents: AIAgent[];
     globalAISettings: GlobalAISettings;
     agentActivityLogs: AgentActivityLog[];
+    agentTemplates?: AgentTemplate[];
+    agentTools?: AgentTool[];
     notificationPreferences: NotificationPreferences;
     auditLogEntries: AuditLogEntry[];
     integrations: Integration[];

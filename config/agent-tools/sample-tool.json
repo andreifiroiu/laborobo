@@ -1,0 +1,20 @@
+{
+    "name": "sample-tool",
+    "description": "A sample tool for testing the tool gateway system",
+    "category": "general",
+    "parameters": {
+        "input": {
+            "type": "string",
+            "description": "The input string to process",
+            "required": true
+        },
+        "format": {
+            "type": "string",
+            "description": "Output format preference",
+            "required": false,
+            "default": "text"
+        }
+    },
+    "required_permissions": [],
+    "implementation_class": "App\\Agents\\Tools\\SampleTool"
+}

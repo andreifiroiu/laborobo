@@ -1,0 +1,32 @@
+{
+    "name": "task-list",
+    "description": "Lists tasks for a specified work order or project. Returns task details including title, status, assignee, and due date.",
+    "category": "tasks",
+    "parameters": {
+        "work_order_id": {
+            "type": "integer",
+            "description": "The ID of the work order to list tasks for",
+            "required": false
+        },
+        "project_id": {
+            "type": "integer",
+            "description": "The ID of the project to list tasks for",
+            "required": false
+        },
+        "status": {
+            "type": "string",
+            "description": "Filter tasks by status (todo, in-progress, in-review, approved, done, blocked, cancelled)",
+            "required": false
+        },
+        "limit": {
+            "type": "integer",
+            "description": "Maximum number of tasks to return (default: 50, max: 100)",
+            "required": false,
+            "default": 50
+        }
+    },
+    "required_permissions": [
+        "can_modify_tasks"
+    ],
+    "implementation_class": "App\\Agents\\Tools\\TaskListTool"
+}

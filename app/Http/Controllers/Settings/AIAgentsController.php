@@ -1,16 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\AgentType;
 use App\Http\Controllers\Controller;
-use App\Models\AIAgent;
+use App\Http\Resources\AgentActivityResource;
 use App\Models\AgentActivityLog;
 use App\Models\AgentConfiguration;
+use App\Models\AgentTemplate;
+use App\Models\AIAgent;
+use App\Services\AgentRunner;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AIAgentsController extends Controller
 {
-    public function toggleAgent(Request $request, AIAgent $agent)
+    public function __construct(
+        private readonly AgentRunner $agentRunner,
+    ) {}
+
+    /**
+     * Toggle an agent's enabled status.
+     */
+    public function toggleAgent(Request $request, AIAgent $agent): RedirectResponse
     {
         $validated = $request->validate([
             'enabled' => 'required|boolean',
@@ -27,7 +44,10 @@ class AIAgentsController extends Controller
         return back()->with('success', $validated['enabled'] ? 'Agent enabled' : 'Agent disabled');
     }
 
-    public function updateConfig(Request $request, AIAgent $agent)
+    /**
+     * Update an agent's configuration.
+     */
+    public function updateConfig(Request $request, AIAgent $agent): RedirectResponse
     {
         $validated = $request->validate([
             'daily_run_limit' => 'required|integer|min:1',
@@ -54,7 +74,156 @@ class AIAgentsController extends Controller
         return back()->with('success', 'Agent configuration updated');
     }
 
-    public function approveOutput(Request $request, AgentActivityLog $log)
+    /**
+     * Create an agent from a template or as a custom agent.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'template_id' => 'nullable|exists:agent_templates,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'type' => 'required_without:template_id|nullable|string',
+        ]);
+
+        $team = $request->user()->currentTeam;
+        $template = null;
+
+        if (isset($validated['template_id'])) {
+            $template = AgentTemplate::findOrFail($validated['template_id']);
+        }
+
+        // Generate a unique code for the agent
+        $code = Str::slug($validated['name']) . '-' . $team->id . '-' . Str::random(4);
+
+        // Create the agent
+        $agent = AIAgent::create([
+            'code' => $code,
+            'name' => $validated['name'],
+            'type' => $template?->type ?? AgentType::tryFrom($validated['type'] ?? 'project-management') ?? AgentType::ProjectManagement,
+            'description' => $validated['description'] ?? $template?->description,
+            'capabilities' => $template?->default_tools ?? [],
+            'template_id' => $template?->id,
+            'is_custom' => $template === null,
+        ]);
+
+        // Create the configuration for this team
+        $permissions = $template?->default_permissions ?? [];
+
+        AgentConfiguration::create([
+            'team_id' => $team->id,
+            'ai_agent_id' => $agent->id,
+            'enabled' => true,
+            'daily_run_limit' => 50,
+            'weekly_run_limit' => 200,
+            'monthly_budget_cap' => 100.00,
+            'can_create_work_orders' => $permissions['can_create_work_orders'] ?? false,
+            'can_modify_tasks' => $permissions['can_modify_tasks'] ?? false,
+            'can_access_client_data' => $permissions['can_access_client_data'] ?? false,
+            'can_send_emails' => $permissions['can_send_emails'] ?? false,
+            'can_modify_deliverables' => $permissions['can_modify_deliverables'] ?? false,
+            'can_access_financial_data' => $permissions['can_access_financial_data'] ?? false,
+            'can_modify_playbooks' => $permissions['can_modify_playbooks'] ?? false,
+        ]);
+
+        return back()->with('success', 'Agent created successfully');
+    }
+
+    /**
+     * Update an agent's basic information.
+     */
+    public function update(Request $request, AIAgent $agent): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        $agent->update($validated);
+
+        return back()->with('success', 'Agent updated successfully');
+    }
+
+    /**
+     * Update an agent's configuration including permissions and budget caps.
+     */
+    public function updateConfiguration(Request $request, AIAgent $agent): RedirectResponse
+    {
+        $validated = $request->validate([
+            'can_create_work_orders' => 'boolean',
+            'can_modify_tasks' => 'boolean',
+            'can_access_client_data' => 'boolean',
+            'can_send_emails' => 'boolean',
+            'can_modify_deliverables' => 'boolean',
+            'can_access_financial_data' => 'boolean',
+            'can_modify_playbooks' => 'boolean',
+            'monthly_budget_cap' => 'nullable|numeric|min:0',
+            'daily_run_limit' => 'nullable|integer|min:1',
+            'weekly_run_limit' => 'nullable|integer|min:1',
+            'requires_approval' => 'boolean',
+            'tool_permissions' => 'nullable|array',
+        ]);
+
+        $team = $request->user()->currentTeam;
+
+        $config = AgentConfiguration::where('team_id', $team->id)
+            ->where('ai_agent_id', $agent->id)
+            ->firstOrFail();
+
+        $config->update($validated);
+
+        return back()->with('success', 'Agent configuration updated');
+    }
+
+    /**
+     * Run an agent with the given input.
+     */
+    public function run(Request $request, AIAgent $agent): RedirectResponse
+    {
+        $validated = $request->validate([
+            'prompt' => 'required|string|max:10000',
+            'context_entity_type' => 'nullable|string',
+            'context_entity_id' => 'nullable|integer',
+        ]);
+
+        $team = $request->user()->currentTeam;
+
+        $config = AgentConfiguration::where('team_id', $team->id)
+            ->where('ai_agent_id', $agent->id)
+            ->firstOrFail();
+
+        if (! $config->enabled) {
+            return back()->with('error', 'Agent is not enabled');
+        }
+
+        // Resolve context entity if provided
+        $contextEntity = null;
+        if (isset($validated['context_entity_type']) && isset($validated['context_entity_id'])) {
+            $entityClass = $validated['context_entity_type'];
+            if (class_exists($entityClass)) {
+                $contextEntity = $entityClass::find($validated['context_entity_id']);
+            }
+        }
+
+        // Run the agent
+        $activityLog = $this->agentRunner->runWithPrompt(
+            $agent,
+            $config,
+            $validated['prompt'],
+            $contextEntity,
+        );
+
+        if ($activityLog->error !== null) {
+            return back()->with('error', $activityLog->error);
+        }
+
+        return back()->with('success', 'Agent run completed');
+    }
+
+    /**
+     * Approve an agent's output.
+     */
+    public function approveOutput(Request $request, AgentActivityLog $log): RedirectResponse
     {
         $this->authorize('update', $log->team);
 
@@ -67,7 +236,10 @@ class AIAgentsController extends Controller
         return back()->with('success', 'Agent output approved');
     }
 
-    public function rejectOutput(Request $request, AgentActivityLog $log)
+    /**
+     * Reject an agent's output.
+     */
+    public function rejectOutput(Request $request, AgentActivityLog $log): RedirectResponse
     {
         $this->authorize('update', $log->team);
 
@@ -78,5 +250,44 @@ class AIAgentsController extends Controller
         ]);
 
         return back()->with('success', 'Agent output rejected');
+    }
+
+    /**
+     * Show activity logs for an agent.
+     */
+    public function activity(Request $request, AIAgent $agent): Response
+    {
+        $team = $request->user()->currentTeam;
+
+        $query = AgentActivityLog::query()
+            ->forTeam($team->id)
+            ->where('ai_agent_id', $agent->id)
+            ->with(['agent', 'approver', 'workflowState'])
+            ->orderByDesc('created_at');
+
+        // Apply filters
+        if ($request->filled('approval_status')) {
+            $query->where('approval_status', $request->input('approval_status'));
+        }
+
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->dateRange($request->input('date_from'), $request->input('date_to'));
+        }
+
+        $activities = $query->paginate(25);
+
+        return Inertia::render('settings/agent-activity/index', [
+            'agent' => [
+                'id' => $agent->id,
+                'code' => $agent->code,
+                'name' => $agent->name,
+            ],
+            'activities' => AgentActivityResource::collection($activities)->response()->getData(true),
+            'filters' => [
+                'approval_status' => $request->input('approval_status'),
+                'date_from' => $request->input('date_from'),
+                'date_to' => $request->input('date_to'),
+            ],
+        ]);
     }
 }

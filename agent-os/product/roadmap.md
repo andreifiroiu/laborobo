@@ -47,6 +47,7 @@
 32. [ ] CRM Module — Client and contact management, company profiles, deal pipeline with stages, SLA definitions and tracking, and relationship history. `XL`
 33. [ ] Finance Module — Detailed estimate builder, invoice generation and sending, payment tracking, expense management, and advanced profitability reports. `XL`
 34. [ ] Helpdesk Module — Ticket management, customer portal, SLA compliance monitoring, ticket routing and escalation rules, and support-specific workflows. `XL`
+35. [ ] Public client portal — External-facing portal for clients to view project status, submit requests, approve deliverables, and communicate with the team. `L`
 
 > Notes
 > - Items marked [x] are complete with models, migrations, controllers, and UI

@@ -1,0 +1,90 @@
+# AI Agent Foundation and Tool Gateway - Orchestration Plan
+# Spec: 2026-01-19-ai-agent-foundation-and-tool-gateway
+
+task_groups:
+  - name: "Database Layer (Models & Migrations)"
+    tasks: 1-8
+    subagent: laravel-backend-specialist
+    standards: [backend, global]
+    status: completed
+    description: "Migrations and model updates for tool definitions, agent memory, workflow state, and audit logging"
+
+  - name: "Tool Gateway and Tool System"
+    tasks: 9-18
+    subagent: laravel-backend-specialist
+    standards: [backend, global]
+    status: completed
+    description: "Core tool gateway service, tool registry, configuration-based tool definitions, and execution auditing"
+
+  - name: "Permission System and Budget Management"
+    tasks: 19-26
+    subagent: laravel-backend-specialist
+    standards: [backend, global]
+    status: completed
+    description: "Category-based permissions, human approval enforcement, and budget cap checking"
+
+  - name: "Agent Abstraction Layer and Context Builder"
+    tasks: 27-36
+    subagent: laravel-backend-specialist
+    standards: [backend, global]
+    status: completed
+    description: "Base agent class, neuron-ai integration, context builder, and memory services"
+
+  - name: "Orchestration Engine"
+    tasks: 37-45
+    subagent: laravel-backend-specialist
+    standards: [backend, global]
+    status: completed
+    description: "Workflow orchestrator, pause/resume capability, and multi-agent coordination"
+
+  - name: "API Endpoints"
+    tasks: 46-51
+    subagent: laravel-backend-specialist
+    standards: [backend, global]
+    status: completed
+    description: "REST API for tool management, agent execution, workflow control, and audit access"
+
+  - name: "UI Extensions"
+    tasks: 52-57
+    subagent: frontend-developer
+    standards: [frontend, global]
+    status: completed
+    description: "Tool permissions tab, workflow visualization, and memory viewer components"
+
+  - name: "Agent Template Seeding and Integration"
+    tasks: 58-62
+    subagent: testing-quality-engineer
+    standards: [testing, global]
+    status: completed
+    description: "Seeder for default agent templates and integration with existing inbox/approvals"
+
+  - name: "Test Review and Gap Analysis"
+    tasks: 63-65
+    subagent: testing-quality-engineer
+    standards: [testing, global]
+    status: completed
+    description: "Review test coverage, identify gaps, and document integration points"
+
+# Execution order and dependencies:
+# Phase 1 (Parallel):
+#   - Group 1: Database Layer
+#   - Group 2: Tool Gateway (can start tool service skeleton)
+#
+# Phase 2 (Sequential):
+#   - Group 3: Permission System (depends on Group 2)
+#
+# Phase 3 (Sequential):
+#   - Group 4: Agent Abstraction (depends on Groups 1-3)
+#
+# Phase 4 (Sequential):
+#   - Group 5: Orchestration Engine (depends on Group 4)
+#
+# Phase 5 (Parallel):
+#   - Group 6: API Endpoints (depends on Groups 2-5)
+#   - Group 7: UI Extensions (depends on API endpoints partially)
+#
+# Phase 6 (Sequential):
+#   - Group 8: Agent Templates (depends on Groups 4-5)
+#
+# Phase 7 (Final):
+#   - Group 9: Test Review (runs after all implementation)

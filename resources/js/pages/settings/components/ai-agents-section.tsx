@@ -5,18 +5,72 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus, Filter, Calendar } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    AgentPermissionsPanel,
+    AgentToolsPanel,
+    ActivityDetailModal,
+    BudgetDisplay,
+    AgentTemplateSelector,
+} from '@/components/agents';
 import type { AIAgent, GlobalAISettings, AgentActivityLog } from '@/types/settings';
 
 interface AIAgentsSectionProps {
     agents: AIAgent[];
     globalSettings: GlobalAISettings;
     activityLogs: AgentActivityLog[];
+    agentTemplates?: AgentTemplate[];
+    agentTools?: AgentTool[];
 }
 
-export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgentsSectionProps) {
+interface AgentTemplate {
+    id: number;
+    code: string;
+    name: string;
+    type: string;
+    description: string;
+    defaultTools: string[];
+    defaultPermissions: string[];
+    isActive: boolean;
+}
+
+interface AgentTool {
+    name: string;
+    description: string;
+    category: string;
+    requiredPermissions: string[];
+    enabled: boolean;
+}
+
+interface ExtendedAgentActivityLog extends AgentActivityLog {
+    toolCalls?: Array<{
+        name: string;
+        params: Record<string, unknown>;
+        result: Record<string, unknown> | string | null;
+        durationMs: number;
+    }>;
+    contextAccessed?: string[];
+}
+
+type AgentTab = 'config' | 'tools' | 'activity' | 'budget';
+
+export function AIAgentsSection({
+    agents,
+    globalSettings,
+    activityLogs,
+    agentTemplates = [],
+    agentTools = [],
+}: AIAgentsSectionProps) {
     const [expandedAgentId, setExpandedAgentId] = useState<number | null>(null);
-    const [activeTab, setActiveTab] = useState<'config' | 'activity' | 'budget'>('config');
+    const [activeTab, setActiveTab] = useState<AgentTab>('config');
+    const [selectedActivity, setSelectedActivity] = useState<ExtendedAgentActivityLog | null>(null);
+    const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
+
+    // Activity filters
+    const [activityStatusFilter, setActivityStatusFilter] = useState<string>('all');
+    const [activityDateFilter, setActivityDateFilter] = useState<string>('all');
 
     const toggleAgent = (agentId: number, enabled: boolean) => {
         router.post(
@@ -26,16 +80,109 @@ export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgen
         );
     };
 
-    const getAgentLogs = (agentId: number) =>
-        activityLogs.filter((log) => log.agentId === agentId).slice(0, 10);
+    const getAgentLogs = (agentId: number): ExtendedAgentActivityLog[] => {
+        let logs = activityLogs.filter((log) => log.agentId === agentId) as ExtendedAgentActivityLog[];
+
+        // Apply status filter
+        if (activityStatusFilter !== 'all') {
+            logs = logs.filter((log) => log.approvalStatus === activityStatusFilter);
+        }
+
+        // Apply date filter
+        if (activityDateFilter !== 'all') {
+            const now = new Date();
+            const filterDays = activityDateFilter === '7d' ? 7 : activityDateFilter === '30d' ? 30 : 1;
+            const cutoff = new Date(now.getTime() - filterDays * 24 * 60 * 60 * 1000);
+            logs = logs.filter((log) => new Date(log.timestamp) >= cutoff);
+        }
+
+        return logs.slice(0, 20);
+    };
+
+    const getAgentTools = (agentId: number): AgentTool[] => {
+        // In a real implementation, this would filter tools based on agent configuration
+        return agentTools;
+    };
+
+    const handlePermissionChange = (agentId: number, updates: Record<string, unknown>) => {
+        router.patch(
+            `/settings/agents/${agentId}/configuration`,
+            updates,
+            { preserveScroll: true }
+        );
+    };
+
+    const handleToolToggle = (agentId: number, toolName: string, enabled: boolean) => {
+        router.patch(
+            `/settings/agents/${agentId}/configuration`,
+            { tool_permissions: { [toolName]: enabled } },
+            { preserveScroll: true }
+        );
+    };
+
+    const handleCreateAgent = (
+        template: AgentTemplate | null,
+        customName?: string,
+        customDescription?: string
+    ) => {
+        if (template) {
+            router.post('/settings/agents', {
+                template_id: template.id,
+            });
+        } else if (customName) {
+            router.post('/settings/agents', {
+                name: customName,
+                description: customDescription,
+                is_custom: true,
+            });
+        }
+        setTemplateSelectorOpen(false);
+    };
+
+    // Transform config to permissions format for the panel
+    const getPermissionsFromConfig = (config: AIAgent['configuration']) => ({
+        canCreateWorkOrders: config?.permissions?.canCreateWorkOrders ?? false,
+        canModifyTasks: config?.permissions?.canModifyTasks ?? false,
+        canAccessClientData: config?.permissions?.canAccessClientData ?? false,
+        canSendEmails: config?.permissions?.canSendEmails ?? false,
+        canModifyDeliverables: (config as unknown as { canModifyDeliverables?: boolean })?.canModifyDeliverables ?? false,
+        canAccessFinancialData: (config as unknown as { canAccessFinancialData?: boolean })?.canAccessFinancialData ?? false,
+        canModifyPlaybooks: (config as unknown as { canModifyPlaybooks?: boolean })?.canModifyPlaybooks ?? false,
+    });
+
+    const getBehaviorSettings = (config: AIAgent['configuration']) => ({
+        verbosityLevel: config?.behaviorSettings?.verbosityLevel ?? 'balanced',
+        creativityLevel: config?.behaviorSettings?.creativityLevel ?? 'balanced',
+        riskTolerance: config?.behaviorSettings?.riskTolerance ?? 'medium',
+    });
+
+    // Get budget data for an agent
+    const getBudgetData = (config: AIAgent['configuration']) => {
+        const dailyCap = Number(config?.monthlyBudgetCap ?? 0) / 30; // Approximate daily from monthly
+        const dailySpent = (config as unknown as { dailySpend?: number })?.dailySpend ?? 0;
+
+        return {
+            dailyCap: Number(dailyCap.toFixed(2)),
+            dailySpent: Number(dailySpent),
+            monthlyCap: Number(config?.monthlyBudgetCap ?? 0),
+            monthlySpent: Number(config?.currentMonthSpend ?? 0),
+            costByCategory: [], // Would come from backend aggregation
+        };
+    };
 
     return (
         <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-                <h2 className="text-2xl font-semibold mb-2">AI Agents</h2>
-                <p className="text-muted-foreground">
-                    Configure AI agents, budgets, and permissions
-                </p>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h2 className="text-2xl font-semibold mb-2">AI Agents</h2>
+                    <p className="text-muted-foreground">
+                        Configure AI agents, budgets, and permissions
+                    </p>
+                </div>
+                <Button onClick={() => setTemplateSelectorOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Agent
+                </Button>
             </div>
 
             {/* Global Budget */}
@@ -72,6 +219,7 @@ export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgen
                 {agents.map((agent) => {
                     const isExpanded = expandedAgentId === agent.id;
                     const logs = getAgentLogs(agent.id);
+                    const tools = getAgentTools(agent.id);
                     const config = agent.configuration;
 
                     return (
@@ -82,7 +230,9 @@ export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgen
                                 className="w-full flex items-center justify-between p-6 hover:bg-muted/50 transition-colors text-left"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="text-3xl">🤖</div>
+                                    <div className="text-3xl">
+                                        {agent.type === 'project-management' ? '📋' : '🤖'}
+                                    </div>
                                     <div>
                                         <h4 className="text-lg font-semibold">{agent.name}</h4>
                                         <p className="text-sm text-muted-foreground">
@@ -115,42 +265,26 @@ export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgen
                                 <div className="border-t">
                                     {/* Tabs */}
                                     <div className="flex gap-6 px-6 pt-4 border-b">
-                                        <button
-                                            onClick={() => setActiveTab('config')}
-                                            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                                                activeTab === 'config'
-                                                    ? 'border-primary text-primary'
-                                                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            Config
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveTab('activity')}
-                                            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                                                activeTab === 'activity'
-                                                    ? 'border-primary text-primary'
-                                                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            Activity
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveTab('budget')}
-                                            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                                                activeTab === 'budget'
-                                                    ? 'border-primary text-primary'
-                                                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                                            }`}
-                                        >
-                                            Budget
-                                        </button>
+                                        {(['config', 'tools', 'activity', 'budget'] as AgentTab[]).map((tab) => (
+                                            <button
+                                                key={tab}
+                                                onClick={() => setActiveTab(tab)}
+                                                className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                                                    activeTab === tab
+                                                        ? 'border-primary text-primary'
+                                                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                            </button>
+                                        ))}
                                     </div>
 
                                     {/* Tab Content */}
                                     <div className="p-6">
                                         {activeTab === 'config' && (
-                                            <div className="space-y-4">
+                                            <div className="space-y-6">
+                                                {/* Enable Agent Toggle */}
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <p className="font-medium">Enable Agent</p>
@@ -173,6 +307,8 @@ export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgen
                                                         />
                                                     </button>
                                                 </div>
+
+                                                {/* Run Limits */}
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label>Daily Run Limit</Label>
@@ -191,98 +327,119 @@ export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgen
                                                         />
                                                     </div>
                                                 </div>
+
+                                                {/* Permissions Panel */}
+                                                <div className="pt-4 border-t">
+                                                    <AgentPermissionsPanel
+                                                        permissions={getPermissionsFromConfig(config)}
+                                                        behaviorSettings={getBehaviorSettings(config)}
+                                                        onChange={(updates) => handlePermissionChange(agent.id, updates)}
+                                                    />
+                                                </div>
                                             </div>
                                         )}
 
+                                        {activeTab === 'tools' && (
+                                            <AgentToolsPanel
+                                                tools={tools}
+                                                permissions={getPermissionsFromConfig(config)}
+                                                onChange={(toolName, enabled) => handleToolToggle(agent.id, toolName, enabled)}
+                                            />
+                                        )}
+
                                         {activeTab === 'activity' && (
-                                            <div className="space-y-2">
-                                                {logs.length === 0 ? (
-                                                    <p className="text-sm text-muted-foreground text-center py-8">
-                                                        No activity logs yet
-                                                    </p>
-                                                ) : (
-                                                    logs.map((log) => (
-                                                        <div
-                                                            key={log.id}
-                                                            className="p-4 bg-muted/50 rounded-lg"
+                                            <div className="space-y-4">
+                                                {/* Filters */}
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Filter className="w-4 h-4 text-muted-foreground" />
+                                                        <Select
+                                                            value={activityStatusFilter}
+                                                            onValueChange={setActivityStatusFilter}
                                                         >
-                                                            <div className="flex items-start justify-between mb-2">
-                                                                <p className="text-sm font-medium">
-                                                                    {log.runType.replace(/_/g, ' ')}
+                                                            <SelectTrigger className="w-[140px]">
+                                                                <SelectValue placeholder="Status" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="all">All Statuses</SelectItem>
+                                                                <SelectItem value="approved">Approved</SelectItem>
+                                                                <SelectItem value="rejected">Rejected</SelectItem>
+                                                                <SelectItem value="pending">Pending</SelectItem>
+                                                                <SelectItem value="failed">Failed</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                                                        <Select
+                                                            value={activityDateFilter}
+                                                            onValueChange={setActivityDateFilter}
+                                                        >
+                                                            <SelectTrigger className="w-[140px]">
+                                                                <SelectValue placeholder="Date" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="all">All Time</SelectItem>
+                                                                <SelectItem value="1d">Last 24h</SelectItem>
+                                                                <SelectItem value="7d">Last 7 days</SelectItem>
+                                                                <SelectItem value="30d">Last 30 days</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+
+                                                {/* Activity List */}
+                                                <div className="space-y-2">
+                                                    {logs.length === 0 ? (
+                                                        <p className="text-sm text-muted-foreground text-center py-8">
+                                                            No activity logs match your filters
+                                                        </p>
+                                                    ) : (
+                                                        logs.map((log) => (
+                                                            <button
+                                                                key={log.id}
+                                                                onClick={() => setSelectedActivity(log)}
+                                                                className="w-full p-4 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors text-left"
+                                                            >
+                                                                <div className="flex items-start justify-between mb-2">
+                                                                    <p className="text-sm font-medium">
+                                                                        {log.runType.replace(/_/g, ' ')}
+                                                                    </p>
+                                                                    <Badge
+                                                                        variant={
+                                                                            log.approvalStatus === 'approved'
+                                                                                ? 'default'
+                                                                                : log.approvalStatus === 'pending'
+                                                                                    ? 'secondary'
+                                                                                    : log.approvalStatus === 'rejected'
+                                                                                        ? 'destructive'
+                                                                                        : 'outline'
+                                                                        }
+                                                                    >
+                                                                        {log.approvalStatus}
+                                                                    </Badge>
+                                                                </div>
+                                                                <p className="text-xs text-muted-foreground mb-1">
+                                                                    {new Date(log.timestamp).toLocaleString()} • $
+                                                                    {Number(log.cost).toFixed(4)}
+                                                                    {log.toolCalls && log.toolCalls.length > 0 && (
+                                                                        <span className="ml-2">
+                                                                            • {log.toolCalls.length} tool call(s)
+                                                                        </span>
+                                                                    )}
                                                                 </p>
-                                                                <Badge
-                                                                    variant={
-                                                                        log.approvalStatus === 'approved'
-                                                                            ? 'default'
-                                                                            : log.approvalStatus === 'pending'
-                                                                                ? 'secondary'
-                                                                                : 'outline'
-                                                                    }
-                                                                >
-                                                                    {log.approvalStatus}
-                                                                </Badge>
-                                                            </div>
-                                                            <p className="text-xs text-muted-foreground mb-1">
-                                                                {new Date(log.timestamp).toLocaleString()} • $
-                                                                {Number(log.cost).toFixed(4)}
-                                                            </p>
-                                                            <p className="text-sm">
-                                                                {log.input.substring(0, 100)}...
-                                                            </p>
-                                                        </div>
-                                                    ))
-                                                )}
+                                                                <p className="text-sm line-clamp-1">
+                                                                    {log.input}
+                                                                </p>
+                                                            </button>
+                                                        ))
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
 
                                         {activeTab === 'budget' && (
-                                            <div className="space-y-4">
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    <div>
-                                                        <p className="text-sm text-muted-foreground mb-1">
-                                                            Budget Cap
-                                                        </p>
-                                                        <p className="text-xl font-semibold">
-                                                            ${config.monthlyBudgetCap}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm text-muted-foreground mb-1">
-                                                            Spent
-                                                        </p>
-                                                        <p className="text-xl font-semibold text-spend-primary">
-                                                            ${Number(config.currentMonthSpend).toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm text-muted-foreground mb-1">
-                                                            Remaining
-                                                        </p>
-                                                        <p className="text-xl font-semibold">
-                                                            ${(Number(config.monthlyBudgetCap) - Number(config.currentMonthSpend)).toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground mb-2">
-                                                        Budget Usage
-                                                    </p>
-                                                    <div className="w-full bg-muted rounded-full h-3">
-                                                        <div
-                                                            className={`h-3 rounded-full transition-all ${
-                                                                (Number(config.currentMonthSpend) / Number(config.monthlyBudgetCap)) * 100 >= 90
-                                                                    ? 'bg-red-600'
-                                                                    : (Number(config.currentMonthSpend) / Number(config.monthlyBudgetCap)) * 100 >= 75
-                                                                        ? 'bg-amber-600'
-                                                                        : 'bg-spend-primary'
-                                                            }`}
-                                                            style={{
-                                                                width: `${Math.min((Number(config.currentMonthSpend) / Number(config.monthlyBudgetCap)) * 100, 100)}%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <BudgetDisplay budget={getBudgetData(config)} />
                                         )}
                                     </div>
                                 </div>
@@ -291,6 +448,21 @@ export function AIAgentsSection({ agents, globalSettings, activityLogs }: AIAgen
                     );
                 })}
             </div>
+
+            {/* Activity Detail Modal */}
+            <ActivityDetailModal
+                activity={selectedActivity}
+                isOpen={!!selectedActivity}
+                onClose={() => setSelectedActivity(null)}
+            />
+
+            {/* Template Selector Modal */}
+            <AgentTemplateSelector
+                templates={agentTemplates}
+                isOpen={templateSelectorOpen}
+                onClose={() => setTemplateSelectorOpen(false)}
+                onSelectTemplate={handleCreateAgent}
+            />
         </div>
     );
 }

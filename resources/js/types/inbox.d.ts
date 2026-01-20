@@ -6,7 +6,7 @@ import type { TeamMember, Project, WorkOrder } from './work';
 
 export interface InboxItem {
     id: string;
-    type: 'agent_draft' | 'approval' | 'flag' | 'mention';
+    type: 'agent_draft' | 'approval' | 'flag' | 'mention' | 'agent_workflow_approval';
     title: string;
     contentPreview: string;
     fullContent: string;
@@ -22,13 +22,38 @@ export interface InboxItem {
     qaValidation: 'passed' | 'failed' | null;
     createdAt: string;
     waitingHours: number;
+    // Additional fields for agent workflow approvals
+    workflowStateId?: number;
+    agentCode?: string;
+    pauseReason?: string;
+}
+
+// =============================================================================
+// Agent Workflow Approval Types
+// =============================================================================
+
+export interface AgentWorkflowApprovalItem {
+    id: number;
+    workflowStateId: number;
+    agentId: number;
+    agentName: string;
+    agentCode: string;
+    actionDescription: string;
+    contextPreview: string;
+    pauseReason: string;
+    relatedEntityType: string | null;
+    relatedEntityId: number | null;
+    relatedEntityName: string | null;
+    createdAt: string;
+    waitingHours: number;
+    urgency: 'urgent' | 'high' | 'normal';
 }
 
 // =============================================================================
 // View Types
 // =============================================================================
 
-export type InboxTab = 'all' | 'agent_drafts' | 'approvals' | 'flagged' | 'mentions';
+export type InboxTab = 'all' | 'agent_drafts' | 'approvals' | 'flagged' | 'mentions' | 'agent_workflow';
 
 export interface InboxCounts {
     all: number;
@@ -36,6 +61,7 @@ export interface InboxCounts {
     approvals: number;
     flagged: number;
     mentions: number;
+    agent_workflow?: number;
 }
 
 // =============================================================================
@@ -44,6 +70,7 @@ export interface InboxCounts {
 
 export interface InboxPageProps {
     inboxItems: InboxItem[];
+    agentWorkflowApprovals?: AgentWorkflowApprovalItem[];
     teamMembers: TeamMember[];
     projects: Project[];
     workOrders: WorkOrder[];
@@ -89,6 +116,13 @@ export interface InboxBulkActionsProps {
     onClearSelection: () => void;
 }
 
+export interface AgentApprovalItemProps {
+    item: AgentWorkflowApprovalItem;
+    isSelected: boolean;
+    onSelect: () => void;
+    onView: () => void;
+}
+
 // =============================================================================
 // Form Types
 // =============================================================================
@@ -101,9 +135,15 @@ export interface RejectFeedbackForm {
 // Action Types
 // =============================================================================
 
-export type InboxAction = 'approve' | 'defer' | 'archive';
+export type InboxAction = 'approve' | 'defer' | 'archive' | 'reject';
 
 export interface BulkActionPayload {
     itemIds: string[];
     action: InboxAction;
+}
+
+export interface AgentApprovalActionPayload {
+    workflowStateId: number;
+    action: 'approve' | 'reject';
+    reason?: string;
 }

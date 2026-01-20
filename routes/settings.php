@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Settings\AgentActivityController;
+use App\Http\Controllers\Settings\AgentTemplateController;
+use App\Http\Controllers\Settings\AgentWorkflowController;
 use App\Http\Controllers\Settings\AIAgentsController;
 use App\Http\Controllers\Settings\AuditLogController;
 use App\Http\Controllers\Settings\IntegrationsController;
@@ -55,19 +58,54 @@ Route::middleware('auth')->group(function () {
     Route::patch('/settings/workspace', [WorkspaceSettingsController::class, 'updateWorkspace'])->name('settings.workspace.update');
     Route::patch('/settings/global-ai', [WorkspaceSettingsController::class, 'updateGlobalAI'])->name('settings.global-ai.update');
 
+    // ========================================================================
+    // Agent Templates
+    // ========================================================================
+    Route::get('/settings/agent-templates', [AgentTemplateController::class, 'index'])->name('settings.agent-templates.index');
+    Route::get('/settings/agent-templates/{template}', [AgentTemplateController::class, 'show'])->name('settings.agent-templates.show');
+
+    // ========================================================================
     // AI Agents
+    // ========================================================================
+    Route::post('/settings/agents', [AIAgentsController::class, 'store'])->name('settings.agents.store');
+    Route::patch('/settings/agents/{agent}', [AIAgentsController::class, 'update'])->name('settings.agents.update');
+    Route::patch('/settings/agents/{agent}/configuration', [AIAgentsController::class, 'updateConfiguration'])->name('settings.agents.configuration.update');
+    Route::post('/settings/agents/{agent}/run', [AIAgentsController::class, 'run'])->name('settings.agents.run');
+    Route::get('/settings/agents/{agent}/activity', [AIAgentsController::class, 'activity'])->name('settings.agents.activity');
+
+    // Legacy AI Agent routes (backward compatibility)
     Route::post('/settings/ai-agents/{agent}/toggle', [AIAgentsController::class, 'toggleAgent'])->name('settings.ai-agents.toggle');
     Route::patch('/settings/ai-agents/{agent}/config', [AIAgentsController::class, 'updateConfig'])->name('settings.ai-agents.config.update');
     Route::post('/settings/ai-agents/activity/{log}/approve', [AIAgentsController::class, 'approveOutput'])->name('settings.ai-agents.activity.approve');
     Route::post('/settings/ai-agents/activity/{log}/reject', [AIAgentsController::class, 'rejectOutput'])->name('settings.ai-agents.activity.reject');
 
+    // ========================================================================
+    // Agent Activity
+    // ========================================================================
+    Route::get('/settings/agent-activity/{agent}', [AgentActivityController::class, 'index'])->name('settings.agent-activity.index');
+    Route::get('/settings/agent-activity/detail/{activity}', [AgentActivityController::class, 'show'])->name('settings.agent-activity.show');
+
+    // ========================================================================
+    // Agent Workflow States
+    // ========================================================================
+    Route::get('/settings/workflow-states', [AgentWorkflowController::class, 'index'])->name('settings.workflow-states.index');
+    Route::get('/settings/workflow-states/{workflowState}', [AgentWorkflowController::class, 'show'])->name('settings.workflow-states.show');
+    Route::post('/settings/workflow-states/{workflowState}/approve', [AgentWorkflowController::class, 'approve'])->name('settings.workflow-states.approve');
+    Route::post('/settings/workflow-states/{workflowState}/reject', [AgentWorkflowController::class, 'reject'])->name('settings.workflow-states.reject');
+
+    // ========================================================================
     // Notifications
+    // ========================================================================
     Route::patch('/settings/notifications', [NotificationsController::class, 'update'])->name('settings.notifications.update');
 
+    // ========================================================================
     // Audit Log
+    // ========================================================================
     Route::get('/settings/audit-log/export', [AuditLogController::class, 'export'])->name('settings.audit-log.export');
 
+    // ========================================================================
     // Integrations
+    // ========================================================================
     Route::post('/settings/integrations/{integration}/connect', [IntegrationsController::class, 'connect'])->name('settings.integrations.connect');
     Route::post('/settings/integrations/{integration}/disconnect', [IntegrationsController::class, 'disconnect'])->name('settings.integrations.disconnect');
 
