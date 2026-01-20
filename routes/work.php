@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/tasks/{task}/transition', [TaskTransitionController::class, 'transition'])->name('tasks.transition');
     Route::patch('/tasks/{task}/checklist/{itemId}', [TaskController::class, 'toggleChecklist'])->name('tasks.checklist');
     Route::post('/tasks/{task}/promote', [TaskController::class, 'promote'])->name('tasks.promote');
+    Route::post('/work-orders/{workOrder}/tasks/reorder', [TaskController::class, 'reorder'])->name('work-orders.tasks.reorder');
 
     // Time Entries
     Route::get('/time-entries', [TimeEntryController::class, 'index'])->name('time-entries.index');

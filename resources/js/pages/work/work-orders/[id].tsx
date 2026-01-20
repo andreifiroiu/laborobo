@@ -1,5 +1,20 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+    arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
     ArrowLeft,
     Calendar,
     Clock,
@@ -18,6 +33,7 @@ import {
     Users,
     RefreshCw,
     ArrowUpCircle,
+    GripVertical,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -137,6 +153,7 @@ interface WorkOrderDetailProps {
         actualHours: number;
         checklistItems: Array<{ id: string; text: string; completed: boolean }>;
         isBlocked: boolean;
+        positionInWorkOrder: number;
     }>;
     deliverables: Array<{
         id: string;
@@ -175,6 +192,151 @@ interface WorkOrderDetailProps {
     allowedTransitions?: TransitionOption[];
     raciValue?: RaciValue;
     rejectionFeedback?: RejectionFeedback | null;
+}
+
+/**
+ * Sortable task card component for drag-and-drop reordering
+ */
+interface SortableTaskCardProps {
+    task: WorkOrderDetailProps['tasks'][0];
+    completingTaskId: string | null;
+    onQuickComplete: (taskId: string, currentStatus: string, e: React.MouseEvent) => void;
+    onStatusChange: (task: WorkOrderDetailProps['tasks'][0]) => void;
+    onPromote: (task: WorkOrderDetailProps['tasks'][0]) => void;
+    onDelete: (task: WorkOrderDetailProps['tasks'][0]) => void;
+    getStatusOptions: (currentStatus: string) => Array<{ value: string; label: string }>;
+}
+
+function SortableTaskCard({
+    task,
+    completingTaskId,
+    onQuickComplete,
+    onStatusChange,
+    onPromote,
+    onDelete,
+    getStatusOptions,
+}: SortableTaskCardProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
+        >
+            <div className="flex items-start gap-3">
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="mt-1 cursor-grab text-muted-foreground hover:text-foreground"
+                >
+                    <GripVertical className="h-5 w-5" />
+                </div>
+                <button
+                    type="button"
+                    onClick={(e) => onQuickComplete(task.id, task.status, e)}
+                    disabled={
+                        task.status === 'done' ||
+                        task.status === 'cancelled' ||
+                        task.status === 'in_review' ||
+                        task.status === 'blocked' ||
+                        completingTaskId === task.id
+                    }
+                    className={`mt-1 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
+                        task.status === 'done'
+                            ? 'bg-primary border-primary'
+                            : task.status === 'cancelled' || task.status === 'in_review' || task.status === 'blocked'
+                              ? 'border-muted bg-muted cursor-not-allowed'
+                              : completingTaskId === task.id
+                                ? 'border-primary animate-pulse'
+                                : 'border-muted-foreground hover:border-primary hover:bg-primary/10 cursor-pointer'
+                    }`}
+                    aria-label={
+                        task.status === 'done'
+                            ? 'Task completed'
+                            : task.status === 'in_review'
+                              ? 'Task is awaiting review'
+                              : task.status === 'blocked'
+                                ? 'Task is blocked'
+                                : 'Mark task as done'
+                    }
+                >
+                    {task.status === 'done' && <CheckCircle2 className="text-primary-foreground h-3 w-3" />}
+                </button>
+                <Link href={`/work/tasks/${task.id}`} className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span
+                            className={`font-medium ${
+                                task.status === 'done' ? 'text-muted-foreground line-through' : ''
+                            }`}
+                        >
+                            {task.title}
+                        </span>
+                        <StatusBadge status={task.status} type="task" />
+                        {task.isBlocked && <Badge variant="destructive">Blocked</Badge>}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                        {task.assignedToName} - {task.checklistItems.filter((i) => i.completed).length}/
+                        {task.checklistItems.length} items - {task.actualHours}/{task.estimatedHours}h
+                    </div>
+                </Link>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {getStatusOptions(task.status).length > 0 && (
+                            <>
+                                <DropdownMenuItem
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onStatusChange(task);
+                                    }}
+                                >
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Change Status
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                            </>
+                        )}
+                        <DropdownMenuItem
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onPromote(task);
+                            }}
+                        >
+                            <ArrowUpCircle className="mr-2 h-4 w-4" />
+                            Promote to Work Order
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(task);
+                            }}
+                            className="text-destructive"
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </div>
+    );
 }
 
 export default function WorkOrderDetail({
@@ -230,6 +392,10 @@ export default function WorkOrderDetail({
     // Quick task completion state
     const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
 
+    // Task drag-and-drop state
+    const [localTasks, setLocalTasks] = useState(tasks);
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
     // Task context menu state
     type TaskType = typeof tasks[0];
     const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
@@ -238,6 +404,7 @@ export default function WorkOrderDetail({
     const [taskDeleteDialogOpen, setTaskDeleteDialogOpen] = useState(false);
     const [selectedTaskTransition, setSelectedTaskTransition] = useState<string | null>(null);
     const [isTaskTransitioning, setIsTaskTransitioning] = useState(false);
+    const [taskTransitionError, setTaskTransitionError] = useState<string | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -316,6 +483,45 @@ export default function WorkOrderDetail({
             setLocalRaciValue(raciValue);
         }
     }, [raciValue]);
+
+    // Sync localTasks with props
+    useEffect(() => {
+        setLocalTasks(tasks);
+    }, [tasks]);
+
+    // Handle task drag-and-drop reorder
+    const handleTaskDragEnd = useCallback(
+        async (event: DragEndEvent) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id) return;
+
+            const oldIndex = localTasks.findIndex((t) => t.id === active.id);
+            const newIndex = localTasks.findIndex((t) => t.id === over.id);
+            const newOrder = arrayMove(localTasks, oldIndex, newIndex);
+
+            // Optimistic update
+            setLocalTasks(newOrder);
+
+            // Persist to backend
+            try {
+                await fetch(`/work/work-orders/${workOrder.id}/tasks/reorder`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN':
+                            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({ taskIds: newOrder.map((t) => t.id) }),
+                });
+            } catch (error) {
+                // Revert on error
+                setLocalTasks(tasks);
+                console.error('Failed to reorder tasks:', error);
+            }
+        },
+        [localTasks, workOrder.id, tasks]
+    );
 
     const handleUpdateWorkOrder = (e: React.FormEvent) => {
         e.preventDefault();
@@ -661,6 +867,7 @@ export default function WorkOrderDetail({
         if (!selectedTask || !selectedTaskTransition) return;
 
         setIsTaskTransitioning(true);
+        setTaskTransitionError(null);
 
         try {
             const response = await fetch(`/work/tasks/${selectedTask.id}/transition`, {
@@ -676,7 +883,7 @@ export default function WorkOrderDetail({
 
             if (!response.ok) {
                 const data = await response.json();
-                console.error('Task transition failed:', data.message);
+                setTaskTransitionError(data.message || 'Failed to update task status');
                 return;
             }
 
@@ -684,11 +891,12 @@ export default function WorkOrderDetail({
             setTaskTransitionDialogOpen(false);
             setSelectedTask(null);
             setSelectedTaskTransition(null);
+            setTaskTransitionError(null);
 
             // Reload to get fresh task data
             router.reload({ only: ['tasks'] });
         } catch (error) {
-            console.error('Task transition error:', error);
+            setTaskTransitionError('An error occurred while updating the task status');
         } finally {
             setIsTaskTransitioning(false);
         }
@@ -737,23 +945,41 @@ export default function WorkOrderDetail({
      * Quick task completion - mark task as done from work order view
      */
     const handleQuickTaskComplete = useCallback(
-        (taskId: string, currentStatus: string, e: React.MouseEvent) => {
+        async (taskId: string, currentStatus: string, e: React.MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
 
-            // Only allow completing tasks that aren't already done or cancelled
-            if (currentStatus === 'done' || currentStatus === 'cancelled') return;
+            // Only allow completing tasks that can be directly marked as done
+            // Tasks in 'in_review' or 'blocked' require proper workflow transitions
+            const nonCompletableStatuses = ['done', 'cancelled', 'in_review', 'blocked'];
+            if (nonCompletableStatuses.includes(currentStatus)) return;
 
             setCompletingTaskId(taskId);
 
-            router.post(
-                `/work/tasks/${taskId}/transition`,
-                { status: 'done' },
-                {
-                    preserveScroll: true,
-                    onFinish: () => setCompletingTaskId(null),
+            try {
+                const response = await fetch(`/work/tasks/${taskId}/transition`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN':
+                            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({ status: 'done' }),
+                });
+
+                if (response.ok) {
+                    // Reload page data to reflect the change
+                    router.reload({ only: ['tasks'] });
+                } else {
+                    const data = await response.json();
+                    console.error('Task transition failed:', data.message);
                 }
-            );
+            } catch (error) {
+                console.error('Task transition error:', error);
+            } finally {
+                setCompletingTaskId(null);
+            }
         },
         []
     );
@@ -965,7 +1191,7 @@ export default function WorkOrderDetail({
                                 </Button>
                             </div>
 
-                            {tasks.length === 0 ? (
+                            {localTasks.length === 0 ? (
                                 <div className="bg-muted/50 rounded-xl py-8 text-center">
                                     <p className="text-muted-foreground mb-4">No tasks yet</p>
                                     <Button onClick={() => setCreateTaskDialogOpen(true)}>
@@ -973,110 +1199,31 @@ export default function WorkOrderDetail({
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    {tasks.map((task) => (
-                                        <div
-                                            key={task.id}
-                                            className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => handleQuickTaskComplete(task.id, task.status, e)}
-                                                    disabled={task.status === 'done' || task.status === 'cancelled' || completingTaskId === task.id}
-                                                    className={`mt-1 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
-                                                        task.status === 'done'
-                                                            ? 'bg-primary border-primary'
-                                                            : task.status === 'cancelled'
-                                                              ? 'border-muted bg-muted cursor-not-allowed'
-                                                              : completingTaskId === task.id
-                                                                ? 'border-primary animate-pulse'
-                                                                : 'border-muted-foreground hover:border-primary hover:bg-primary/10 cursor-pointer'
-                                                    }`}
-                                                    aria-label={task.status === 'done' ? 'Task completed' : 'Mark task as done'}
-                                                >
-                                                    {task.status === 'done' && (
-                                                        <CheckCircle2 className="text-primary-foreground h-3 w-3" />
-                                                    )}
-                                                </button>
-                                                <Link
-                                                    href={`/work/tasks/${task.id}`}
-                                                    className="min-w-0 flex-1"
-                                                >
-                                                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                                                        <span
-                                                            className={`font-medium ${
-                                                                task.status === 'done'
-                                                                    ? 'text-muted-foreground line-through'
-                                                                    : ''
-                                                            }`}
-                                                        >
-                                                            {task.title}
-                                                        </span>
-                                                        <StatusBadge status={task.status} type="task" />
-                                                        {task.isBlocked && (
-                                                            <Badge variant="destructive">Blocked</Badge>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-muted-foreground text-sm">
-                                                        {task.assignedToName} -{' '}
-                                                        {task.checklistItems.filter((i) => i.completed).length}/
-                                                        {task.checklistItems.length} items -{' '}
-                                                        {task.actualHours}/{task.estimatedHours}h
-                                                    </div>
-                                                </Link>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 shrink-0"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        {getTaskStatusOptions(task.status).length > 0 && (
-                                                            <>
-                                                                <DropdownMenuItem
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleTaskStatusChange(task);
-                                                                    }}
-                                                                >
-                                                                    <RefreshCw className="mr-2 h-4 w-4" />
-                                                                    Change Status
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSeparator />
-                                                            </>
-                                                        )}
-                                                        <DropdownMenuItem
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleTaskPromote(task);
-                                                            }}
-                                                        >
-                                                            <ArrowUpCircle className="mr-2 h-4 w-4" />
-                                                            Promote to Work Order
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleTaskDelete(task);
-                                                            }}
-                                                            className="text-destructive"
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
+                                <DndContext
+                                    sensors={sensors}
+                                    collisionDetection={closestCenter}
+                                    onDragEnd={handleTaskDragEnd}
+                                >
+                                    <SortableContext
+                                        items={localTasks.map((t) => t.id)}
+                                        strategy={verticalListSortingStrategy}
+                                    >
+                                        <div className="space-y-3">
+                                            {localTasks.map((task) => (
+                                                <SortableTaskCard
+                                                    key={task.id}
+                                                    task={task}
+                                                    completingTaskId={completingTaskId}
+                                                    onQuickComplete={handleQuickTaskComplete}
+                                                    onStatusChange={handleTaskStatusChange}
+                                                    onPromote={handleTaskPromote}
+                                                    onDelete={handleTaskDelete}
+                                                    getStatusOptions={getTaskStatusOptions}
+                                                />
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                    </SortableContext>
+                                </DndContext>
                             )}
 
                             {/* Deliverables Section */}
@@ -1237,6 +1384,7 @@ export default function WorkOrderDetail({
                 onConfirm={handleTransitionConfirm}
                 onCancel={handleTransitionCancel}
                 isLoading={isTransitioning}
+                error={transitionError}
             />
 
             {/* Assignment Confirmation Dialog */}
@@ -1657,7 +1805,17 @@ export default function WorkOrderDetail({
             </Dialog>
 
             {/* Task Status Change Dialog */}
-            <Dialog open={taskTransitionDialogOpen} onOpenChange={setTaskTransitionDialogOpen}>
+            <Dialog
+                open={taskTransitionDialogOpen}
+                onOpenChange={(open) => {
+                    setTaskTransitionDialogOpen(open);
+                    if (!open) {
+                        setSelectedTask(null);
+                        setSelectedTaskTransition(null);
+                        setTaskTransitionError(null);
+                    }
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Change Task Status</DialogTitle>
@@ -1670,7 +1828,10 @@ export default function WorkOrderDetail({
                             <Label>New Status</Label>
                             <Select
                                 value={selectedTaskTransition || ''}
-                                onValueChange={setSelectedTaskTransition}
+                                onValueChange={(value) => {
+                                    setSelectedTaskTransition(value);
+                                    setTaskTransitionError(null);
+                                }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select status..." />
@@ -1684,6 +1845,11 @@ export default function WorkOrderDetail({
                                 </SelectContent>
                             </Select>
                         </div>
+                        {taskTransitionError && (
+                            <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950">
+                                <p className="text-sm text-red-800 dark:text-red-200">{taskTransitionError}</p>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button
@@ -1692,6 +1858,7 @@ export default function WorkOrderDetail({
                                 setTaskTransitionDialogOpen(false);
                                 setSelectedTask(null);
                                 setSelectedTaskTransition(null);
+                                setTaskTransitionError(null);
                             }}
                         >
                             Cancel

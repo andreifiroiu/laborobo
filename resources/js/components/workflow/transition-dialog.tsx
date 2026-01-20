@@ -29,6 +29,8 @@ export interface TransitionDialogProps {
     title?: string;
     /** Custom description for the dialog */
     description?: string;
+    /** Error message to display */
+    error?: string | null;
 }
 
 /**
@@ -49,6 +51,7 @@ function TransitionDialog({
     isLoading = false,
     title,
     description,
+    error,
 }: TransitionDialogProps) {
     const [comment, setComment] = React.useState('');
     const requiresComment = COMMENT_REQUIRED_STATUSES.includes(targetStatus);
@@ -111,6 +114,12 @@ function TransitionDialog({
                                 A comment is required for this transition.
                             </p>
                         )}
+                    </div>
+                )}
+
+                {error && (
+                    <div className="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950">
+                        <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
                     </div>
                 )}
 

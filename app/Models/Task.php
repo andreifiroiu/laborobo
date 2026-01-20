@@ -37,6 +37,7 @@ class Task extends Model
         'is_blocked',
         'blocker_reason',
         'blocker_details',
+        'position_in_work_order',
     ];
 
     protected $casts = [
@@ -48,6 +49,7 @@ class Task extends Model
         'dependencies' => 'array',
         'is_blocked' => 'boolean',
         'blocker_reason' => BlockerReason::class,
+        'position_in_work_order' => 'integer',
     ];
 
     public function team(): BelongsTo
@@ -155,6 +157,11 @@ class Task extends Model
     public function scopeWithStatus($query, TaskStatus $status)
     {
         return $query->where('status', $status);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('position_in_work_order');
     }
 
     public function getChecklistProgressAttribute(): array

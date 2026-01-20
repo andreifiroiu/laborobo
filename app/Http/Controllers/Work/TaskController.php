@@ -12,6 +12,7 @@ use App\Models\Task;
 use App\Models\TimeEntry;
 use App\Models\WorkOrder;
 use App\Services\WorkflowTransitionService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -391,6 +392,27 @@ class TaskController extends Controller
         };
 
         return redirect()->route('work-orders.show', $workOrder->id);
+    }
+
+    /**
+     * Reorder tasks within a work order.
+     */
+    public function reorder(Request $request, WorkOrder $workOrder): JsonResponse
+    {
+        $this->authorize('update', $workOrder);
+
+        $validated = $request->validate([
+            'taskIds' => 'required|array',
+            'taskIds.*' => 'exists:tasks,id',
+        ]);
+
+        foreach ($validated['taskIds'] as $index => $taskId) {
+            Task::where('id', $taskId)
+                ->where('work_order_id', $workOrder->id)
+                ->update(['position_in_work_order' => ($index + 1) * 100]);
+        }
+
+        return response()->json(['message' => 'Tasks reordered successfully']);
     }
 
     /**

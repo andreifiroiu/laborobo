@@ -113,7 +113,7 @@ class WorkOrderController extends Controller
                 'consultedIds' => $workOrder->consulted_ids ?? [],
                 'informedIds' => $workOrder->informed_ids ?? [],
             ],
-            'tasks' => $workOrder->tasks->map(fn (Task $task) => [
+            'tasks' => $workOrder->tasks()->ordered()->get()->map(fn (Task $task) => [
                 'id' => (string) $task->id,
                 'title' => $task->title,
                 'description' => $task->description,
@@ -125,6 +125,7 @@ class WorkOrderController extends Controller
                 'actualHours' => (float) $task->actual_hours,
                 'checklistItems' => $task->checklist_items ?? [],
                 'isBlocked' => $task->is_blocked,
+                'positionInWorkOrder' => $task->position_in_work_order,
             ]),
             'deliverables' => $workOrder->deliverables->map(fn ($del) => [
                 'id' => (string) $del->id,
