@@ -39,8 +39,10 @@ const mockTasks = [
     {
         id: '1',
         title: 'Task 1',
+        description: 'Task description',
         status: 'done',
         dueDate: '2024-12-15',
+        assignedToId: '1',
         assignedToName: 'John Doe',
         estimatedHours: 8,
         actualHours: 6,
@@ -359,8 +361,10 @@ describe('WorkOrderDetail - RACI Selector', () => {
         // Check that the RACI selector is present
         expect(screen.getByTestId('raci-selector')).toBeInTheDocument();
 
-        // Check that the accountable user is displayed
-        expect(screen.getByText('Accountable')).toBeInTheDocument();
+        // Check that the accountable and responsible roles are displayed in RACI section
+        // Note: 'Accountable' also appears in header stats, so we check for multiple instances
+        const accountableTexts = screen.getAllByText('Accountable');
+        expect(accountableTexts.length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText('Responsible')).toBeInTheDocument();
     });
 

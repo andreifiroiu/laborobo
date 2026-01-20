@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import {
     DndContext,
     DragOverlay,
-    closestCenter,
+    pointerWithin,
     KeyboardSensor,
     PointerSensor,
     useSensor,
@@ -280,7 +280,7 @@ export function WorkOrderListSection({
             ) : (
                 <DndContext
                     sensors={sensors}
-                    collisionDetection={closestCenter}
+                    collisionDetection={pointerWithin}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}

@@ -69,6 +69,8 @@ class WorkOrderRaciController extends Controller
 
         if (array_key_exists('accountable_id', $validated)) {
             $updateData['accountable_id'] = $validated['accountable_id'];
+            // Sync assigned_to_id with accountable_id for backward compatibility
+            $updateData['assigned_to_id'] = $validated['accountable_id'];
         }
         if (array_key_exists('responsible_id', $validated)) {
             $updateData['responsible_id'] = $validated['responsible_id'];
