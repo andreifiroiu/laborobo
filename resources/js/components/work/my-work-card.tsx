@@ -29,10 +29,10 @@ function WorkOrderCard({ workOrder }: { workOrder: WorkOrder }) {
         urgent: 'border-l-red-500 dark:border-l-red-500',
     };
 
-    const dueDate = new Date(workOrder.dueDate);
+    const dueDate = workOrder.dueDate ? new Date(workOrder.dueDate) : null;
     const now = new Date();
-    const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const isOverdue = daysUntilDue < 0;
+    const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const isOverdue = daysUntilDue !== null && daysUntilDue < 0;
 
     return (
         <Link
@@ -74,14 +74,16 @@ function WorkOrderCard({ workOrder }: { workOrder: WorkOrder }) {
                         {workOrder.actualHours}/{workOrder.estimatedHours}h
                     </span>
                 </div>
-                <div
-                    className={`flex items-center gap-1 font-medium ${
-                        isOverdue ? 'text-destructive' : ''
-                    }`}
-                >
-                    {isOverdue ? <AlertCircle className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
-                    {isOverdue ? `${Math.abs(daysUntilDue)}d overdue` : `${daysUntilDue}d left`}
-                </div>
+                {daysUntilDue !== null && (
+                    <div
+                        className={`flex items-center gap-1 font-medium ${
+                            isOverdue ? 'text-destructive' : ''
+                        }`}
+                    >
+                        {isOverdue ? <AlertCircle className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
+                        {isOverdue ? `${Math.abs(daysUntilDue)}d overdue` : `${daysUntilDue}d left`}
+                    </div>
+                )}
             </div>
 
             {workOrder.acceptanceCriteria.length > 0 && (
@@ -107,10 +109,10 @@ function WorkOrderCard({ workOrder }: { workOrder: WorkOrder }) {
 }
 
 function TaskCard({ task }: { task: Task }) {
-    const dueDate = new Date(task.dueDate);
+    const dueDate = task.dueDate ? new Date(task.dueDate) : null;
     const now = new Date();
-    const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const isOverdue = daysUntilDue < 0;
+    const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const isOverdue = daysUntilDue !== null && daysUntilDue < 0;
 
     const completedItems = task.checklistItems.filter((item) => item.completed).length;
     const totalItems = task.checklistItems.length;
@@ -160,20 +162,17 @@ function TaskCard({ task }: { task: Task }) {
                     <Clock className="h-3 w-3" />
                     {task.actualHours}/{task.estimatedHours}h
                 </span>
-                <div className={`flex items-center gap-1 font-medium ${isOverdue ? 'text-destructive' : ''}`}>
-                    {isOverdue ? (
-                        <AlertCircle className="h-3 w-3" />
-                    ) : task.status === 'done' ? (
+                {task.status === 'done' ? (
+                    <div className="flex items-center gap-1 font-medium">
                         <CheckCircle2 className="h-3 w-3" />
-                    ) : (
-                        <Clock className="h-3 w-3" />
-                    )}
-                    {task.status === 'done'
-                        ? 'Completed'
-                        : isOverdue
-                          ? `${Math.abs(daysUntilDue)}d overdue`
-                          : `${daysUntilDue}d left`}
-                </div>
+                        Completed
+                    </div>
+                ) : daysUntilDue !== null ? (
+                    <div className={`flex items-center gap-1 font-medium ${isOverdue ? 'text-destructive' : ''}`}>
+                        {isOverdue ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                        {isOverdue ? `${Math.abs(daysUntilDue)}d overdue` : `${daysUntilDue}d left`}
+                    </div>
+                ) : null}
             </div>
         </Link>
     );

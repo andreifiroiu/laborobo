@@ -18,7 +18,7 @@ interface Task {
     title: string;
     description: string | null;
     status: string;
-    dueDate: string;
+    dueDate: string | null;
     assignedToId: string | null;
     assignedToName: string;
     estimatedHours: number;

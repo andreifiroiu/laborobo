@@ -82,7 +82,7 @@ export default function Work({
 
     const handleViewChange = (newView: WorkView) => {
         setView(newView);
-        router.post('/work/preference', { key: 'work_view', value: newView }, { preserveState: true });
+        router.patch('/work/preferences', { key: 'work_view', value: newView }, { preserveState: true });
     };
 
     const handleQuickAdd = (data: QuickAddData) => {

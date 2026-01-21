@@ -140,8 +140,8 @@ export function MyWorkView({
     const handleSubtabChange = useCallback((subtab: MyWorkSubtab) => {
         setActiveSubtab(subtab);
         // Persist subtab preference
-        router.post(
-            '/work/preference',
+        router.patch(
+            '/work/preferences',
             { key: 'my_work_subtab', value: subtab },
             { preserveState: true, preserveScroll: true }
         );
@@ -155,8 +155,8 @@ export function MyWorkView({
         (show: boolean) => {
             setShowInformed(show);
             // Persist show informed preference
-            router.post(
-                '/work/preference',
+            router.patch(
+                '/work/preferences',
                 { key: 'my_work_show_informed', value: String(show) },
                 { preserveState: true, preserveScroll: true }
             );
@@ -171,8 +171,8 @@ export function MyWorkView({
             if (filterType === 'assigned_tasks') {
                 // Switch to tasks subtab
                 setActiveSubtab('tasks');
-                router.post(
-                    '/work/preference',
+                router.patch(
+                    '/work/preferences',
                     { key: 'my_work_subtab', value: 'tasks' },
                     { preserveState: true, preserveScroll: true }
                 );
@@ -181,8 +181,8 @@ export function MyWorkView({
             } else if (filterType === 'awaiting_review') {
                 // Switch to work orders subtab and filter by in_review status
                 setActiveSubtab('work_orders');
-                router.post(
-                    '/work/preference',
+                router.patch(
+                    '/work/preferences',
                     { key: 'my_work_subtab', value: 'work_orders' },
                     { preserveState: true, preserveScroll: true }
                 );
@@ -196,8 +196,8 @@ export function MyWorkView({
                 if (role) {
                     // Switch to work orders subtab
                     setActiveSubtab('work_orders');
-                    router.post(
-                        '/work/preference',
+                    router.patch(
+                        '/work/preferences',
                         { key: 'my_work_subtab', value: 'work_orders' },
                         { preserveState: true, preserveScroll: true }
                     );

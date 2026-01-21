@@ -40,7 +40,7 @@ interface PromoteToWorkOrderDialogProps {
     taskId: string;
     taskTitle: string;
     taskDescription: string | null;
-    taskDueDate: string;
+    taskDueDate: string | null;
     taskEstimatedHours: number;
     taskAssignedToId: string | null;
     taskChecklistItems: ChecklistItem[];
@@ -68,7 +68,7 @@ export function PromoteToWorkOrderDialog({
     const [title, setTitle] = useState(taskTitle);
     const [description, setDescription] = useState(taskDescription || '');
     const [priority, setPriority] = useState<string>('medium');
-    const [dueDate, setDueDate] = useState(taskDueDate);
+    const [dueDate, setDueDate] = useState(taskDueDate || '');
     const [estimatedHours, setEstimatedHours] = useState(taskEstimatedHours.toString());
     const [assignedToId, setAssignedToId] = useState(taskAssignedToId || '');
     const [acceptanceCriteria, setAcceptanceCriteria] = useState<string[]>([]);
@@ -131,7 +131,7 @@ export function PromoteToWorkOrderDialog({
                 setTitle(taskTitle);
                 setDescription(taskDescription || '');
                 setPriority('medium');
-                setDueDate(taskDueDate);
+                setDueDate(taskDueDate || '');
                 setEstimatedHours(taskEstimatedHours.toString());
                 setAssignedToId(taskAssignedToId || '');
                 setAcceptanceCriteria([]);

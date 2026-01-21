@@ -24,6 +24,7 @@ export function MyWorkTasksList({ tasks, filters, className }: MyWorkTasksListPr
     if (filters.dueDateRange) {
         const now = new Date();
         filteredTasks = filteredTasks.filter((task) => {
+            if (!task.dueDate) return filters.dueDateRange !== 'overdue';
             const dueDate = new Date(task.dueDate);
             switch (filters.dueDateRange) {
                 case 'this_week': {
@@ -54,13 +55,13 @@ export function MyWorkTasksList({ tasks, filters, className }: MyWorkTasksListPr
 
     // Group tasks by status
     const urgentTasks = filteredTasks.filter(
-        (t) => t.isBlocked || isOverdue(t.dueDate) || (t.status !== 'done' && isUrgent(t.dueDate))
+        (t) => t.isBlocked || (t.dueDate && isOverdue(t.dueDate)) || (t.status !== 'done' && t.dueDate && isUrgent(t.dueDate))
     );
     const inProgressTasks = filteredTasks.filter(
-        (t) => t.status === 'in_progress' && !t.isBlocked && !isOverdue(t.dueDate)
+        (t) => t.status === 'in_progress' && !t.isBlocked && (!t.dueDate || !isOverdue(t.dueDate))
     );
     const todoTasks = filteredTasks.filter(
-        (t) => t.status === 'todo' && !t.isBlocked && !isOverdue(t.dueDate)
+        (t) => t.status === 'todo' && !t.isBlocked && (!t.dueDate || !isOverdue(t.dueDate))
     );
     const doneTasks = filteredTasks.filter((t) => t.status === 'done');
     const blockedTasks = filteredTasks.filter((t) => t.isBlocked);
@@ -128,10 +129,10 @@ interface TaskCardProps {
 }
 
 function TaskCard({ task }: TaskCardProps) {
-    const dueDate = new Date(task.dueDate);
+    const dueDate = task.dueDate ? new Date(task.dueDate) : null;
     const now = new Date();
-    const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const overdue = daysUntilDue < 0;
+    const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const overdue = daysUntilDue !== null && daysUntilDue < 0;
 
     const completedItems = task.checklistItems.filter((item) => item.completed).length;
     const totalItems = task.checklistItems.length;
@@ -182,20 +183,17 @@ function TaskCard({ task }: TaskCardProps) {
                     <Clock className="h-3 w-3" />
                     {task.actualHours}/{task.estimatedHours}h
                 </span>
-                <div className={cn('flex items-center gap-1 font-medium', overdue ? 'text-destructive' : '')}>
-                    {overdue ? (
-                        <AlertCircle className="h-3 w-3" />
-                    ) : task.status === 'done' ? (
+                {task.status === 'done' ? (
+                    <div className="flex items-center gap-1 font-medium">
                         <CheckCircle2 className="h-3 w-3" />
-                    ) : (
-                        <Clock className="h-3 w-3" />
-                    )}
-                    {task.status === 'done'
-                        ? 'Completed'
-                        : overdue
-                            ? `${Math.abs(daysUntilDue)}d overdue`
-                            : `${daysUntilDue}d left`}
-                </div>
+                        Completed
+                    </div>
+                ) : daysUntilDue !== null ? (
+                    <div className={cn('flex items-center gap-1 font-medium', overdue ? 'text-destructive' : '')}>
+                        {overdue ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                        {overdue ? `${Math.abs(daysUntilDue)}d overdue` : `${daysUntilDue}d left`}
+                    </div>
+                ) : null}
             </div>
         </Link>
     );
@@ -220,18 +218,25 @@ function sortTasks(tasks: Task[], sortBy: SortBy, direction: SortDirection): Tas
         let comparison = 0;
 
         switch (sortBy) {
-            case 'due_date':
-                comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+            case 'due_date': {
+                const aTime = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+                const bTime = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+                comparison = aTime - bTime;
                 break;
-            case 'priority':
+            }
+            case 'priority': {
                 // For tasks, we don't have explicit priority, so sort by status urgency
                 const statusOrder: Record<string, number> = { todo: 2, in_progress: 1, done: 3 };
                 comparison = statusOrder[a.status] - statusOrder[b.status];
                 break;
-            case 'recently_updated':
+            }
+            case 'recently_updated': {
                 // Fallback to due date for tasks without update timestamp
-                comparison = new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+                const aTime = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+                const bTime = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+                comparison = bTime - aTime;
                 break;
+            }
             case 'alphabetical':
                 comparison = a.title.localeCompare(b.title);
                 break;

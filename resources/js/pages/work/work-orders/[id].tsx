@@ -288,6 +288,7 @@ function SortableTaskCard({
                     <div className="text-muted-foreground text-sm">
                         {task.assignedToName} - {task.checklistItems.filter((i) => i.completed).length}/
                         {task.checklistItems.length} items - {task.actualHours}/{task.estimatedHours}h
+                        {task.dueDate && ` - Due ${new Date(task.dueDate).toLocaleDateString()}`}
                     </div>
                 </Link>
                 <DropdownMenu>

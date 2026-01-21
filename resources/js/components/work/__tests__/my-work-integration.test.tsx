@@ -370,9 +370,9 @@ describe('My Work Integration Tests', () => {
             const toggle = screen.getByRole('switch');
             fireEvent.click(toggle);
 
-            // Should have called the preference update via router.post
-            expect(router.post).toHaveBeenCalledWith(
-                '/work/preference',
+            // Should have called the preference update via router.patch
+            expect(router.patch).toHaveBeenCalledWith(
+                '/work/preferences',
                 expect.objectContaining({ key: 'my_work_show_informed', value: 'true' }),
                 expect.objectContaining({ preserveState: true, preserveScroll: true })
             );
@@ -478,8 +478,8 @@ describe('My Work Integration Tests', () => {
             fireEvent.click(projectsTab);
 
             // Should have called preference update
-            expect(router.post).toHaveBeenCalledWith(
-                '/work/preference',
+            expect(router.patch).toHaveBeenCalledWith(
+                '/work/preferences',
                 expect.objectContaining({ key: 'my_work_subtab', value: 'projects' }),
                 expect.objectContaining({ preserveState: true, preserveScroll: true })
             );

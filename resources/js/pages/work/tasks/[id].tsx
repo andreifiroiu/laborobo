@@ -1,6 +1,7 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Calendar,
     Clock,
     User,
     Bot,
@@ -85,7 +86,7 @@ interface TaskWithWorkflow {
     assignedAgentId: string | null;
     assignedAgentName: string | null;
     status: string;
-    dueDate: string;
+    dueDate: string | null;
     estimatedHours: number;
     actualHours: number;
     checklistItems: Array<{ id: string; text: string; completed: boolean }>;
@@ -191,7 +192,7 @@ export default function TaskDetail({
         description: task.description || '',
         status: task.status,
         assignment: getInitialAssignment(),
-        due_date: task.dueDate,
+        due_date: task.dueDate || '',
         estimated_hours: task.estimatedHours.toString(),
     });
 
@@ -745,7 +746,7 @@ export default function TaskDetail({
                     </div>
 
                     {/* Task Stats */}
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                         <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
                             {task.assignedAgentId ? (
                                 <Bot className="text-muted-foreground h-5 w-5" />
@@ -779,6 +780,15 @@ export default function TaskDetail({
                                 <div className="text-muted-foreground text-xs">Checklist</div>
                                 <div className="font-medium">
                                     {completedItems}/{totalItems}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
+                            <Calendar className="text-muted-foreground h-5 w-5" />
+                            <div>
+                                <div className="text-muted-foreground text-xs">Due Date</div>
+                                <div className="font-medium">
+                                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
                                 </div>
                             </div>
                         </div>

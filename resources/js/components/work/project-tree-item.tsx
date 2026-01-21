@@ -277,6 +277,9 @@ function WorkOrderInListTreeItem({ workOrder, tasks, onCreateTask }: WorkOrderIn
                         <span>
                             {workOrder.completedTasksCount}/{workOrder.tasksCount} tasks
                         </span>
+                        {workOrder.dueDate && (
+                            <span>Due {new Date(workOrder.dueDate).toLocaleDateString()}</span>
+                        )}
                     </div>
                 </Link>
 
