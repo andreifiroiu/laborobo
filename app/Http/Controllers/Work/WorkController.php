@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Work;
 
+use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Models\CommunicationThread;
 use App\Models\Deliverable;
@@ -23,7 +26,7 @@ class WorkController extends Controller
         $user = $request->user();
         $team = $user->currentTeam;
 
-        if (!$team) {
+        if (! $team) {
             return Inertia::render('work/index', [
                 'projects' => [],
                 'workOrders' => [],
@@ -37,10 +40,9 @@ class WorkController extends Controller
             ]);
         }
 
-        // Get user's preferred view
         $currentView = UserPreference::get($user, 'work_view', 'all_projects');
 
-        return Inertia::render('work/index', [
+        $props = [
             'projects' => $this->getProjects($team),
             'workOrders' => $this->getWorkOrders($team),
             'tasks' => $this->getTasks($team),
@@ -50,7 +52,17 @@ class WorkController extends Controller
             'communicationThreads' => $this->getCommunicationThreads($team),
             'currentView' => $currentView,
             'currentUserId' => (string) $user->id,
-        ]);
+        ];
+
+        if ($currentView === 'my_work') {
+            $showInformed = UserPreference::get($user, 'my_work_show_informed', 'false') === 'true';
+            $props['myWorkData'] = $this->getMyWorkData($user, $team, $showInformed);
+            $props['myWorkMetrics'] = $this->getMyWorkMetrics($user, $team);
+            $props['myWorkSubtab'] = UserPreference::get($user, 'my_work_subtab', 'tasks');
+            $props['myWorkShowInformed'] = $showInformed;
+        }
+
+        return Inertia::render('work/index', $props);
     }
 
     public function updatePreference(Request $request)
@@ -60,9 +72,171 @@ class WorkController extends Controller
             'value' => 'nullable|string',
         ]);
 
-        UserPreference::set($request->user(), $request->key, $request->value);
+        $allowedKeys = [
+            'work_view',
+            'my_work_subtab',
+            'my_work_show_informed',
+        ];
+
+        $key = $request->input('key');
+
+        if (! in_array($key, $allowedKeys, true)) {
+            return back()->withErrors(['key' => 'Invalid preference key.']);
+        }
+
+        UserPreference::set($request->user(), $key, $request->value);
 
         return back();
+    }
+
+    /**
+     * Get My Work data for the given user and team.
+     *
+     * @return array{projects: array, workOrders: array, tasks: array}
+     */
+    private function getMyWorkData(User $user, Team $team, bool $showInformed = false): array
+    {
+        return [
+            'projects' => $this->getMyWorkProjects($user, $team, $showInformed),
+            'workOrders' => $this->getMyWorkWorkOrders($user, $team, $showInformed),
+            'tasks' => $this->getMyWorkTasks($user, $team),
+        ];
+    }
+
+    /**
+     * Get My Work metrics for the given user and team.
+     *
+     * @return array{accountableCount: int, responsibleCount: int, awaitingReviewCount: int, assignedTasksCount: int}
+     */
+    private function getMyWorkMetrics(User $user, Team $team): array
+    {
+        $accountableProjectsCount = Project::forTeam($team->id)
+            ->whereUserIsAccountable($user->id)
+            ->count();
+
+        $accountableWorkOrdersCount = WorkOrder::forTeam($team->id)
+            ->whereUserIsAccountable($user->id)
+            ->count();
+
+        $responsibleProjectsCount = Project::forTeam($team->id)
+            ->whereUserIsResponsible($user->id)
+            ->count();
+
+        $responsibleWorkOrdersCount = WorkOrder::forTeam($team->id)
+            ->whereUserIsResponsible($user->id)
+            ->count();
+
+        $awaitingReviewCount = WorkOrder::forTeam($team->id)
+            ->inReviewWhereUserIsAccountable($user->id)
+            ->count();
+
+        $assignedTasksCount = Task::forTeam($team->id)
+            ->assignedTo($user->id)
+            ->whereNotIn('status', [TaskStatus::Done, TaskStatus::Cancelled])
+            ->count();
+
+        return [
+            'accountableCount' => $accountableProjectsCount + $accountableWorkOrdersCount,
+            'responsibleCount' => $responsibleProjectsCount + $responsibleWorkOrdersCount,
+            'awaitingReviewCount' => $awaitingReviewCount,
+            'assignedTasksCount' => $assignedTasksCount,
+        ];
+    }
+
+    /**
+     * Get projects where the user has a RACI role.
+     */
+    private function getMyWorkProjects(User $user, Team $team, bool $showInformed): array
+    {
+        return Project::forTeam($team->id)
+            ->whereUserHasRaciRole($user->id, excludeInformed: ! $showInformed)
+            ->with(['party', 'owner'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(fn (Project $project) => [
+                'id' => (string) $project->id,
+                'name' => $project->name,
+                'description' => $project->description,
+                'partyId' => (string) $project->party_id,
+                'partyName' => $project->party?->name ?? 'Unknown',
+                'ownerId' => (string) $project->owner_id,
+                'ownerName' => $project->owner?->name ?? 'Unknown',
+                'status' => $project->status->value,
+                'startDate' => $project->start_date->format('Y-m-d'),
+                'targetEndDate' => $project->target_end_date?->format('Y-m-d'),
+                'budgetHours' => (float) $project->budget_hours,
+                'actualHours' => (float) $project->actual_hours,
+                'progress' => $project->progress,
+                'tags' => $project->tags ?? [],
+                'userRaciRoles' => $project->getUserRaciRoles($user->id),
+            ])
+            ->all();
+    }
+
+    /**
+     * Get work orders where the user has a RACI role.
+     */
+    private function getMyWorkWorkOrders(User $user, Team $team, bool $showInformed): array
+    {
+        return WorkOrder::forTeam($team->id)
+            ->whereUserHasRaciRole($user->id, excludeInformed: ! $showInformed)
+            ->with(['project', 'assignedTo', 'createdBy'])
+            ->orderBy('due_date')
+            ->get()
+            ->map(fn (WorkOrder $wo) => [
+                'id' => (string) $wo->id,
+                'title' => $wo->title,
+                'description' => $wo->description,
+                'projectId' => (string) $wo->project_id,
+                'projectName' => $wo->project?->name ?? 'Unknown',
+                'assignedToId' => $wo->assigned_to_id ? (string) $wo->assigned_to_id : null,
+                'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                'status' => $wo->status->value,
+                'priority' => $wo->priority->value,
+                'dueDate' => $wo->due_date?->format('Y-m-d'),
+                'estimatedHours' => (float) $wo->estimated_hours,
+                'actualHours' => (float) $wo->actual_hours,
+                'acceptanceCriteria' => $wo->acceptance_criteria ?? [],
+                'sopAttached' => $wo->sop_attached,
+                'sopName' => $wo->sop_name,
+                'partyContactId' => $wo->party_contact_id ? (string) $wo->party_contact_id : null,
+                'createdBy' => (string) $wo->created_by_id,
+                'createdByName' => $wo->createdBy?->name ?? 'Unknown',
+                'userRaciRoles' => $wo->getUserRaciRoles($user->id),
+            ])
+            ->all();
+    }
+
+    /**
+     * Get tasks assigned to the user.
+     */
+    private function getMyWorkTasks(User $user, Team $team): array
+    {
+        return Task::forTeam($team->id)
+            ->assignedTo($user->id)
+            ->whereNotIn('status', [TaskStatus::Cancelled])
+            ->with(['workOrder', 'project', 'assignedTo'])
+            ->orderBy('due_date')
+            ->get()
+            ->map(fn (Task $task) => [
+                'id' => (string) $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'workOrderId' => (string) $task->work_order_id,
+                'workOrderTitle' => $task->workOrder?->title ?? 'Unknown',
+                'projectId' => (string) $task->project_id,
+                'projectName' => $task->project?->name ?? 'Unknown',
+                'assignedToId' => $task->assigned_to_id ? (string) $task->assigned_to_id : null,
+                'assignedToName' => $task->assignedTo?->name ?? 'Unassigned',
+                'status' => $task->status->value,
+                'dueDate' => $task->due_date?->format('Y-m-d'),
+                'estimatedHours' => (float) $task->estimated_hours,
+                'actualHours' => (float) $task->actual_hours,
+                'checklistItems' => $task->checklist_items ?? [],
+                'dependencies' => $task->dependencies ?? [],
+                'isBlocked' => $task->is_blocked,
+            ])
+            ->all();
     }
 
     private function getProjects(Team $team): array

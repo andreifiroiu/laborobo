@@ -36,6 +36,7 @@ export interface Project {
     tags: string[];
     workOrderLists: WorkOrderList[];
     ungroupedWorkOrders: WorkOrderInList[];
+    userRaciRoles?: RaciRole[];
 }
 
 export interface WorkOrder {
@@ -59,6 +60,7 @@ export interface WorkOrder {
     createdByName: string;
     workOrderListId?: string | null;
     positionInList?: number;
+    userRaciRoles?: RaciRole[];
 }
 
 export interface WorkOrderInList {
@@ -100,12 +102,79 @@ export interface Task {
     assignedAgentId: string | null;
     assignedAgentName: string | null;
     status: 'todo' | 'in_progress' | 'done';
-    dueDate: string;
+    dueDate: string | null;
     estimatedHours: number;
     actualHours: number;
     checklistItems: ChecklistItem[];
     dependencies: string[];
     isBlocked: boolean;
+}
+
+// =============================================================================
+// RACI Types
+// =============================================================================
+
+export type RaciRole = 'accountable' | 'responsible' | 'consulted' | 'informed';
+
+export type MyWorkSubtab = 'tasks' | 'work_orders' | 'projects' | 'all';
+
+export type DueDateRange = 'this_week' | 'next_7_days' | 'next_30_days' | 'overdue' | 'custom';
+
+export type SortBy = 'due_date' | 'priority' | 'recently_updated' | 'alphabetical';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface MyWorkFiltersState {
+    raciRoles: RaciRole[];
+    statuses: string[];
+    dueDateRange: DueDateRange | null;
+    sortBy: SortBy;
+    sortDirection: SortDirection;
+}
+
+export interface MyWorkMetrics {
+    accountableCount: number;
+    responsibleCount: number;
+    awaitingReviewCount: number;
+    assignedTasksCount: number;
+}
+
+export interface MyWorkData {
+    projects: Array<Project & { userRaciRoles: RaciRole[] }>;
+    workOrders: Array<WorkOrder & { userRaciRoles: RaciRole[] }>;
+    tasks: Task[];
+}
+
+export interface MyWorkTreeProject {
+    id: string;
+    name: string;
+    status: Project['status'];
+    partyName: string;
+    progress: number;
+    userRaciRoles: RaciRole[];
+    workOrders: MyWorkTreeWorkOrder[];
+}
+
+export interface MyWorkTreeWorkOrder {
+    id: string;
+    title: string;
+    status: WorkOrder['status'];
+    priority: WorkOrder['priority'];
+    dueDate: string | null;
+    userRaciRoles: RaciRole[];
+    tasks: MyWorkTreeTask[];
+}
+
+export interface MyWorkTreeTask {
+    id: string;
+    title: string;
+    status: Task['status'];
+    dueDate: string | null;
+    assignedToName: string;
+}
+
+export interface MyWorkTreeData {
+    projects: MyWorkTreeProject[];
 }
 
 // =============================================================================
@@ -258,6 +327,10 @@ export interface WorkPageProps {
     communicationThreads: CommunicationThread[];
     currentView: WorkView;
     currentUserId: string;
+    myWorkData?: MyWorkData;
+    myWorkMetrics?: MyWorkMetrics;
+    myWorkSubtab?: MyWorkSubtab;
+    myWorkShowInformed?: boolean;
 }
 
 export interface TimeEntriesPageProps {

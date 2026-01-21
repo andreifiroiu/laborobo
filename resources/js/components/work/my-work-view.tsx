@@ -1,206 +1,306 @@
-import { AlertCircle } from 'lucide-react';
-import { MyWorkCard } from './my-work-card';
-import type { WorkOrder, Task } from '@/types/work';
+import { useState, useCallback, useMemo } from 'react';
+import { router } from '@inertiajs/react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import { MyWorkMetrics, metricFilterToRaciRole } from './my-work-metrics';
+import { MyWorkSubtabs } from './my-work-subtabs';
+import { MyWorkFilters, getDefaultFilters } from './my-work-filters';
+import { MyWorkTasksList } from './my-work-tasks-list';
+import { MyWorkOrdersList } from './my-work-orders-list';
+import { MyWorkProjectsList } from './my-work-projects-list';
+import { MyWorkTreeView } from './my-work-tree-view';
+import { cn } from '@/lib/utils';
+import type {
+    WorkOrder,
+    Task,
+    Project,
+    RaciRole,
+    MyWorkSubtab,
+    MyWorkFiltersState,
+    MyWorkMetrics as MyWorkMetricsType,
+    MyWorkData,
+    MyWorkTreeData,
+    MyWorkTreeProject,
+    MyWorkTreeWorkOrder,
+} from '@/types/work';
 
 interface MyWorkViewProps {
     workOrders: WorkOrder[];
     tasks: Task[];
     currentUserId: string;
+    myWorkData?: MyWorkData;
+    myWorkMetrics?: MyWorkMetricsType;
+    myWorkSubtab?: MyWorkSubtab;
+    myWorkShowInformed?: boolean;
+    onShowInformedChange?: (show: boolean) => void;
 }
 
-export function MyWorkView({ workOrders, tasks, currentUserId }: MyWorkViewProps) {
-    // Filter work orders and tasks assigned to current user
-    const myWorkOrders = workOrders.filter((wo) => wo.assignedToId === currentUserId);
-    const myTasks = tasks.filter((t) => t.assignedToId === currentUserId);
+export function MyWorkView({
+    workOrders,
+    tasks,
+    currentUserId,
+    myWorkData,
+    myWorkMetrics,
+    myWorkSubtab = 'tasks',
+    myWorkShowInformed = false,
+    onShowInformedChange,
+}: MyWorkViewProps) {
+    const [activeSubtab, setActiveSubtab] = useState<MyWorkSubtab>(myWorkSubtab);
+    const [filters, setFilters] = useState<MyWorkFiltersState>(getDefaultFilters());
+    const [showInformed, setShowInformed] = useState(myWorkShowInformed);
 
-    // Categorize by priority and status
-    const urgentItems = [
-        ...myWorkOrders.filter((wo) => wo.priority === 'urgent' && wo.status !== 'delivered'),
-        ...myTasks.filter((t) => t.status !== 'done'),
-    ].sort((a, b) => {
-        const aDate = new Date(a.dueDate);
-        const bDate = new Date(b.dueDate);
-        return aDate.getTime() - bDate.getTime();
-    });
+    // Fall back to legacy filtering if myWorkData is not provided
+    const projectsWithRoles = useMemo(() => {
+        return myWorkData?.projects ?? [];
+    }, [myWorkData?.projects]);
 
-    const inProgressWorkOrders = myWorkOrders.filter(
-        (wo) => wo.status === 'active' && wo.priority !== 'urgent'
+    const workOrdersWithRoles = useMemo(() => {
+        return myWorkData?.workOrders ?? [];
+    }, [myWorkData?.workOrders]);
+
+    const userTasks = useMemo(() => {
+        return myWorkData?.tasks ?? tasks.filter((t) => t.assignedToId === currentUserId);
+    }, [myWorkData?.tasks, tasks, currentUserId]);
+
+    // Default metrics when not provided from backend
+    const metrics: MyWorkMetricsType = useMemo(() => {
+        if (myWorkMetrics) {
+            return myWorkMetrics;
+        }
+
+        // Calculate metrics from local data as fallback
+        const myWorkOrders = workOrders.filter((wo) => wo.assignedToId === currentUserId);
+        const myTasks = tasks.filter((t) => t.assignedToId === currentUserId);
+        const inReviewWorkOrders = myWorkOrders.filter((wo) => wo.status === 'in_review');
+
+        return {
+            accountableCount: 0,
+            responsibleCount: 0,
+            awaitingReviewCount: inReviewWorkOrders.length,
+            assignedTasksCount: myTasks.filter((t) => t.status !== 'done').length,
+        };
+    }, [myWorkMetrics, workOrders, tasks, currentUserId]);
+
+    // Build tree data for the "All" subtab
+    const treeData: MyWorkTreeData = useMemo(() => {
+        const projectMap = new Map<string, MyWorkTreeProject>();
+
+        // Add projects
+        for (const project of projectsWithRoles) {
+            projectMap.set(project.id, {
+                id: project.id,
+                name: project.name,
+                status: project.status,
+                partyName: project.partyName,
+                progress: project.progress,
+                userRaciRoles: project.userRaciRoles ?? [],
+                workOrders: [],
+            });
+        }
+
+        // Add work orders to their projects
+        for (const wo of workOrdersWithRoles) {
+            const project = projectMap.get(wo.projectId);
+            if (project) {
+                project.workOrders.push({
+                    id: wo.id,
+                    title: wo.title,
+                    status: wo.status,
+                    priority: wo.priority,
+                    dueDate: wo.dueDate,
+                    userRaciRoles: wo.userRaciRoles ?? [],
+                    tasks: [],
+                });
+            }
+        }
+
+        // Add tasks to their work orders
+        for (const task of userTasks) {
+            const project = projectMap.get(task.projectId);
+            if (project) {
+                const workOrder = project.workOrders.find((wo) => wo.id === task.workOrderId);
+                if (workOrder) {
+                    workOrder.tasks.push({
+                        id: task.id,
+                        title: task.title,
+                        status: task.status,
+                        dueDate: task.dueDate,
+                        assignedToName: task.assignedToName,
+                    });
+                }
+            }
+        }
+
+        return {
+            projects: Array.from(projectMap.values()).filter(
+                (p) => p.workOrders.length > 0 || p.userRaciRoles.length > 0
+            ),
+        };
+    }, [projectsWithRoles, workOrdersWithRoles, userTasks]);
+
+    const handleSubtabChange = useCallback((subtab: MyWorkSubtab) => {
+        setActiveSubtab(subtab);
+        // Persist subtab preference
+        router.post(
+            '/work/preference',
+            { key: 'my_work_subtab', value: subtab },
+            { preserveState: true, preserveScroll: true }
+        );
+    }, []);
+
+    const handleFiltersChange = useCallback((newFilters: MyWorkFiltersState) => {
+        setFilters(newFilters);
+    }, []);
+
+    const handleShowInformedChange = useCallback(
+        (show: boolean) => {
+            setShowInformed(show);
+            // Persist show informed preference
+            router.post(
+                '/work/preference',
+                { key: 'my_work_show_informed', value: String(show) },
+                { preserveState: true, preserveScroll: true }
+            );
+            // Call external handler if provided
+            onShowInformedChange?.(show);
+        },
+        [onShowInformedChange]
     );
-    const inProgressTasks = myTasks.filter((t) => t.status === 'in_progress');
-    const todoTasks = myTasks.filter((t) => t.status === 'todo' && !t.isBlocked);
-    const blockedTasks = myTasks.filter((t) => t.isBlocked);
-    const inReviewWorkOrders = myWorkOrders.filter((wo) => wo.status === 'in_review');
 
-    const hasNoWork = myWorkOrders.length === 0 && myTasks.length === 0;
+    const handleMetricClick = useCallback(
+        (filterType: 'accountable' | 'responsible' | 'awaiting_review' | 'assigned_tasks') => {
+            if (filterType === 'assigned_tasks') {
+                // Switch to tasks subtab
+                setActiveSubtab('tasks');
+                router.post(
+                    '/work/preference',
+                    { key: 'my_work_subtab', value: 'tasks' },
+                    { preserveState: true, preserveScroll: true }
+                );
+                // Clear filters to show all assigned tasks
+                setFilters(getDefaultFilters());
+            } else if (filterType === 'awaiting_review') {
+                // Switch to work orders subtab and filter by in_review status
+                setActiveSubtab('work_orders');
+                router.post(
+                    '/work/preference',
+                    { key: 'my_work_subtab', value: 'work_orders' },
+                    { preserveState: true, preserveScroll: true }
+                );
+                setFilters({
+                    ...getDefaultFilters(),
+                    statuses: ['in_review'],
+                });
+            } else {
+                // Apply RACI role filter
+                const role = metricFilterToRaciRole(filterType);
+                if (role) {
+                    // Switch to work orders subtab
+                    setActiveSubtab('work_orders');
+                    router.post(
+                        '/work/preference',
+                        { key: 'my_work_subtab', value: 'work_orders' },
+                        { preserveState: true, preserveScroll: true }
+                    );
+                    setFilters({
+                        ...getDefaultFilters(),
+                        raciRoles: [role],
+                    });
+                }
+            }
+        },
+        []
+    );
+
+    // Check if we have any work to show
+    const hasNoWork = useMemo(() => {
+        return (
+            projectsWithRoles.length === 0 &&
+            workOrdersWithRoles.length === 0 &&
+            userTasks.length === 0
+        );
+    }, [projectsWithRoles, workOrdersWithRoles, userTasks]);
 
     return (
-        <div className="space-y-8">
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                    label="Work Orders"
-                    value={myWorkOrders.filter((wo) => wo.status !== 'delivered').length}
-                    total={myWorkOrders.length}
-                    color="indigo"
+        <div className="space-y-0">
+            {/* Summary Metrics Section */}
+            <div className="px-4 py-4 sm:px-6">
+                <MyWorkMetrics
+                    metrics={metrics}
+                    onMetricClick={handleMetricClick}
+                    className="mb-0"
                 />
-                <StatCard
-                    label="Tasks"
-                    value={myTasks.filter((t) => t.status !== 'done').length}
-                    total={myTasks.length}
-                    color="emerald"
-                />
-                <StatCard label="In Review" value={inReviewWorkOrders.length} color="amber" />
-                <StatCard label="Blocked" value={blockedTasks.length} color="red" />
             </div>
 
-            {hasNoWork ? (
-                <div className="bg-card border border-border rounded-xl p-12 text-center">
-                    <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">All caught up!</h3>
-                    <p className="text-sm text-muted-foreground">
-                        You don't have any work orders or tasks assigned to you right now.
-                    </p>
-                </div>
-            ) : (
-                <>
-                    {/* Urgent Items */}
-                    {urgentItems.length > 0 && (
-                        <Section title="Urgent & Overdue" count={urgentItems.length} color="red">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {urgentItems.slice(0, 6).map((item) => {
-                                    const isWorkOrder = 'projectName' in item;
-                                    return (
-                                        <MyWorkCard
-                                            key={item.id}
-                                            workOrder={isWorkOrder ? (item as WorkOrder) : undefined}
-                                            task={!isWorkOrder ? (item as Task) : undefined}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </Section>
-                    )}
+            {/* Subtab Navigation */}
+            <MyWorkSubtabs
+                activeTab={activeSubtab}
+                onTabChange={handleSubtabChange}
+            />
 
-                    {/* In Progress Work Orders */}
-                    {inProgressWorkOrders.length > 0 && (
-                        <Section title="Active Work Orders" count={inProgressWorkOrders.length}>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {inProgressWorkOrders.map((wo) => (
-                                    <MyWorkCard key={wo.id} workOrder={wo} />
-                                ))}
-                            </div>
-                        </Section>
-                    )}
+            {/* Filter Bar */}
+            <MyWorkFilters
+                filters={filters}
+                showInformed={showInformed}
+                activeSubtab={activeSubtab}
+                onFiltersChange={handleFiltersChange}
+                onShowInformedChange={handleShowInformedChange}
+                className="flex-wrap md:flex-nowrap"
+            />
 
-                    {/* In Progress Tasks */}
-                    {inProgressTasks.length > 0 && (
-                        <Section title="In Progress Tasks" count={inProgressTasks.length}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {inProgressTasks.map((task) => (
-                                    <MyWorkCard key={task.id} task={task} />
-                                ))}
-                            </div>
-                        </Section>
-                    )}
+            {/* Content Area */}
+            <div className="p-4 sm:p-6">
+                {hasNoWork ? (
+                    <EmptyState />
+                ) : (
+                    <>
+                        {/* Tasks Subtab */}
+                        {activeSubtab === 'tasks' && (
+                            <MyWorkTasksList
+                                tasks={userTasks}
+                                filters={filters}
+                            />
+                        )}
 
-                    {/* Todo Tasks */}
-                    {todoTasks.length > 0 && (
-                        <Section title="To Do" count={todoTasks.length}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {todoTasks.map((task) => (
-                                    <MyWorkCard key={task.id} task={task} />
-                                ))}
-                            </div>
-                        </Section>
-                    )}
+                        {/* Work Orders Subtab */}
+                        {activeSubtab === 'work_orders' && (
+                            <MyWorkOrdersList
+                                workOrders={workOrdersWithRoles}
+                                filters={filters}
+                                showInformed={showInformed}
+                            />
+                        )}
 
-                    {/* In Review */}
-                    {inReviewWorkOrders.length > 0 && (
-                        <Section title="Awaiting Review" count={inReviewWorkOrders.length} color="amber">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {inReviewWorkOrders.map((wo) => (
-                                    <MyWorkCard key={wo.id} workOrder={wo} />
-                                ))}
-                            </div>
-                        </Section>
-                    )}
+                        {/* Projects Subtab */}
+                        {activeSubtab === 'projects' && (
+                            <MyWorkProjectsList
+                                projects={projectsWithRoles}
+                                filters={filters}
+                                showInformed={showInformed}
+                            />
+                        )}
 
-                    {/* Blocked */}
-                    {blockedTasks.length > 0 && (
-                        <Section title="Blocked Tasks" count={blockedTasks.length} color="red">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {blockedTasks.map((task) => (
-                                    <MyWorkCard key={task.id} task={task} />
-                                ))}
-                            </div>
-                        </Section>
-                    )}
-                </>
-            )}
+                        {/* All Subtab (Tree View) */}
+                        {activeSubtab === 'all' && (
+                            <MyWorkTreeView data={treeData} />
+                        )}
+                    </>
+                )}
+            </div>
         </div>
     );
 }
 
-function Section({
-    title,
-    count,
-    children,
-    color = 'slate',
-}: {
-    title: string;
-    count?: number;
-    children: React.ReactNode;
-    color?: 'slate' | 'red' | 'amber';
-}) {
-    const colorClasses = {
-        slate: 'text-foreground',
-        red: 'text-red-600 dark:text-red-400',
-        amber: 'text-amber-600 dark:text-amber-400',
-    };
-
+function EmptyState() {
     return (
-        <div>
-            <div className="flex items-center justify-between mb-4">
-                <h2 className={`text-lg font-bold ${colorClasses[color]}`}>
-                    {title}
-                    {count !== undefined && (
-                        <span className="ml-2 text-sm font-medium text-muted-foreground">({count})</span>
-                    )}
-                </h2>
+        <div className="bg-card border border-border rounded-xl p-8 sm:p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8" />
             </div>
-            {children}
-        </div>
-    );
-}
-
-function StatCard({
-    label,
-    value,
-    total,
-    color = 'slate',
-}: {
-    label: string;
-    value: number;
-    total?: number;
-    color?: 'indigo' | 'emerald' | 'amber' | 'red' | 'slate';
-}) {
-    const colorClasses = {
-        indigo: 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400',
-        emerald: 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400',
-        amber: 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400',
-        red: 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400',
-        slate: 'bg-muted text-muted-foreground',
-    };
-
-    return (
-        <div className={`p-4 rounded-xl ${colorClasses[color]}`}>
-            <div className="text-2xl font-bold mb-1">
-                {value}
-                {total !== undefined && <span className="text-sm font-normal opacity-60">/{total}</span>}
-            </div>
-            <div className="text-sm font-medium opacity-80">{label}</div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">All caught up!</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                You don't have any projects, work orders, or tasks assigned to you right now.
+                When work items are assigned to you or you have RACI roles, they will appear here.
+            </p>
         </div>
     );
 }

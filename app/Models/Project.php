@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -116,24 +117,84 @@ class Project extends Model
         return $this->morphMany(Document::class, 'documentable');
     }
 
-    public function scopeForTeam($query, int $teamId)
+    public function scopeForTeam(Builder $query, int $teamId): Builder
     {
         return $query->where('team_id', $teamId);
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', ProjectStatus::Active);
     }
 
-    public function scopeArchived($query)
+    public function scopeArchived(Builder $query): Builder
     {
         return $query->where('status', ProjectStatus::Archived);
     }
 
-    public function scopeNotArchived($query)
+    public function scopeNotArchived(Builder $query): Builder
     {
         return $query->where('status', '!=', ProjectStatus::Archived);
+    }
+
+    /**
+     * Scope to filter projects where the user has any RACI role.
+     */
+    public function scopeWhereUserHasRaciRole(Builder $query, int $userId, bool $excludeInformed = true): Builder
+    {
+        return $query->where(function (Builder $q) use ($userId, $excludeInformed) {
+            $q->where('accountable_id', $userId)
+                ->orWhere('responsible_id', $userId)
+                ->orWhereJsonContains('consulted_ids', $userId);
+
+            if (! $excludeInformed) {
+                $q->orWhereJsonContains('informed_ids', $userId);
+            }
+        });
+    }
+
+    /**
+     * Scope to filter projects where the user is accountable.
+     */
+    public function scopeWhereUserIsAccountable(Builder $query, int $userId): Builder
+    {
+        return $query->where('accountable_id', $userId);
+    }
+
+    /**
+     * Scope to filter projects where the user is responsible.
+     */
+    public function scopeWhereUserIsResponsible(Builder $query, int $userId): Builder
+    {
+        return $query->where('responsible_id', $userId);
+    }
+
+    /**
+     * Get the RACI roles the given user has for this project.
+     *
+     * @return array<string>
+     */
+    public function getUserRaciRoles(int $userId): array
+    {
+        $roles = [];
+
+        if ($this->accountable_id === $userId) {
+            $roles[] = 'accountable';
+        }
+
+        if ($this->responsible_id === $userId) {
+            $roles[] = 'responsible';
+        }
+
+        if (is_array($this->consulted_ids) && in_array($userId, $this->consulted_ids, true)) {
+            $roles[] = 'consulted';
+        }
+
+        if (is_array($this->informed_ids) && in_array($userId, $this->informed_ids, true)) {
+            $roles[] = 'informed';
+        }
+
+        return $roles;
     }
 
     public function recalculateProgress(): void

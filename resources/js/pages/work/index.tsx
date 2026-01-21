@@ -45,6 +45,10 @@ export default function Work({
     communicationThreads,
     currentView,
     currentUserId,
+    myWorkData,
+    myWorkMetrics,
+    myWorkSubtab,
+    myWorkShowInformed,
 }: WorkPageProps) {
     const [view, setView] = useState<WorkView>(currentView);
     const [searchQuery, setSearchQuery] = useState('');
@@ -78,7 +82,7 @@ export default function Work({
 
     const handleViewChange = (newView: WorkView) => {
         setView(newView);
-        router.patch('/work/preferences', { work_view: newView }, { preserveState: true });
+        router.post('/work/preference', { key: 'work_view', value: newView }, { preserveState: true });
     };
 
     const handleQuickAdd = (data: QuickAddData) => {
@@ -168,60 +172,64 @@ export default function Work({
                 <ViewTabs currentView={view} onViewChange={handleViewChange} />
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto">
                     {/* Search Bar (for relevant views) */}
-                    {(view === 'all_projects' || view === 'my_work') && (
-                        <div className="mb-6 flex items-center gap-4">
-                            <div className="flex-1 relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search projects, work orders, tasks..."
-                                    className="pl-10"
-                                />
+                    {view === 'all_projects' && (
+                        <div className="p-6 pb-0">
+                            <div className="mb-6 flex items-center gap-4">
+                                <div className="flex-1 relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search projects, work orders, tasks..."
+                                        className="pl-10"
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {/* All Projects View */}
                     {view === 'all_projects' && (
-                        <div className="bg-card border border-border rounded-xl overflow-hidden">
-                            <QuickAddBar onQuickAdd={handleQuickAdd} />
+                        <div className="px-6 pb-6">
+                            <div className="bg-card border border-border rounded-xl overflow-hidden">
+                                <QuickAddBar onQuickAdd={handleQuickAdd} />
 
-                            <div className="divide-y divide-border">
-                                {activeProjects.length === 0 ? (
-                                    <div className="p-12 text-center">
-                                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                                            <Search className="w-8 h-8 text-muted-foreground" />
+                                <div className="divide-y divide-border">
+                                    {activeProjects.length === 0 ? (
+                                        <div className="p-12 text-center">
+                                            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                                                <Search className="w-8 h-8 text-muted-foreground" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-foreground mb-2">
+                                                {searchQuery ? 'No projects found' : 'No active projects'}
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground mb-6">
+                                                {searchQuery
+                                                    ? 'Try adjusting your search query'
+                                                    : 'Get started by creating your first project'}
+                                            </p>
+                                            {!searchQuery && (
+                                                <Button onClick={() => setCreateProjectDialogOpen(true)}>
+                                                    Create First Project
+                                                </Button>
+                                            )}
                                         </div>
-                                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                                            {searchQuery ? 'No projects found' : 'No active projects'}
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground mb-6">
-                                            {searchQuery
-                                                ? 'Try adjusting your search query'
-                                                : 'Get started by creating your first project'}
-                                        </p>
-                                        {!searchQuery && (
-                                            <Button onClick={() => setCreateProjectDialogOpen(true)}>
-                                                Create First Project
-                                            </Button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    activeProjects.map((project) => (
-                                        <ProjectTreeItem
-                                            key={project.id}
-                                            project={project}
-                                            workOrders={workOrders}
-                                            tasks={tasks}
-                                            onCreateWorkOrder={handleCreateWorkOrder}
-                                            onCreateTask={handleCreateTask}
-                                        />
-                                    ))
-                                )}
+                                    ) : (
+                                        activeProjects.map((project) => (
+                                            <ProjectTreeItem
+                                                key={project.id}
+                                                project={project}
+                                                workOrders={workOrders}
+                                                tasks={tasks}
+                                                onCreateWorkOrder={handleCreateWorkOrder}
+                                                onCreateTask={handleCreateTask}
+                                            />
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -232,25 +240,35 @@ export default function Work({
                             workOrders={workOrders}
                             tasks={tasks}
                             currentUserId={currentUserId}
+                            myWorkData={myWorkData}
+                            myWorkMetrics={myWorkMetrics}
+                            myWorkSubtab={myWorkSubtab}
+                            myWorkShowInformed={myWorkShowInformed}
                         />
                     )}
 
                     {/* By Status (Kanban) View */}
                     {view === 'by_status' && (
-                        <KanbanView
-                            workOrders={workOrders}
-                            onCreateWorkOrder={handleCreateWorkOrderFromKanban}
-                        />
+                        <div className="p-6">
+                            <KanbanView
+                                workOrders={workOrders}
+                                onCreateWorkOrder={handleCreateWorkOrderFromKanban}
+                            />
+                        </div>
                     )}
 
                     {/* Calendar View */}
                     {view === 'calendar' && (
-                        <CalendarView projects={projects} workOrders={workOrders} />
+                        <div className="p-6">
+                            <CalendarView projects={projects} workOrders={workOrders} />
+                        </div>
                     )}
 
                     {/* Archive View */}
                     {view === 'archive' && (
-                        <ArchiveView projects={projects} workOrders={workOrders} tasks={tasks} />
+                        <div className="p-6">
+                            <ArchiveView projects={projects} workOrders={workOrders} tasks={tasks} />
+                        </div>
                     )}
                 </div>
             </div>

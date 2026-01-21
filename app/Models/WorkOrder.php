@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\Priority;
 use App\Enums\WorkOrderStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -139,34 +140,103 @@ class WorkOrder extends Model
             ->orderByDesc('created_at');
     }
 
-    public function scopeForTeam($query, int $teamId)
+    public function scopeForTeam(Builder $query, int $teamId): Builder
     {
         return $query->where('team_id', $teamId);
     }
 
-    public function scopeAssignedTo($query, int $userId)
+    public function scopeAssignedTo(Builder $query, int $userId): Builder
     {
         return $query->where('assigned_to_id', $userId);
     }
 
-    public function scopeWithStatus($query, WorkOrderStatus $status)
+    public function scopeWithStatus(Builder $query, WorkOrderStatus $status): Builder
     {
         return $query->where('status', $status);
     }
 
-    public function scopeInList($query, ?int $listId)
+    public function scopeInList(Builder $query, ?int $listId): Builder
     {
         return $query->where('work_order_list_id', $listId);
     }
 
-    public function scopeOrderedInList($query)
+    public function scopeOrderedInList(Builder $query): Builder
     {
         return $query->orderBy('position_in_list');
     }
 
-    public function scopeUngrouped($query)
+    public function scopeUngrouped(Builder $query): Builder
     {
         return $query->whereNull('work_order_list_id');
+    }
+
+    /**
+     * Scope to filter work orders where the user has any RACI role.
+     */
+    public function scopeWhereUserHasRaciRole(Builder $query, int $userId, bool $excludeInformed = true): Builder
+    {
+        return $query->where(function (Builder $q) use ($userId, $excludeInformed) {
+            $q->where('accountable_id', $userId)
+                ->orWhere('responsible_id', $userId)
+                ->orWhereJsonContains('consulted_ids', $userId);
+
+            if (! $excludeInformed) {
+                $q->orWhereJsonContains('informed_ids', $userId);
+            }
+        });
+    }
+
+    /**
+     * Scope to filter work orders where the user is accountable.
+     */
+    public function scopeWhereUserIsAccountable(Builder $query, int $userId): Builder
+    {
+        return $query->where('accountable_id', $userId);
+    }
+
+    /**
+     * Scope to filter work orders where the user is responsible.
+     */
+    public function scopeWhereUserIsResponsible(Builder $query, int $userId): Builder
+    {
+        return $query->where('responsible_id', $userId);
+    }
+
+    /**
+     * Scope to filter work orders in review status where the user is accountable.
+     */
+    public function scopeInReviewWhereUserIsAccountable(Builder $query, int $userId): Builder
+    {
+        return $query->where('status', WorkOrderStatus::InReview)
+            ->where('accountable_id', $userId);
+    }
+
+    /**
+     * Get the RACI roles the given user has for this work order.
+     *
+     * @return array<string>
+     */
+    public function getUserRaciRoles(int $userId): array
+    {
+        $roles = [];
+
+        if ($this->accountable_id === $userId) {
+            $roles[] = 'accountable';
+        }
+
+        if ($this->responsible_id === $userId) {
+            $roles[] = 'responsible';
+        }
+
+        if (is_array($this->consulted_ids) && in_array($userId, $this->consulted_ids, true)) {
+            $roles[] = 'consulted';
+        }
+
+        if (is_array($this->informed_ids) && in_array($userId, $this->informed_ids, true)) {
+            $roles[] = 'informed';
+        }
+
+        return $roles;
     }
 
     public function getTasksCountAttribute(): int
