@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CommunicationsController;
 use App\Http\Controllers\DirectoryController;
+use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\PlaybooksController;
 use App\Http\Controllers\Reports\TimeReportsController;
@@ -34,6 +35,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Consolidated communications view
     Route::get('communications', [CommunicationsController::class, 'index'])->name('communications.index');
+
+    // Documents management
+    Route::get('documents', [DocumentsController::class, 'index'])->name('documents');
 
     Route::get('reports', function () {
         return Inertia::render('reports/index');

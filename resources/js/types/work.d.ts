@@ -237,6 +237,8 @@ export interface Document {
     name: string;
     type: 'reference' | 'artifact' | 'evidence' | 'template';
     fileUrl: string;
+    mimeType?: string;
+    folderId?: string | null;
     attachedToType?: 'project' | 'workOrder' | 'task' | 'deliverable';
     attachedToId?: string;
     uploadedBy?: string;

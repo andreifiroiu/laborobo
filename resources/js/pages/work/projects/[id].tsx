@@ -4,25 +4,16 @@ import {
     Calendar,
     Clock,
     User,
-    Plus,
     MoreVertical,
     MessageSquare,
-    FileText,
     Edit,
     Archive,
     Trash2,
-    Upload,
-    ExternalLink,
-    Image,
-    File,
-    FileSpreadsheet,
-    Package,
     Lock,
     Unlock,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -50,9 +41,15 @@ import {
 import InputError from '@/components/input-error';
 import { StatusBadge, ProgressBar, ProjectTeamSection, WorkOrderListSection } from '@/components/work';
 import { CommunicationsPanel } from '@/components/communications';
-import { useState, useRef } from 'react';
+import { ProjectDocumentsSection } from './components/project-documents-section';
+import { useState } from 'react';
 import type { ProjectDetailProps } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
+import type { FolderNode } from '@/components/documents/folder-tree';
+
+interface ProjectDetailPageProps extends ProjectDetailProps {
+    folders: FolderNode[];
+}
 
 export default function ProjectDetail({
     project,
@@ -60,17 +57,16 @@ export default function ProjectDetail({
     workOrderLists,
     ungroupedWorkOrders,
     documents,
+    folders,
     communicationThread,
     messages,
     parties,
     teamMembers,
-}: ProjectDetailProps) {
+}: ProjectDetailPageProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
     const [selectedListId, setSelectedListId] = useState<string | undefined>(undefined);
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -136,60 +132,6 @@ export default function ProjectDetail({
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
             router.delete(`/work/projects/${project.id}`);
-        }
-    };
-
-    // File upload handlers
-    const handleFileSelect = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
-        router.post(`/work/projects/${project.id}/files`, formData, {
-            forceFormData: true,
-            preserveScroll: true,
-            onFinish: () => {
-                setIsUploading(false);
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                }
-            },
-        });
-    };
-
-    const handleDeleteFile = (documentId: string) => {
-        if (confirm('Are you sure you want to delete this file?')) {
-            router.delete(`/work/projects/${project.id}/files/${documentId}`, {
-                preserveScroll: true,
-            });
-        }
-    };
-
-    const getFileIcon = (type: string, fileName: string) => {
-        const ext = fileName.split('.').pop()?.toLowerCase();
-        if (ext === 'pdf') return <FileText className="h-8 w-8 text-red-500" />;
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return <Image className="h-8 w-8 text-blue-500" />;
-        if (['xls', 'xlsx'].includes(ext || '')) return <FileSpreadsheet className="h-8 w-8 text-green-500" />;
-        if (['doc', 'docx'].includes(ext || '')) return <FileText className="h-8 w-8 text-blue-500" />;
-
-        switch (type) {
-            case 'reference':
-                return <FileText className="h-8 w-8 text-blue-500" />;
-            case 'artifact':
-                return <Package className="h-8 w-8 text-purple-500" />;
-            case 'evidence':
-                return <FileText className="h-8 w-8 text-amber-500" />;
-            case 'template':
-                return <FileText className="h-8 w-8 text-green-500" />;
-            default:
-                return <File className="h-8 w-8 text-muted-foreground" />;
         }
     };
 
@@ -341,93 +283,11 @@ export default function ProjectDetail({
                     />
 
                     {/* Documents Section */}
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-foreground">
-                                Documents ({documents.length})
-                            </h2>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleFileSelect}
-                                disabled={isUploading}
-                            >
-                                <Upload className="h-4 w-4 mr-2" />
-                                {isUploading ? 'Uploading...' : 'Upload'}
-                            </Button>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                className="hidden"
-                                onChange={handleFileChange}
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.txt"
-                            />
-                        </div>
-
-                        {documents.length === 0 ? (
-                            <div
-                                className="text-center py-8 bg-muted/50 rounded-xl border-2 border-dashed border-border cursor-pointer hover:bg-muted/70 transition-colors"
-                                onClick={handleFileSelect}
-                            >
-                                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                <p className="text-muted-foreground">
-                                    Click to upload files or drag and drop
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    PDF, DOC, XLS, Images up to 10MB
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {documents.map((doc) => (
-                                    <div
-                                        key={doc.id}
-                                        className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg group"
-                                    >
-                                        {getFileIcon(doc.type, doc.name)}
-                                        <div className="flex-1 min-w-0">
-                                            <a
-                                                href={doc.fileUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="font-medium text-sm truncate block hover:text-primary"
-                                            >
-                                                {doc.name}
-                                            </a>
-                                            <div className="text-xs text-muted-foreground">
-                                                {doc.fileSize} • {doc.uploadedDate}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" asChild>
-                                                <a href={doc.fileUrl} target="_blank" rel="noreferrer">
-                                                    <ExternalLink className="h-4 w-4" />
-                                                </a>
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleDeleteFile(doc.id)}
-                                                className="text-destructive hover:text-destructive"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Add more files button */}
-                                <button
-                                    onClick={handleFileSelect}
-                                    disabled={isUploading}
-                                    className="w-full p-3 border-2 border-dashed border-border rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Add more files
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                    <ProjectDocumentsSection
+                        projectId={project.id}
+                        documents={documents}
+                        folders={folders}
+                    />
                 </div>
             </div>
 

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Home, Briefcase, Inbox, BookOpen, Users, BarChart3, Settings, Folder, MessageSquare } from 'lucide-react';
+import { Home, Briefcase, Inbox, BookOpen, Users, BarChart3, Settings, Folder, MessageSquare, FileText } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -36,6 +36,11 @@ const mainNavItems: NavItem[] = [
         title: 'Communications',
         href: '/communications',
         icon: MessageSquare,
+    },
+    {
+        title: 'Documents',
+        href: '/documents',
+        icon: FileText,
     },
     {
         title: 'Playbooks',
