@@ -414,7 +414,7 @@ export function ProjectDocumentsSection({
 
             {/* Manage Share Links Dialog */}
             <Dialog open={!!manageLinksDoc} onOpenChange={(open) => !open && setManageLinksDoc(null)}>
-                <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
                     <DialogHeader>
                         <DialogTitle>Manage Share Links</DialogTitle>
                         <DialogDescription>
