@@ -81,7 +81,6 @@ return [
         'cache_decisions' => false,
     ],
 
-
     /*
     |--------------------------------------------------------------------------
     | Invitations
@@ -93,10 +92,11 @@ return [
         'enabled' => true,
 
         'routes' => [
-            'register' => true,
-            'url' => '/invitation/{invitation_id}/accept',
-            'middleware' => 'web'
-        ]
+            // Disabled because we have custom routes in routes/web.php
+            'register' => false,
+            'url' => '/invitation/{invitation}/accept',
+            'middleware' => 'web',
+        ],
     ],
 
     /*
@@ -111,8 +111,8 @@ return [
         'nodes' => [
             '*',
             '*.*',
-            'all'
-        ]
-    ]
+            'all',
+        ],
+    ],
 
 ];

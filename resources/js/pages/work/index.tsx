@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Lock, Search } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
     Select,
     SelectContent,
@@ -63,6 +64,7 @@ export default function Work({
         partyId: '',
         startDate: new Date().toISOString().split('T')[0],
         description: '',
+        isPrivate: false,
     });
 
     const workOrderForm = useForm({
@@ -332,6 +334,19 @@ export default function Work({
                                     placeholder="Brief description of the project"
                                 />
                                 <InputError message={projectForm.errors.description} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label htmlFor="project-private">Private Project</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Only you and assigned team members can see this project
+                                    </p>
+                                </div>
+                                <Switch
+                                    id="project-private"
+                                    checked={projectForm.data.isPrivate}
+                                    onCheckedChange={(checked) => projectForm.setData('isPrivate', checked)}
+                                />
                             </div>
                         </div>
                         <DialogFooter>

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Team;
+use App\Observers\TeamObserver;
 use Illuminate\Support\ServiceProvider;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
@@ -51,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Team::observe(TeamObserver::class);
+
         if (! config('opentelemetry.auto_instrumentation.enabled', true)) {
             return;
         }
@@ -104,7 +108,7 @@ class AppServiceProvider extends ServiceProvider
 
         $exporter = new SpanExporter($transport);
         $processor = new BatchSpanProcessor($exporter, ClockFactory::getDefault());
-        $sampler = new ParentBased(new AlwaysOnSampler());
+        $sampler = new ParentBased(new AlwaysOnSampler);
 
         return TracerProvider::builder()
             ->addSpanProcessor($processor)

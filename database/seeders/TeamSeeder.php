@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Observers\TeamObserver;
 use Illuminate\Database\Seeder;
 
 class TeamSeeder extends Seeder
@@ -15,7 +16,7 @@ class TeamSeeder extends Seeder
     {
         $testUser = User::where('email', 'test@example.com')->first();
 
-        if (!$testUser) {
+        if (! $testUser) {
             return;
         }
 
@@ -68,12 +69,29 @@ class TeamSeeder extends Seeder
         // Add users to work team - using addUser method from HasMembers trait
         $workTeam = $testUser->allTeams()->where('name', 'Work Team')->first();
         if ($workTeam) {
-            if (!$workTeam->hasUser($alice)) {
+            if (! $workTeam->hasUser($alice)) {
                 $workTeam->addUser($alice, 'member');
             }
-            if (!$workTeam->hasUser($bob)) {
+            if (! $workTeam->hasUser($bob)) {
                 $workTeam->addUser($bob, 'member');
             }
         }
+
+        // Ensure all teams have default roles (for existing teams that may not have them)
+        $this->ensureTeamsHaveRoles();
+    }
+
+    /**
+     * Ensure all teams have default roles.
+     */
+    private function ensureTeamsHaveRoles(): void
+    {
+        $observer = new TeamObserver;
+
+        Team::all()->each(function (Team $team) use ($observer) {
+            if ($team->roles()->count() === 0) {
+                $observer->createDefaultRoles($team);
+            }
+        });
     }
 }

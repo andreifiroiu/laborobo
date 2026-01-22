@@ -1,7 +1,22 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Folder, List, MoreVertical, Plus, Lock } from 'lucide-react';
-import { Link } from '@inertiajs/react';
+import { ChevronRight, ChevronDown, Folder, List, MoreVertical, Plus, Lock, Edit, Trash2 } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { StatusBadge } from './status-badge';
 import type { Project, WorkOrder, Task, WorkOrderList, WorkOrderInList } from '@/types/work';
 
@@ -21,6 +36,7 @@ export function ProjectTreeItem({
     onCreateTask,
 }: ProjectTreeItemProps) {
     const [isExpanded, setIsExpanded] = useState(true);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const totalWorkOrders =
         (project.workOrderLists?.reduce((sum, list) => sum + list.workOrders.length, 0) ?? 0) +
@@ -76,9 +92,54 @@ export function ProjectTreeItem({
                     <Plus className="h-4 w-4" />
                 </Button>
 
-                <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
-                    <MoreVertical className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                            <Link href={`/work/projects/${project.id}`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Project
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => setDeleteDialogOpen(true)}
+                            className="text-destructive focus:text-destructive"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Project
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Project</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete "{project.name}"? This action cannot be undone.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    router.delete(`/work/projects/${project.id}`, { preserveScroll: true });
+                                    setDeleteDialogOpen(false);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Work Order Lists and Ungrouped Work Orders */}
@@ -116,6 +177,7 @@ interface WorkOrderListTreeItemProps {
 
 function WorkOrderListTreeItem({ list, tasks, onCreateTask }: WorkOrderListTreeItemProps) {
     const [isExpanded, setIsExpanded] = useState(true);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     return (
         <div className="border-l-2 border-muted">
@@ -152,9 +214,54 @@ function WorkOrderListTreeItem({ list, tasks, onCreateTask }: WorkOrderListTreeI
                     </span>
                 </div>
 
-                <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
-                    <MoreVertical className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                            <Link href={`/work/work-order-lists/${list.id}`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit List
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => setDeleteDialogOpen(true)}
+                            className="text-destructive focus:text-destructive"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete List
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete List</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete "{list.name}"? Work orders in this list will become ungrouped.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    router.delete(`/work/work-order-lists/${list.id}`, { preserveScroll: true });
+                                    setDeleteDialogOpen(false);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Work Orders in List */}
@@ -238,6 +345,7 @@ interface WorkOrderInListTreeItemProps {
 
 function WorkOrderInListTreeItem({ workOrder, tasks, onCreateTask }: WorkOrderInListTreeItemProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const priorityColors: Record<string, string> = {
         low: 'text-muted-foreground',
@@ -296,9 +404,54 @@ function WorkOrderInListTreeItem({ workOrder, tasks, onCreateTask }: WorkOrderIn
                     <Plus className="h-4 w-4" />
                 </Button>
 
-                <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
-                    <MoreVertical className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                            <Link href={`/work/work-orders/${workOrder.id}`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Work Order
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => setDeleteDialogOpen(true)}
+                            className="text-destructive focus:text-destructive"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Work Order
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Work Order</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete "{workOrder.title}"? This action cannot be undone. All associated tasks and deliverables will also be deleted.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    router.delete(`/work/work-orders/${workOrder.id}`, { preserveScroll: true });
+                                    setDeleteDialogOpen(false);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Tasks */}
@@ -321,6 +474,7 @@ interface WorkOrderTreeItemProps {
 
 function WorkOrderTreeItem({ workOrder, tasks, onCreateTask }: WorkOrderTreeItemProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const priorityColors: Record<string, string> = {
         low: 'text-muted-foreground',
@@ -377,9 +531,54 @@ function WorkOrderTreeItem({ workOrder, tasks, onCreateTask }: WorkOrderTreeItem
                     <Plus className="h-4 w-4" />
                 </Button>
 
-                <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
-                    <MoreVertical className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                            <Link href={`/work/work-orders/${workOrder.id}`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Work Order
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => setDeleteDialogOpen(true)}
+                            className="text-destructive focus:text-destructive"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Work Order
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Work Order</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete "{workOrder.title}"? This action cannot be undone. All associated tasks and deliverables will also be deleted.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    router.delete(`/work/work-orders/${workOrder.id}`, { preserveScroll: true });
+                                    setDeleteDialogOpen(false);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Tasks */}
@@ -399,6 +598,7 @@ interface TaskTreeItemProps {
 }
 
 function TaskTreeItem({ task }: TaskTreeItemProps) {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const completedItems = task.checklistItems.filter((item) => item.completed).length;
     const totalItems = task.checklistItems.length;
 
@@ -437,9 +637,54 @@ function TaskTreeItem({ task }: TaskTreeItemProps) {
                 </div>
             </Link>
 
-            <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
-                <MoreVertical className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" title="More options">
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                        <Link href={`/work/tasks/${task.id}`}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Task
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        onClick={() => setDeleteDialogOpen(true)}
+                        className="text-destructive focus:text-destructive"
+                    >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Task
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Task</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete "{task.title}"? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                router.delete(`/work/tasks/${task.id}`, { preserveScroll: true });
+                                setDeleteDialogOpen(false);
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
