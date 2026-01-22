@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
-import { Download, File } from 'lucide-react';
+import { AlertCircle, Download, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 interface FilePreviewProps {
     fileUrl: string;
@@ -23,6 +24,31 @@ const VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 
 const PDF_MIME_TYPE = 'application/pdf';
 
+/**
+ * Office document MIME types supported for preview via Microsoft Office Online Viewer.
+ * Includes: .doc, .docx, .xls, .xlsx, .ppt, .pptx
+ */
+export const OFFICE_MIME_TYPES = [
+    // Word documents
+    'application/msword', // .doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    // Excel spreadsheets
+    'application/vnd.ms-excel', // .xls
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    // PowerPoint presentations
+    'application/vnd.ms-powerpoint', // .ppt
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+];
+
+/**
+ * Generate the Microsoft Office Online Viewer URL for a document.
+ * The Office viewer requires a publicly accessible URL.
+ */
+function getOfficeViewerUrl(fileUrl: string): string {
+    const encodedUrl = encodeURIComponent(fileUrl);
+    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
+}
+
 export function FilePreview({
     fileUrl,
     mimeType,
@@ -30,9 +56,12 @@ export function FilePreview({
     className,
     inModal = false,
 }: FilePreviewProps) {
+    const [officeError, setOfficeError] = useState(false);
+
     const isImage = IMAGE_MIME_TYPES.includes(mimeType);
     const isVideo = VIDEO_MIME_TYPES.includes(mimeType);
     const isPdf = mimeType === PDF_MIME_TYPE;
+    const isOffice = OFFICE_MIME_TYPES.includes(mimeType);
 
     if (isImage) {
         return (
@@ -96,6 +125,31 @@ export function FilePreview({
         );
     }
 
+    if (isOffice && !officeError) {
+        return (
+            <div
+                className={cn(
+                    'overflow-hidden rounded-lg',
+                    inModal ? 'h-full w-full' : 'h-96 w-full',
+                    className
+                )}
+                data-testid="file-preview-office"
+            >
+                <iframe
+                    src={getOfficeViewerUrl(fileUrl)}
+                    className="h-full w-full border-0"
+                    title={fileName}
+                    onError={() => setOfficeError(true)}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    loading="lazy"
+                >
+                    Your browser does not support iframes.
+                </iframe>
+            </div>
+        );
+    }
+
+    // Fallback for unsupported formats or Office preview failure
     return (
         <div
             className={cn(
@@ -104,11 +158,17 @@ export function FilePreview({
             )}
             data-testid="file-preview-fallback"
         >
-            <File className="h-12 w-12 text-muted-foreground" aria-hidden="true" />
+            {officeError ? (
+                <AlertCircle className="h-12 w-12 text-muted-foreground" aria-hidden="true" />
+            ) : (
+                <File className="h-12 w-12 text-muted-foreground" aria-hidden="true" />
+            )}
             <div className="text-center">
                 <p className="font-medium text-foreground">{fileName}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Preview not available for this file type
+                    {officeError
+                        ? 'Preview failed to load. Try downloading the file.'
+                        : 'Preview not available for this file type'}
                 </p>
             </div>
             <Button variant="outline" asChild>

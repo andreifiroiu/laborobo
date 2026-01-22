@@ -1,0 +1,29 @@
+task_groups:
+  - name: S3 Storage Integration
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Data Models and Migrations
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Controllers and Policies
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: File Preview and Folder Navigation
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Commenting and Annotation System
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: External Sharing UI
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Test Review and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all

@@ -1,18 +1,38 @@
 import { cn } from '@/lib/utils';
-import { Upload, X, File } from 'lucide-react';
+import { Upload, X, File, FolderPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useRef, useState, useCallback } from 'react';
 
+/**
+ * Folder option for the folder selector dropdown.
+ */
+export interface FolderOption {
+    id: string;
+    name: string;
+}
+
 interface FileUploaderProps {
-    onUpload: (file: File, notes?: string) => void;
+    onUpload: (file: File, notes?: string, folderId?: string) => void;
     isUploading: boolean;
     progress?: number;
     maxSizeMB?: number;
     error?: string;
     className?: string;
+    /** Optional list of folders for folder selection during upload. */
+    folders?: FolderOption[];
+    /** Callback for creating a new folder inline. */
+    onCreateFolder?: (name: string) => Promise<FolderOption>;
 }
 
 const BLOCKED_EXTENSIONS = [
@@ -32,12 +52,18 @@ export function FileUploader({
     maxSizeMB = 50,
     error,
     className,
+    folders,
+    onCreateFolder,
 }: FileUploaderProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [notes, setNotes] = useState('');
+    const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(undefined);
     const [validationError, setValidationError] = useState<string | null>(null);
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [folderCreationError, setFolderCreationError] = useState<string | null>(null);
 
     const validateFile = useCallback(
         (file: File): string | null => {
@@ -122,7 +148,11 @@ export function FileUploader({
     const handleClearSelection = useCallback(() => {
         setSelectedFile(null);
         setNotes('');
+        setSelectedFolderId(undefined);
         setValidationError(null);
+        setIsCreatingFolder(false);
+        setNewFolderName('');
+        setFolderCreationError(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -130,11 +160,48 @@ export function FileUploader({
 
     const handleSubmit = useCallback(() => {
         if (selectedFile) {
-            onUpload(selectedFile, notes.trim() || undefined);
+            onUpload(selectedFile, notes.trim() || undefined, selectedFolderId);
         }
-    }, [selectedFile, notes, onUpload]);
+    }, [selectedFile, notes, selectedFolderId, onUpload]);
+
+    const handleFolderSelect = useCallback((value: string) => {
+        if (value === '__new__') {
+            setIsCreatingFolder(true);
+            setSelectedFolderId(undefined);
+        } else if (value === '__none__') {
+            setSelectedFolderId(undefined);
+            setIsCreatingFolder(false);
+        } else {
+            setSelectedFolderId(value);
+            setIsCreatingFolder(false);
+        }
+    }, []);
+
+    const handleCreateFolder = useCallback(async () => {
+        if (!newFolderName.trim() || !onCreateFolder) {
+            return;
+        }
+
+        setFolderCreationError(null);
+
+        try {
+            const newFolder = await onCreateFolder(newFolderName.trim());
+            setSelectedFolderId(newFolder.id);
+            setIsCreatingFolder(false);
+            setNewFolderName('');
+        } catch {
+            setFolderCreationError('Failed to create folder. Please try again.');
+        }
+    }, [newFolderName, onCreateFolder]);
+
+    const handleCancelFolderCreation = useCallback(() => {
+        setIsCreatingFolder(false);
+        setNewFolderName('');
+        setFolderCreationError(null);
+    }, []);
 
     const displayError = error || validationError;
+    const hasFolders = folders && folders.length > 0;
 
     return (
         <div className={cn('space-y-4', className)}>
@@ -228,6 +295,79 @@ export function FileUploader({
 
             {selectedFile && !isUploading && (
                 <div className="space-y-3">
+                    {/* Folder selection dropdown */}
+                    {(hasFolders || onCreateFolder) && (
+                        <div className="space-y-2">
+                            <Label htmlFor="folder-select">Folder (optional)</Label>
+                            {isCreatingFolder ? (
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="new-folder-name"
+                                        value={newFolderName}
+                                        onChange={(e) => setNewFolderName(e.target.value)}
+                                        placeholder="New folder name..."
+                                        className="flex-1"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleCreateFolder();
+                                            } else if (e.key === 'Escape') {
+                                                handleCancelFolderCreation();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={handleCreateFolder}
+                                        disabled={!newFolderName.trim()}
+                                    >
+                                        Create
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleCancelFolderCreation}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Select
+                                    value={selectedFolderId ?? '__none__'}
+                                    onValueChange={handleFolderSelect}
+                                >
+                                    <SelectTrigger id="folder-select" aria-label="Folder">
+                                        <SelectValue placeholder="Select a folder..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__none__">No folder (root)</SelectItem>
+                                        {folders?.map((folder) => (
+                                            <SelectItem key={folder.id} value={folder.id}>
+                                                {folder.name}
+                                            </SelectItem>
+                                        ))}
+                                        {onCreateFolder && (
+                                            <SelectItem value="__new__">
+                                                <span className="flex items-center gap-2">
+                                                    <FolderPlus className="h-4 w-4" />
+                                                    Create new folder...
+                                                </span>
+                                            </SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                            {folderCreationError && (
+                                <p className="text-sm text-destructive" role="alert">
+                                    {folderCreationError}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <Label htmlFor="version-notes">Version Notes (optional)</Label>
                         <Textarea
