@@ -344,6 +344,57 @@ function SortableTaskCard({
     );
 }
 
+/**
+ * Calculate smart default due date based on work order due date.
+ * If work order due date is within 1 week and in the future, use it.
+ * Otherwise, default to 7 days from now.
+ */
+const calculateDefaultDueDate = (workOrderDueDate: string | null): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    if (workOrderDueDate) {
+        const woDueDate = new Date(workOrderDueDate);
+        // If work order due date is within 1 week and in the future, use it
+        if (woDueDate <= oneWeekFromNow && woDueDate >= today) {
+            return workOrderDueDate;
+        }
+    }
+
+    // Default to 7 days from now
+    return oneWeekFromNow.toISOString().split('T')[0];
+};
+
+/**
+ * Get a preset date value for quick-select buttons.
+ */
+const getPresetDate = (preset: 'today' | 'tomorrow' | 'nextMonday' | 'nextMonth'): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (preset) {
+        case 'today':
+            return today.toISOString().split('T')[0];
+        case 'tomorrow': {
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return tomorrow.toISOString().split('T')[0];
+        }
+        case 'nextMonday': {
+            const nextMonday = new Date(today);
+            const daysUntilMonday = (8 - today.getDay()) % 7 || 7;
+            nextMonday.setDate(nextMonday.getDate() + daysUntilMonday);
+            return nextMonday.toISOString().split('T')[0];
+        }
+        case 'nextMonth': {
+            const nextMonth = new Date(today);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            return nextMonth.toISOString().split('T')[0];
+        }
+    }
+};
+
 export default function WorkOrderDetail({
     workOrder,
     tasks,
@@ -433,7 +484,8 @@ export default function WorkOrderDetail({
         title: '',
         workOrderId: workOrder.id,
         description: '',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        dueDate: calculateDefaultDueDate(workOrder.dueDate),
+        assignedToId: '' as string,
     });
 
     const deliverableForm = useForm({
@@ -548,6 +600,17 @@ export default function WorkOrderDetail({
                 setCreateTaskDialogOpen(false);
             },
         });
+    };
+
+    const openCreateTaskDialog = () => {
+        taskForm.setData({
+            title: '',
+            workOrderId: workOrder.id,
+            description: '',
+            dueDate: calculateDefaultDueDate(workOrder.dueDate),
+            assignedToId: '',
+        });
+        setCreateTaskDialogOpen(true);
     };
 
     const handleCreateDeliverable = (e: React.FormEvent) => {
@@ -1243,7 +1306,7 @@ export default function WorkOrderDetail({
                             <div>
                                 <div className="mb-4 flex items-center justify-between">
                                     <h2 className="text-foreground text-lg font-bold">Tasks</h2>
-                                    <Button size="sm" onClick={() => setCreateTaskDialogOpen(true)}>
+                                    <Button size="sm" onClick={openCreateTaskDialog}>
                                         <Plus className="mr-2 h-4 w-4" />
                                         Add Task
                                     </Button>
@@ -1251,7 +1314,7 @@ export default function WorkOrderDetail({
                                 {localTasks.length === 0 ? (
                                     <div className="bg-muted/50 rounded-xl py-8 text-center">
                                         <p className="text-muted-foreground mb-4">No tasks yet</p>
-                                        <Button onClick={() => setCreateTaskDialogOpen(true)}>
+                                        <Button onClick={openCreateTaskDialog}>
                                             Create Task
                                         </Button>
                                     </div>
@@ -1547,12 +1610,74 @@ export default function WorkOrderDetail({
                                 <InputError message={taskForm.errors.title} />
                             </div>
                             <div className="grid gap-2">
+                                <Label>Assign To</Label>
+                                <Select
+                                    value={taskForm.data.assignedToId || 'unassigned'}
+                                    onValueChange={(value) =>
+                                        taskForm.setData('assignedToId', value === 'unassigned' ? '' : value)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select assignee" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                                        {teamMembers.map((member) => (
+                                            <SelectItem key={member.id} value={member.id}>
+                                                <span className="flex items-center gap-2">
+                                                    <User className="h-3 w-3" />
+                                                    {member.name}
+                                                </span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
                                 <Label>Due Date</Label>
                                 <Input
                                     type="date"
                                     value={taskForm.data.dueDate}
                                     onChange={(e) => taskForm.setData('dueDate', e.target.value)}
                                 />
+                                <div className="flex flex-wrap gap-1">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-xs"
+                                        onClick={() => taskForm.setData('dueDate', getPresetDate('today'))}
+                                    >
+                                        Today
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-xs"
+                                        onClick={() => taskForm.setData('dueDate', getPresetDate('tomorrow'))}
+                                    >
+                                        Tomorrow
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-xs"
+                                        onClick={() => taskForm.setData('dueDate', getPresetDate('nextMonday'))}
+                                    >
+                                        Next Monday
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-xs"
+                                        onClick={() => taskForm.setData('dueDate', getPresetDate('nextMonth'))}
+                                    >
+                                        Next Month
+                                    </Button>
+                                </div>
                                 <InputError message={taskForm.errors.dueDate} />
                             </div>
                             <div className="grid gap-2">
