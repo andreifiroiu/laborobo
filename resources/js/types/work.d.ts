@@ -34,6 +34,7 @@ export interface Project {
     actualHours: number;
     progress: number;
     tags: string[];
+    isPrivate?: boolean;
     workOrderLists: WorkOrderList[];
     ungroupedWorkOrders: WorkOrderInList[];
     userRaciRoles?: RaciRole[];
@@ -339,7 +340,7 @@ export interface TimeEntriesPageProps {
 }
 
 export interface ProjectDetailProps {
-    project: Project;
+    project: Project & { canTogglePrivacy?: boolean };
     workOrders: Array<{
         id: string;
         title: string;

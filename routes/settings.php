@@ -6,6 +6,7 @@ use App\Http\Controllers\Settings\AgentWorkflowController;
 use App\Http\Controllers\Settings\AIAgentsController;
 use App\Http\Controllers\Settings\AuditLogController;
 use App\Http\Controllers\Settings\IntegrationsController;
+use App\Http\Controllers\Settings\InvitationController;
 use App\Http\Controllers\Settings\LanguageController;
 use App\Http\Controllers\Settings\NotificationsController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -108,6 +109,19 @@ Route::middleware('auth')->group(function () {
     // ========================================================================
     Route::post('/settings/integrations/{integration}/connect', [IntegrationsController::class, 'connect'])->name('settings.integrations.connect');
     Route::post('/settings/integrations/{integration}/disconnect', [IntegrationsController::class, 'disconnect'])->name('settings.integrations.disconnect');
+
+    // ========================================================================
+    // Team Members
+    // ========================================================================
+    Route::post('/settings/team-members', [TeamMemberController::class, 'store'])->name('settings.team-members.store');
+    Route::patch('/settings/team-members/{user}', [TeamMemberController::class, 'update'])->name('settings.team-members.update');
+    Route::delete('/settings/team-members/{user}', [TeamMemberController::class, 'destroy'])->name('settings.team-members.destroy');
+
+    // ========================================================================
+    // Invitations
+    // ========================================================================
+    Route::get('/settings/invitations', [InvitationController::class, 'index'])->name('settings.invitations.index');
+    Route::delete('/settings/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('settings.invitations.destroy');
 
     // ========================================================================
     // Legacy Routes (Backward Compatibility - Redirect to Account)

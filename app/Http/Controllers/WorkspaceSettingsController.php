@@ -27,16 +27,42 @@ class WorkspaceSettingsController extends Controller
 
         // Get team members with roles
         $teamMembers = $team->allUsers()->map(function ($member) use ($team) {
+            $memberRole = $team->userRole($member);
+
             return [
                 'id' => $member->id,
                 'name' => $member->name,
                 'email' => $member->email,
-                'role' => $team->userRole($member)->name ?? 'Owner',
+                'role' => $memberRole->name ?? 'Owner',
+                'roleId' => $memberRole->id ?? null,
                 'avatar' => $member->avatar ?? null,
                 'joinedAt' => $member->pivot->created_at ?? $member->created_at,
                 'lastActiveAt' => $member->updated_at,
+                'isOwner' => $member->id === $team->user_id,
             ];
         });
+
+        // Get pending invitations
+        $pendingInvitations = $team->invitations()
+            ->with('role')
+            ->get()
+            ->map(fn ($invitation) => [
+                'id' => $invitation->id,
+                'email' => $invitation->email,
+                'role' => $invitation->role?->name ?? 'Member',
+                'roleId' => $invitation->role_id,
+                'createdAt' => $invitation->created_at->toISOString(),
+            ]);
+
+        // Get team roles
+        $teamRoles = $team->roles()->get()->map(fn ($role) => [
+            'id' => $role->id,
+            'code' => $role->code,
+            'name' => $role->name,
+        ]);
+
+        // Check if current user is team owner
+        $isTeamOwner = $user->ownsTeam($team);
 
         // Get AI agents with configurations
         $aiAgents = AIAgent::with(['configurations' => function ($q) use ($team) {
@@ -201,6 +227,10 @@ class WorkspaceSettingsController extends Controller
                 'currency' => $workspaceSettings->currency,
             ],
             'teamMembers' => $teamMembers,
+            'pendingInvitations' => $pendingInvitations,
+            'teamRoles' => $teamRoles,
+            'isTeamOwner' => $isTeamOwner,
+            'currentUserId' => $user->id,
             'aiAgents' => $aiAgents,
             'globalAISettings' => [
                 'totalMonthlyBudget' => $globalAISettings->total_monthly_budget,

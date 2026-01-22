@@ -17,7 +17,7 @@ class LanguageController extends Controller
      */
     public function edit(): Response
     {
-        return Inertia::render('settings/language', [
+        return Inertia::render('account/language', [
             'availableLocales' => config('app.available_locales'),
             'localeNames' => config('app.locale_names'),
         ]);

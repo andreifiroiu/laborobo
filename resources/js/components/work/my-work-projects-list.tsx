@@ -1,4 +1,4 @@
-import { Folder } from 'lucide-react';
+import { Folder, Lock } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import { StatusBadge } from './status-badge';
 import { ProgressBar } from './progress-bar';
@@ -127,8 +127,11 @@ function ProjectCard({ project }: ProjectCardProps) {
                         <StatusBadge status={project.status} type="project" />
                         <RaciBadgeGroup roles={project.userRaciRoles} />
                     </div>
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate flex items-center gap-1">
                         {project.name}
+                        {project.isPrivate && (
+                            <Lock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Private project" />
+                        )}
                     </h3>
                     <p className="text-sm text-muted-foreground truncate">{project.partyName}</p>
                 </div>

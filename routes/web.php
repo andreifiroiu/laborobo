@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CommunicationsController;
 use App\Http\Controllers\DirectoryController;
+use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\PlaybooksController;
 use App\Http\Controllers\Reports\TimeReportsController;
 use App\Http\Controllers\TodayController;
@@ -11,6 +12,14 @@ use Laravel\Fortify\Features;
 
 // Redirect home to today
 Route::redirect('/', '/today')->name('home');
+
+// Public invitation acceptance (signed URLs)
+Route::get('/invitation/{invitation}/accept', [InvitationAcceptController::class, 'show'])
+    ->name('teams.invitations.accept')
+    ->middleware('signed');
+Route::post('/invitation/{invitation}/accept', [InvitationAcceptController::class, 'accept'])
+    ->name('teams.invitations.accept.post')
+    ->middleware('signed');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Main navigation routes

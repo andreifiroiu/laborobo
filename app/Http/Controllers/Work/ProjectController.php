@@ -30,6 +30,7 @@ class ProjectController extends Controller
             'targetEndDate' => 'nullable|date|after_or_equal:startDate',
             'budgetHours' => 'nullable|numeric|min:0',
             'tags' => 'nullable|array',
+            'isPrivate' => 'nullable|boolean',
         ]);
 
         $user = $request->user();
@@ -47,6 +48,7 @@ class ProjectController extends Controller
             'target_end_date' => $validated['targetEndDate'] ?? null,
             'budget_hours' => $validated['budgetHours'] ?? null,
             'tags' => $validated['tags'] ?? [],
+            'is_private' => $validated['isPrivate'] ?? false,
         ]);
 
         return back();
@@ -55,6 +57,8 @@ class ProjectController extends Controller
     public function show(Request $request, Project $project): Response
     {
         $this->authorize('view', $project);
+
+        $user = $request->user();
 
         $project->load([
             'party', 'owner', 'accountable', 'responsible',
@@ -87,6 +91,8 @@ class ProjectController extends Controller
                 'actualHours' => (float) $project->actual_hours,
                 'progress' => $project->progress,
                 'tags' => $project->tags ?? [],
+                'isPrivate' => $project->is_private,
+                'canTogglePrivacy' => $user->id === $project->owner_id,
             ],
             'workOrders' => $project->workOrders->map(fn (WorkOrder $wo) => [
                 'id' => (string) $wo->id,
@@ -175,6 +181,7 @@ class ProjectController extends Controller
             'targetEndDate' => 'nullable|date|after_or_equal:startDate',
             'budgetHours' => 'nullable|numeric|min:0',
             'tags' => 'nullable|array',
+            'isPrivate' => 'nullable|boolean',
         ]);
 
         $updateData = [];
@@ -201,6 +208,10 @@ class ProjectController extends Controller
         }
         if (isset($validated['tags'])) {
             $updateData['tags'] = $validated['tags'];
+        }
+        if (array_key_exists('isPrivate', $validated)) {
+            $this->authorize('togglePrivacy', $project);
+            $updateData['is_private'] = $validated['isPrivate'];
         }
 
         $project->update($updateData);

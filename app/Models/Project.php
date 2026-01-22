@@ -36,6 +36,7 @@ class Project extends Model
         'actual_hours',
         'progress',
         'tags',
+        'is_private',
     ];
 
     protected $casts = [
@@ -47,6 +48,7 @@ class Project extends Model
         'tags' => 'array',
         'consulted_ids' => 'array',
         'informed_ids' => 'array',
+        'is_private' => 'boolean',
     ];
 
     public function team(): BelongsTo
@@ -135,6 +137,42 @@ class Project extends Model
     public function scopeNotArchived(Builder $query): Builder
     {
         return $query->where('status', '!=', ProjectStatus::Archived);
+    }
+
+    /**
+     * Scope to filter projects visible to a specific user.
+     *
+     * A user can see a project if:
+     * - The project is not private (visible to all team members)
+     * - The user is the owner
+     * - The user has any RACI role (accountable, responsible, consulted, or informed)
+     */
+    public function scopeVisibleTo(Builder $query, int $userId): Builder
+    {
+        return $query->where(function (Builder $q) use ($userId) {
+            $q->where('is_private', false)
+                ->orWhere('owner_id', $userId)
+                ->orWhere('accountable_id', $userId)
+                ->orWhere('responsible_id', $userId)
+                ->orWhereJsonContains('consulted_ids', $userId)
+                ->orWhereJsonContains('informed_ids', $userId);
+        });
+    }
+
+    /**
+     * Check if this project is visible to a specific user.
+     */
+    public function isVisibleTo(int $userId): bool
+    {
+        if (! $this->is_private) {
+            return true;
+        }
+
+        return $this->owner_id === $userId
+            || $this->accountable_id === $userId
+            || $this->responsible_id === $userId
+            || (is_array($this->consulted_ids) && in_array($userId, $this->consulted_ids, true))
+            || (is_array($this->informed_ids) && in_array($userId, $this->informed_ids, true));
     }
 
     /**

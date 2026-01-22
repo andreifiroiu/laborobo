@@ -43,7 +43,7 @@ class WorkController extends Controller
         $currentView = UserPreference::get($user, 'work_view', 'all_projects');
 
         $props = [
-            'projects' => $this->getProjects($team),
+            'projects' => $this->getProjects($team, $user),
             'workOrders' => $this->getWorkOrders($team),
             'tasks' => $this->getTasks($team),
             'deliverables' => $this->getDeliverables($team),
@@ -168,6 +168,7 @@ class WorkController extends Controller
                 'actualHours' => (float) $project->actual_hours,
                 'progress' => $project->progress,
                 'tags' => $project->tags ?? [],
+                'isPrivate' => $project->is_private,
                 'userRaciRoles' => $project->getUserRaciRoles($user->id),
             ])
             ->all();
@@ -239,9 +240,10 @@ class WorkController extends Controller
             ->all();
     }
 
-    private function getProjects(Team $team): array
+    private function getProjects(Team $team, User $user): array
     {
         return Project::forTeam($team->id)
+            ->visibleTo($user->id)
             ->with([
                 'party',
                 'owner',
@@ -265,6 +267,7 @@ class WorkController extends Controller
                 'actualHours' => (float) $project->actual_hours,
                 'progress' => $project->progress,
                 'tags' => $project->tags ?? [],
+                'isPrivate' => $project->is_private,
                 'workOrderLists' => $project->workOrderLists->map(fn ($list) => [
                     'id' => (string) $list->id,
                     'name' => $list->name,

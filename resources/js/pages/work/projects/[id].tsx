@@ -17,6 +17,8 @@ import {
     File,
     FileSpreadsheet,
     Package,
+    Lock,
+    Unlock,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -123,6 +125,14 @@ export default function ProjectDetail({
         router.post(`/work/projects/${project.id}/archive`);
     };
 
+    const handleTogglePrivacy = () => {
+        router.patch(`/work/projects/${project.id}`, {
+            isPrivate: !project.isPrivate,
+        }, {
+            preserveScroll: true,
+        });
+    };
+
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
             router.delete(`/work/projects/${project.id}`);
@@ -203,6 +213,9 @@ export default function ProjectDetail({
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-1">
                                 <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
+                                {project.isPrivate && (
+                                    <Lock className="h-4 w-4 text-muted-foreground" title="Private project" />
+                                )}
                                 <StatusBadge status={project.status} type="project" />
                             </div>
                             {project.description && (
@@ -229,6 +242,21 @@ export default function ProjectDetail({
                                         <Edit className="h-4 w-4 mr-2" />
                                         Edit Project
                                     </DropdownMenuItem>
+                                    {project.canTogglePrivacy && (
+                                        <DropdownMenuItem onClick={handleTogglePrivacy}>
+                                            {project.isPrivate ? (
+                                                <>
+                                                    <Unlock className="h-4 w-4 mr-2" />
+                                                    Make Public
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Lock className="h-4 w-4 mr-2" />
+                                                    Make Private
+                                                </>
+                                            )}
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem onClick={handleArchive}>
                                         <Archive className="h-4 w-4 mr-2" />
                                         Archive

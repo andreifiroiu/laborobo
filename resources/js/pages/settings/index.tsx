@@ -30,6 +30,10 @@ const tabTitles: Record<string, string> = {
 export default function Settings({
     workspaceSettings,
     teamMembers,
+    pendingInvitations,
+    teamRoles,
+    isTeamOwner,
+    currentUserId,
     aiAgents,
     globalAISettings,
     agentActivityLogs,
@@ -62,7 +66,13 @@ export default function Settings({
                                     <WorkspaceSection settings={workspaceSettings} />
                                 )}
                                 {activeTab === 'team' && (
-                                    <TeamSection members={teamMembers} />
+                                    <TeamSection
+                                        members={teamMembers}
+                                        pendingInvitations={pendingInvitations}
+                                        teamRoles={teamRoles}
+                                        isTeamOwner={isTeamOwner}
+                                        currentUserId={currentUserId}
+                                    />
                                 )}
                                 {activeTab === 'ai-agents' && (
                                     <AIAgentsSection

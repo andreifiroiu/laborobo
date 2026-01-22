@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,61 +10,94 @@ use Illuminate\Support\Facades\Auth;
 class TeamMemberController extends Controller
 {
     /**
-     * Display team members.
+     * Invite a user to the team (or send invitation if user doesn't exist).
      */
-    public function index(Team $team)
+    public function store(Request $request)
     {
-        $this->authorize('view', $team);
+        $team = $request->user()->currentTeam;
 
-        $members = $team->users()->get()->map(function ($user) use ($team) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'is_owner' => $user->id === $team->user_id,
-                'joined_at' => $user->pivot->created_at->toISOString(),
-            ];
-        });
-
-        return response()->json([
-            'members' => $members,
-        ]);
-    }
-
-    /**
-     * Invite a user to the team.
-     */
-    public function store(Request $request, Team $team)
-    {
         $this->authorize('addTeamMember', $team);
 
         $validated = $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', 'email', 'max:255'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
-
-        if ($team->users()->where('user_id', $user->id)->exists()) {
+        // Check if email already belongs to the team
+        if ($team->hasUserWithEmail($validated['email'])) {
             return back()->withErrors([
-                'email' => 'This user is already a member of the team.'
+                'email' => 'This user is already a member of the team.',
             ]);
         }
 
-        $team->inviteUser($user);
+        // Check if there's already a pending invitation
+        if ($team->invitations()->where('email', $validated['email'])->exists()) {
+            return back()->withErrors([
+                'email' => 'An invitation has already been sent to this email address.',
+            ]);
+        }
+
+        // Get the role by ID to get its code
+        $role = $team->roles()->find($validated['role_id']);
+
+        if (! $role) {
+            return back()->withErrors([
+                'role_id' => 'The selected role is not valid for this team.',
+            ]);
+        }
+
+        // Create invitation (works for both existing and new users)
+        $team->inviteUser($validated['email'], $role->code);
 
         return back()->with('status', 'Invitation sent successfully.');
     }
 
     /**
+     * Update a team member's role.
+     */
+    public function update(Request $request, User $user)
+    {
+        $team = $request->user()->currentTeam;
+
+        $this->authorize('updateTeamMember', $team);
+
+        $validated = $request->validate([
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
+        ]);
+
+        // Cannot change owner role
+        if ($user->id === $team->user_id) {
+            return back()->withErrors([
+                'user' => 'Cannot change the team owner\'s role.',
+            ]);
+        }
+
+        // Get the role by ID to get its code
+        $role = $team->roles()->find($validated['role_id']);
+
+        if (! $role) {
+            return back()->withErrors([
+                'role_id' => 'The selected role is not valid for this team.',
+            ]);
+        }
+
+        $team->updateUser($user, $role->code);
+
+        return back()->with('status', 'Member role updated successfully.');
+    }
+
+    /**
      * Remove a team member.
      */
-    public function destroy(Team $team, User $user)
+    public function destroy(Request $request, User $user)
     {
+        $team = $request->user()->currentTeam;
+
         $this->authorize('removeTeamMember', $team);
 
         if ($user->id === $team->user_id) {
             return back()->withErrors([
-                'user' => 'Cannot remove the team owner.'
+                'user' => 'Cannot remove the team owner.',
             ]);
         }
 
@@ -79,7 +111,7 @@ class TeamMemberController extends Controller
             }
         }
 
-        $team->removeUser($user);
+        $team->deleteUser($user);
 
         return back()->with('status', 'Member removed successfully.');
     }

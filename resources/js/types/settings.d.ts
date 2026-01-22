@@ -16,9 +16,25 @@ export interface TeamMember {
     name: string;
     email: string;
     role: string;
+    roleId?: number | null;
     avatar: string | null;
     joinedAt: string;
     lastActiveAt: string;
+    isOwner: boolean;
+}
+
+export interface TeamInvitation {
+    id: number;
+    email: string;
+    role: string;
+    roleId: number;
+    createdAt: string;
+}
+
+export interface TeamRole {
+    id: number;
+    code: string;
+    name: string;
 }
 
 export interface AgentPermissions {
@@ -236,6 +252,10 @@ export interface Invoice {
 export interface SettingsPageProps {
     workspaceSettings: WorkspaceSettings;
     teamMembers: TeamMember[];
+    pendingInvitations: TeamInvitation[];
+    teamRoles: TeamRole[];
+    isTeamOwner: boolean;
+    currentUserId: number;
     aiAgents: AIAgent[];
     globalAISettings: GlobalAISettings;
     agentActivityLogs: AgentActivityLog[];

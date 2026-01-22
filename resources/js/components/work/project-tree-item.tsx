@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Folder, List, MoreVertical, Plus } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, List, MoreVertical, Plus, Lock } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from './status-badge';
@@ -47,6 +47,9 @@ export function ProjectTreeItem({
                         <span className="font-semibold text-foreground truncate">
                             {project.name}
                         </span>
+                        {project.isPrivate && (
+                            <Lock className="h-3 w-3 text-muted-foreground" title="Private project" />
+                        )}
                         <StatusBadge status={project.status} type="project" />
                         <span className="text-sm text-muted-foreground">
                             {project.partyName}
