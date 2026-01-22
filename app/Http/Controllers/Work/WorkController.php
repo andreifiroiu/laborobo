@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Work;
 
+use App\Enums\ProjectStatus;
 use App\Enums\TaskStatus;
+use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\CommunicationThread;
 use App\Models\Deliverable;
@@ -150,6 +152,7 @@ class WorkController extends Controller
     {
         return Project::forTeam($team->id)
             ->whereUserHasRaciRole($user->id, excludeInformed: ! $showInformed)
+            ->whereNotIn('status', [ProjectStatus::Completed, ProjectStatus::Archived])
             ->with(['party', 'owner'])
             ->orderBy('updated_at', 'desc')
             ->get()
@@ -181,6 +184,7 @@ class WorkController extends Controller
     {
         return WorkOrder::forTeam($team->id)
             ->whereUserHasRaciRole($user->id, excludeInformed: ! $showInformed)
+            ->whereNotIn('status', [WorkOrderStatus::Delivered, WorkOrderStatus::Cancelled])
             ->with(['project', 'assignedTo', 'createdBy'])
             ->orderBy('due_date')
             ->get()
@@ -215,7 +219,7 @@ class WorkController extends Controller
     {
         return Task::forTeam($team->id)
             ->assignedTo($user->id)
-            ->whereNotIn('status', [TaskStatus::Cancelled])
+            ->whereNotIn('status', [TaskStatus::Done, TaskStatus::Cancelled])
             ->with(['workOrder', 'project', 'assignedTo'])
             ->orderBy('due_date')
             ->get()

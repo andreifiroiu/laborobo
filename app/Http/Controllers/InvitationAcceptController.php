@@ -37,20 +37,19 @@ class InvitationAcceptController extends Controller
 
         // If not logged in, redirect to login/register with redirect back
         if (! auth()->check()) {
+            // Store invitation ID in session for post-registration/login processing
+            session(['pending_invitation_id' => $invitation->id]);
+
             // Check if user exists with this email
             $userExists = User::where('email', $invitation->email)->exists();
 
-            $redirectUrl = url()->signedRoute('teams.invitations.accept', $invitation);
-
             if ($userExists) {
                 return redirect()->route('login', [
-                    'redirect' => $redirectUrl,
                     'email' => $invitation->email,
                 ]);
             }
 
             return redirect()->route('register', [
-                'redirect' => $redirectUrl,
                 'email' => $invitation->email,
             ]);
         }

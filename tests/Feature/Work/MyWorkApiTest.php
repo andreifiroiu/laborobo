@@ -29,7 +29,7 @@ beforeEach(function () {
 });
 
 test('my work data returns projects with user RACI roles', function () {
-    Project::factory()->create([
+    Project::factory()->active()->create([
         'team_id' => $this->team->id,
         'party_id' => $this->party->id,
         'owner_id' => $this->otherUser->id,
@@ -37,7 +37,7 @@ test('my work data returns projects with user RACI roles', function () {
         'responsible_id' => $this->otherUser->id,
     ]);
 
-    Project::factory()->create([
+    Project::factory()->active()->create([
         'team_id' => $this->team->id,
         'party_id' => $this->party->id,
         'owner_id' => $this->otherUser->id,
@@ -45,7 +45,7 @@ test('my work data returns projects with user RACI roles', function () {
         'responsible_id' => $this->user->id,
     ]);
 
-    Project::factory()->create([
+    Project::factory()->active()->create([
         'team_id' => $this->team->id,
         'party_id' => $this->party->id,
         'owner_id' => $this->otherUser->id,
@@ -232,14 +232,14 @@ test('my work metrics calculations are correct', function () {
 });
 
 test('show informed toggle affects returned my work data', function () {
-    Project::factory()->create([
+    Project::factory()->active()->create([
         'team_id' => $this->team->id,
         'party_id' => $this->party->id,
         'owner_id' => $this->otherUser->id,
         'accountable_id' => $this->user->id,
     ]);
 
-    Project::factory()->create([
+    Project::factory()->active()->create([
         'team_id' => $this->team->id,
         'party_id' => $this->party->id,
         'owner_id' => $this->otherUser->id,
