@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Agents\Tools\CreateDeliverableTool;
 use App\Agents\Tools\CreateDraftWorkOrderTool;
 use App\Agents\Tools\CreateNoteTool;
+use App\Agents\Tools\CreateTaskTool;
 use App\Agents\Tools\GetPlaybooksTool;
+use App\Agents\Tools\GetProjectInsightsTool;
 use App\Agents\Tools\GetTeamCapacityTool;
 use App\Agents\Tools\GetTeamSkillsTool;
 use App\Agents\Tools\TaskListTool;
@@ -102,6 +105,10 @@ class AgentServiceProvider extends ServiceProvider
             GetTeamCapacityTool::class,
             CreateDraftWorkOrderTool::class,
             GetPlaybooksTool::class,
+            // PM Copilot Agent tools
+            CreateDeliverableTool::class,
+            CreateTaskTool::class,
+            GetProjectInsightsTool::class,
         ], 'agent.tool');
     }
 
@@ -147,6 +154,10 @@ class AgentServiceProvider extends ServiceProvider
             GetTeamCapacityTool::class,
             CreateDraftWorkOrderTool::class,
             GetPlaybooksTool::class,
+            // PM Copilot Agent tools
+            CreateDeliverableTool::class,
+            CreateTaskTool::class,
+            GetProjectInsightsTool::class,
         ];
 
         foreach ($builtInTools as $toolClass) {

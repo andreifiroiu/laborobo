@@ -90,6 +90,18 @@ import {
     type AssignmentChange,
 } from '@/components/workflow';
 import { workOrderStatusLabels } from '@/components/ui/status-badge';
+import {
+    PMCopilotTriggerButton,
+    PlanAlternativesPanel,
+    PMCopilotSettingsToggle,
+} from '@/components/pm-copilot';
+import {
+    useTriggerPMCopilot,
+    usePMCopilotSuggestions,
+    useApproveSuggestion,
+    useRejectSuggestion,
+} from '@/hooks/use-pm-copilot';
+import type { PlanAlternative, PMCopilotMode } from '@/types/pm-copilot.d';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { BreadcrumbItem } from '@/types';
 
@@ -144,6 +156,15 @@ interface WorkOrderWithRaci {
     budgetCost?: number | null;
     budgetHours?: number | null;
     averageBillingRate?: number;
+    pmCopilotMode?: PMCopilotMode;
+    pmCopilotSuggestions?: {
+        workOrderId: string;
+        workflowState: { status: string; currentStep: string | null; progress: number; error: string | null };
+        alternatives: PlanAlternative[];
+        insights: Array<unknown>;
+        createdAt: string;
+        updatedAt: string;
+    };
 }
 
 /**
@@ -470,6 +491,19 @@ export default function WorkOrderDetail({
     const [selectedTaskTransition, setSelectedTaskTransition] = useState<string | null>(null);
     const [isTaskTransitioning, setIsTaskTransitioning] = useState(false);
     const [taskTransitionError, setTaskTransitionError] = useState<string | null>(null);
+
+    // PM Copilot state
+    const [pmCopilotMode, setPMCopilotMode] = useState<PMCopilotMode>(workOrder.pmCopilotMode ?? 'full');
+    const [approvedAlternativeId, setApprovedAlternativeId] = useState<string | null>(null);
+
+    // PM Copilot hooks
+    const { trigger: triggerPMCopilot, isLoading: isPMCopilotRunning } = useTriggerPMCopilot();
+    const { data: pmCopilotData, fetch: fetchSuggestions } = usePMCopilotSuggestions(workOrder.id);
+    const { approve: approveSuggestion, isLoading: isApproving } = useApproveSuggestion();
+    const { reject: rejectSuggestion, isLoading: isRejecting } = useRejectSuggestion();
+
+    // Get suggestions from either prop or fetched data
+    const suggestions = workOrder.pmCopilotSuggestions ?? pmCopilotData;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -923,6 +957,43 @@ export default function WorkOrderDetail({
     const handleAssignmentCancel = useCallback(() => {
         setAssignmentConfirmOpen(false);
         setPendingAssignmentChange(null);
+    }, []);
+
+    /**
+     * Handle PM Copilot trigger
+     */
+    const handlePMCopilotTrigger = useCallback(async () => {
+        const result = await triggerPMCopilot(workOrder.id);
+        if (result.success) {
+            // Fetch suggestions after workflow completes
+            await fetchSuggestions();
+        }
+    }, [triggerPMCopilot, workOrder.id, fetchSuggestions]);
+
+    /**
+     * Handle PM Copilot suggestion approval
+     */
+    const handleApproveSuggestion = useCallback(async (alternativeId: string) => {
+        const result = await approveSuggestion(alternativeId);
+        if (result.success) {
+            setApprovedAlternativeId(alternativeId);
+            // Reload to get new tasks/deliverables
+            router.reload({ only: ['tasks', 'deliverables', 'workOrder'] });
+        }
+    }, [approveSuggestion]);
+
+    /**
+     * Handle PM Copilot suggestion rejection
+     */
+    const handleRejectSuggestion = useCallback(async (alternativeId: string, reason?: string) => {
+        await rejectSuggestion(alternativeId, reason);
+    }, [rejectSuggestion]);
+
+    /**
+     * Handle PM Copilot mode change
+     */
+    const handlePMCopilotModeChange = useCallback((newMode: PMCopilotMode) => {
+        setPMCopilotMode(newMode);
     }, []);
 
     /**
@@ -1445,8 +1516,35 @@ export default function WorkOrderDetail({
                                 )}
                             </div>
 
-                            {/* Column 3: RACI + Activity */}
+                            {/* Column 3: PM Copilot + RACI + Activity */}
                             <div>
+                                {/* PM Copilot Section */}
+                                <div className="mb-6 space-y-4">
+                                    <PMCopilotTriggerButton
+                                        workOrderId={workOrder.id}
+                                        onTrigger={handlePMCopilotTrigger}
+                                        isRunning={isPMCopilotRunning}
+                                        disabled={isApproving || isRejecting}
+                                    />
+
+                                    <PMCopilotSettingsToggle
+                                        workOrderId={workOrder.id}
+                                        currentMode={pmCopilotMode}
+                                        onChange={handlePMCopilotModeChange}
+                                        disabled={isPMCopilotRunning}
+                                    />
+
+                                    {suggestions?.alternatives && suggestions.alternatives.length > 0 && (
+                                        <PlanAlternativesPanel
+                                            alternatives={suggestions.alternatives}
+                                            onApprove={handleApproveSuggestion}
+                                            onReject={handleRejectSuggestion}
+                                            selectedAlternativeId={approvedAlternativeId}
+                                            isLoading={isApproving || isRejecting}
+                                        />
+                                    )}
+                                </div>
+
                                 {/* RACI Assignments Section */}
                                 <div className="mb-4 flex items-center gap-2">
                                     <Users className="text-muted-foreground h-5 w-5" />

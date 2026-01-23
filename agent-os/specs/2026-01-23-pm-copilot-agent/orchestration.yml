@@ -1,0 +1,49 @@
+task_groups:
+  - name: PM Copilot Agent Core
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: PM Copilot Workflow
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Deliverable and Task Creation Tools
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Deliverable Generation Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Task Breakdown Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Project Insights Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Event-Driven and Dispatcher Integration
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Work Order and Auto-Approval Settings
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: PM Copilot API Endpoints
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: PM Copilot UI Components
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Work Order Integration UI
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Test Review and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all

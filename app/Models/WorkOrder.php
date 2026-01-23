@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\BudgetType;
+use App\Enums\PMCopilotMode;
 use App\Enums\Priority;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,6 +49,7 @@ class WorkOrder extends Model
         'acceptance_criteria',
         'sop_attached',
         'sop_name',
+        'pm_copilot_mode',
     ];
 
     protected $casts = [
@@ -147,6 +150,39 @@ class WorkOrder extends Model
     {
         return $this->morphMany(StatusTransition::class, 'transitionable')
             ->orderByDesc('created_at');
+    }
+
+    /**
+     * Get the PM Copilot mode for this work order.
+     *
+     * Returns the configured mode or defaults to 'full' if not set.
+     */
+    protected function pmCopilotMode(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value
+                ? PMCopilotMode::from($value)
+                : PMCopilotMode::Full,
+            set: fn (PMCopilotMode|string|null $value) => $value instanceof PMCopilotMode
+                ? $value->value
+                : $value,
+        );
+    }
+
+    /**
+     * Check if PM Copilot is in staged mode for this work order.
+     */
+    public function isPMCopilotStagedMode(): bool
+    {
+        return $this->pm_copilot_mode === PMCopilotMode::Staged;
+    }
+
+    /**
+     * Check if PM Copilot is in full mode for this work order.
+     */
+    public function isPMCopilotFullMode(): bool
+    {
+        return $this->pm_copilot_mode === PMCopilotMode::Full;
     }
 
     public function scopeForTeam(Builder $query, int $teamId): Builder

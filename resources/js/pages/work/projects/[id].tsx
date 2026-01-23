@@ -43,8 +43,16 @@ import InputError from '@/components/input-error';
 import { StatusBadge, ProgressBar, ProjectTeamSection, WorkOrderListSection } from '@/components/work';
 import { CommunicationsPanel } from '@/components/communications';
 import { BudgetFieldsGroup } from '@/components/budget';
+import { ProjectInsightsPanel } from '@/components/pm-copilot';
+import { useProjectInsights } from '@/hooks/use-pm-copilot';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 import { ProjectDocumentsSection } from './components/project-documents-section';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ProjectDetailProps, BudgetType } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
 import type { FolderNode } from '@/components/documents/folder-tree';
@@ -82,6 +90,15 @@ export default function ProjectDetail({
     const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
     const [selectedListId, setSelectedListId] = useState<string | undefined>(undefined);
     const [commsPanelOpen, setCommsPanelOpen] = useState(false);
+    const [insightsPanelOpen, setInsightsPanelOpen] = useState(true);
+
+    // Project insights hook
+    const { insights, isLoading: isLoadingInsights, fetch: fetchInsights } = useProjectInsights(project.id);
+
+    // Fetch insights on mount
+    useEffect(() => {
+        fetchInsights();
+    }, [fetchInsights]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -308,6 +325,33 @@ export default function ProjectDetail({
                             <span className="font-medium">{project.progress}%</span>
                         </div>
                         <ProgressBar progress={project.progress} />
+                    </div>
+
+                    {/* Project Insights Section */}
+                    <div className="mt-6">
+                        <Collapsible open={insightsPanelOpen} onOpenChange={setInsightsPanelOpen}>
+                            <CollapsibleTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="flex w-full items-center justify-between py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+                                >
+                                    <span>AI Insights</span>
+                                    <ChevronDown
+                                        className={`h-4 w-4 transition-transform ${
+                                            insightsPanelOpen ? 'rotate-180' : ''
+                                        }`}
+                                    />
+                                </button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <div className="mt-2">
+                                    <ProjectInsightsPanel
+                                        insights={insights}
+                                        isLoading={isLoadingInsights}
+                                    />
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
                     </div>
                 </div>
 

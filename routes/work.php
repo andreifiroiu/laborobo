@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\MentionSearchController;
+use App\Http\Controllers\PMCopilotController;
 use App\Http\Controllers\ProjectRaciController;
 use App\Http\Controllers\ProjectUserRateController;
 use App\Http\Controllers\Work\CommunicationController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Work\WorkController;
 use App\Http\Controllers\Work\WorkOrderController;
 use App\Http\Controllers\Work\WorkOrderListController;
 use App\Http\Controllers\Work\WorkOrderTransitionController;
+use App\Http\Controllers\WorkOrderAgentSettingsController;
 use App\Http\Controllers\WorkOrderRaciController;
 use Illuminate\Support\Facades\Route;
 
@@ -59,6 +61,15 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/work-orders/{workOrder}/transition', [WorkOrderTransitionController::class, 'transition'])->name('work-orders.transition');
     Route::patch('/work-orders/{workOrder}/raci', [WorkOrderRaciController::class, 'update'])->name('work-orders.raci');
     Route::post('/work-orders/{workOrder}/accept-routing', [WorkOrderController::class, 'acceptRoutingRecommendation'])->name('work-orders.accept-routing');
+
+    // Work Order Agent Settings
+    Route::patch('/work-orders/{workOrder}/agent-settings', [WorkOrderAgentSettingsController::class, 'update'])->name('work-orders.agent-settings');
+
+    // PM Copilot Routes
+    Route::post('/work-orders/{workOrder}/pm-copilot/trigger', [PMCopilotController::class, 'trigger'])->name('work-orders.pm-copilot.trigger');
+    Route::get('/work-orders/{workOrder}/pm-copilot/suggestions', [PMCopilotController::class, 'getSuggestions'])->name('work-orders.pm-copilot.suggestions');
+    Route::post('/pm-copilot/suggestions/{suggestion}/approve', [PMCopilotController::class, 'approveSuggestion'])->name('pm-copilot.suggestions.approve');
+    Route::post('/pm-copilot/suggestions/{suggestion}/reject', [PMCopilotController::class, 'rejectSuggestion'])->name('pm-copilot.suggestions.reject');
 
     // Tasks
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');

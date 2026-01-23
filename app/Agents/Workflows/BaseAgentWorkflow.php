@@ -97,6 +97,20 @@ abstract class BaseAgentWorkflow
     }
 
     /**
+     * Set the current workflow state.
+     *
+     * Used when continuing a workflow that was previously started,
+     * allowing the workflow to run from an existing state.
+     *
+     * @param  AgentWorkflowState  $state  The workflow state to set
+     */
+    public function setCurrentState(AgentWorkflowState $state): void
+    {
+        $this->state = $state;
+        $this->loadCustomization();
+    }
+
+    /**
      * Execute the next step in the workflow.
      *
      * @return bool True if the workflow should continue, false if paused or completed
@@ -152,7 +166,7 @@ abstract class BaseAgentWorkflow
         // Check if step paused the workflow
         $this->state->refresh();
 
-        return !$this->state->isPaused() && !$this->state->isCompleted();
+        return ! $this->state->isPaused() && ! $this->state->isCompleted();
     }
 
     /**
@@ -172,7 +186,7 @@ abstract class BaseAgentWorkflow
      * @param  string  $actionDescription  Description of the action requiring approval
      * @return \App\Models\InboxItem The created inbox item
      */
-    protected function pauseForApproval(string $reason, string $actionDescription): \App\Models\InboxItem
+    protected function pauseForApproval(string $_reason, string $actionDescription): \App\Models\InboxItem
     {
         return $this->approvalService->requestApproval($this->state, $actionDescription);
     }
@@ -229,7 +243,7 @@ abstract class BaseAgentWorkflow
      *
      * @param  array<string, mixed>  $input  The input data
      */
-    protected function onStart(array $input): void
+    protected function onStart(array $_input): void
     {
         // Override in subclass if needed
     }

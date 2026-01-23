@@ -26,6 +26,8 @@ class GlobalAISettings extends Model
         'require_approval_financial',
         'require_approval_contracts',
         'require_approval_scope_changes',
+        'pm_copilot_auto_suggest',
+        'pm_copilot_auto_approval_threshold',
     ];
 
     protected $casts = [
@@ -42,6 +44,18 @@ class GlobalAISettings extends Model
         'require_approval_financial' => 'boolean',
         'require_approval_contracts' => 'boolean',
         'require_approval_scope_changes' => 'boolean',
+        'pm_copilot_auto_suggest' => 'boolean',
+        'pm_copilot_auto_approval_threshold' => 'float',
+    ];
+
+    /**
+     * The model's default attribute values.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'pm_copilot_auto_suggest' => false,
+        'pm_copilot_auto_approval_threshold' => 0.8,
     ];
 
     /**
@@ -77,6 +91,33 @@ class GlobalAISettings extends Model
             'task_assignment' => $this->approval_task_assignment,
             default => true,
         };
+    }
+
+    /**
+     * Check if PM Copilot auto-suggest is enabled for this team.
+     */
+    public function isPMCopilotAutoSuggestEnabled(): bool
+    {
+        return (bool) $this->pm_copilot_auto_suggest;
+    }
+
+    /**
+     * Get the PM Copilot auto-approval threshold.
+     *
+     * Returns the configured threshold (0-1) for automatically approving
+     * low-risk suggestions without human review.
+     */
+    public function getPMCopilotAutoApprovalThreshold(): float
+    {
+        return (float) ($this->pm_copilot_auto_approval_threshold ?? 0.8);
+    }
+
+    /**
+     * Check if a confidence score meets the auto-approval threshold.
+     */
+    public function meetsAutoApprovalThreshold(float $confidenceScore): bool
+    {
+        return $confidenceScore >= $this->getPMCopilotAutoApprovalThreshold();
     }
 
     /**

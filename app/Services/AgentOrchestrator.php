@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Agents\Workflows\PMCopilotWorkflow;
+use App\Enums\AgentType;
 use App\Models\AgentWorkflowState;
 use App\Models\AIAgent;
 use App\Models\Team;
 use App\Models\WorkflowCustomization;
+use App\Models\WorkOrder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -64,6 +67,47 @@ class AgentOrchestrator
 
             return $state;
         });
+    }
+
+    /**
+     * Invoke the PM Copilot agent for a work order.
+     *
+     * Allows the Dispatcher Agent or other callers to start a PM Copilot
+     * workflow for generating deliverables and task breakdowns.
+     *
+     * @param  WorkOrder  $workOrder  The work order to analyze
+     * @param  AIAgent|null  $agent  The PM Copilot agent (optional, will find if not provided)
+     * @return AgentWorkflowState The created workflow state
+     */
+    public function invokePMCopilot(WorkOrder $workOrder, ?AIAgent $agent = null): AgentWorkflowState
+    {
+        $team = $workOrder->team;
+
+        // Find PM Copilot agent if not provided
+        if ($agent === null) {
+            $agent = AIAgent::where('code', 'pm-copilot-agent')
+                ->orWhere('type', AgentType::ProjectManagement)
+                ->first();
+        }
+
+        Log::info('Invoking PM Copilot for work order', [
+            'work_order_id' => $workOrder->id,
+            'team_id' => $team->id,
+            'agent_id' => $agent?->id,
+        ]);
+
+        $input = [
+            'work_order_id' => $workOrder->id,
+            'team_id' => $team->id,
+            'pm_copilot_mode' => $workOrder->pm_copilot_mode?->value ?? 'full',
+        ];
+
+        return $this->execute(
+            PMCopilotWorkflow::class,
+            $input,
+            $team,
+            $agent,
+        );
     }
 
     /**
@@ -215,7 +259,7 @@ class AgentOrchestrator
 
         $customization = WorkflowCustomization::find($customizationId);
 
-        if ($customization === null || !$customization->enabled) {
+        if ($customization === null || ! $customization->enabled) {
             return false;
         }
 
@@ -240,7 +284,7 @@ class AgentOrchestrator
 
         $customization = WorkflowCustomization::find($customizationId);
 
-        if ($customization === null || !$customization->enabled) {
+        if ($customization === null || ! $customization->enabled) {
             return $default;
         }
 
