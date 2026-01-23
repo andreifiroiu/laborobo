@@ -211,7 +211,9 @@ export default function ProjectDetail({
                             <div className="flex items-center gap-3 mb-1">
                                 <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
                                 {project.isPrivate && (
-                                    <Lock className="h-4 w-4 text-muted-foreground" title="Private project" />
+                                    <span title="Private project">
+                                        <Lock className="h-4 w-4 text-muted-foreground" />
+                                    </span>
                                 )}
                                 <StatusBadge status={project.status} type="project" />
                             </div>

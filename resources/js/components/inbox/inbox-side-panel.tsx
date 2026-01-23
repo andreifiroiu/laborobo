@@ -106,9 +106,9 @@ export function InboxSidePanel({ item, onClose }: InboxSidePanelProps) {
                             )}
                         </div>
                         <SheetTitle>{item.title}</SheetTitle>
-                        <SheetDescription>
-                            <div className="flex flex-col gap-2 mt-2">
-                                <div className="flex items-center gap-2 text-sm">
+                        <SheetDescription asChild>
+                            <div className="flex flex-col gap-2 mt-2 text-muted-foreground text-sm">
+                                <div className="flex items-center gap-2">
                                     {item.sourceType === 'ai_agent' ? (
                                         <Bot className="w-4 h-4" />
                                     ) : (
@@ -117,14 +117,14 @@ export function InboxSidePanel({ item, onClose }: InboxSidePanelProps) {
                                     <span>From {item.sourceName}</span>
                                 </div>
                                 {(item.relatedWorkOrderTitle || item.relatedProjectName) && (
-                                    <div className="flex items-center gap-2 text-sm">
+                                    <div className="flex items-center gap-2">
                                         <LinkIcon className="w-4 h-4" />
                                         <span>
                                             {item.relatedWorkOrderTitle || item.relatedProjectName}
                                         </span>
                                     </div>
                                 )}
-                                <div className="flex items-center gap-2 text-sm">
+                                <div className="flex items-center gap-2">
                                     <Clock className="w-4 h-4" />
                                     <span>Waiting for {item.waitingHours} hours</span>
                                 </div>
