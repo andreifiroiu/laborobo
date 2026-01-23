@@ -35,7 +35,7 @@ class CommunicationThreadFactory extends Factory
     /**
      * Set the threadable entity.
      */
-    public function for(string $type, int $id): static
+    public function forThreadable(string $type, int $id): static
     {
         return $this->state(fn (array $attributes) => [
             'threadable_type' => $type,

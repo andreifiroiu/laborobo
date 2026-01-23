@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Events\MessageCreated;
+use App\Listeners\DispatcherMentionListener;
 use App\Models\Team;
 use App\Models\TimeEntry;
 use App\Observers\TeamObserver;
 use App\Observers\TimeEntryObserver;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
@@ -55,8 +58,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register model observers
         Team::observe(TeamObserver::class);
         TimeEntry::observe(TimeEntryObserver::class);
+
+        // Register event listeners
+        Event::listen(MessageCreated::class, DispatcherMentionListener::class);
 
         if (! config('opentelemetry.auto_instrumentation.enabled', true)) {
             return;

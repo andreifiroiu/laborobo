@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Work;
 
+use App\Enums\AgentType;
 use App\Enums\Priority;
 use App\Enums\TaskStatus;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessDispatcherRouting;
 use App\Models\AIAgent;
 use App\Models\StatusTransition;
 use App\Models\Task;
@@ -408,10 +410,18 @@ class TaskController extends Controller
             'acceptanceCriteria.*' => 'string',
             'originalTaskAction' => 'required|string|in:cancel,delete,keep',
             'convertChecklistToTasks' => 'boolean',
+            'dispatcherEnabled' => 'boolean',
         ]);
 
         $user = $request->user();
         $task->load('workOrder.project');
+
+        // Build metadata with dispatcher preference
+        $metadata = [];
+        $dispatcherEnabled = $validated['dispatcherEnabled'] ?? false;
+        if ($dispatcherEnabled) {
+            $metadata['dispatcher_enabled'] = true;
+        }
 
         // Create the new work order
         $workOrder = WorkOrder::create([
@@ -428,6 +438,7 @@ class TaskController extends Controller
             'estimated_hours' => $validated['estimatedHours'] ?? $task->estimated_hours,
             'acceptance_criteria' => $validated['acceptanceCriteria'] ?? [],
             'accountable_id' => $user->id,
+            'metadata' => $metadata,
         ]);
 
         // Optionally convert checklist items to tasks
@@ -455,7 +466,30 @@ class TaskController extends Controller
             'keep' => null, // Do nothing
         };
 
+        // Trigger Dispatcher Agent if enabled
+        if ($dispatcherEnabled) {
+            $this->triggerDispatcherAgent($workOrder);
+        }
+
         return redirect()->route('work-orders.show', $workOrder->id);
+    }
+
+    /**
+     * Trigger the Dispatcher Agent to analyze and provide routing recommendations.
+     */
+    private function triggerDispatcherAgent(WorkOrder $workOrder): void
+    {
+        // Find the Dispatcher Agent
+        $dispatcherAgent = AIAgent::query()
+            ->where('type', AgentType::WorkRouting)
+            ->first();
+
+        if ($dispatcherAgent === null) {
+            return;
+        }
+
+        // Dispatch job to process routing asynchronously
+        ProcessDispatcherRouting::dispatch($workOrder, $dispatcherAgent);
     }
 
     /**

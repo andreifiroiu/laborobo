@@ -86,6 +86,9 @@ class WorkOrderController extends Controller
         // Get rejection feedback if applicable
         $rejectionFeedback = $this->getRejectionFeedback($workOrder);
 
+        // Get routing recommendations from metadata if dispatcher was enabled
+        $routingRecommendations = $this->getRoutingRecommendations($workOrder);
+
         return Inertia::render('work/work-orders/[id]', [
             'workOrder' => [
                 'id' => (string) $workOrder->id,
@@ -190,6 +193,7 @@ class WorkOrderController extends Controller
                 'informed_ids' => $workOrder->informed_ids ?? [],
             ],
             'rejectionFeedback' => $rejectionFeedback,
+            'routingRecommendations' => $routingRecommendations,
         ]);
     }
 
@@ -250,6 +254,48 @@ class WorkOrderController extends Controller
         ];
     }
 
+    /**
+     * Get routing recommendations from work order metadata.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function getRoutingRecommendations(WorkOrder $workOrder): ?array
+    {
+        $metadata = $workOrder->metadata ?? [];
+
+        // Check if dispatcher was enabled and recommendations exist
+        if (! ($metadata['dispatcher_enabled'] ?? false)) {
+            return null;
+        }
+
+        $recommendations = $metadata['routing_recommendations'] ?? null;
+
+        if ($recommendations === null) {
+            // Dispatcher was enabled but recommendations not yet generated
+            return [
+                'status' => 'processing',
+                'candidates' => [],
+            ];
+        }
+
+        // Check for error state
+        if ($recommendations['error'] ?? false) {
+            return [
+                'status' => 'error',
+                'errorMessage' => $recommendations['error_message'] ?? 'Failed to generate recommendations',
+                'candidates' => [],
+            ];
+        }
+
+        return [
+            'status' => 'completed',
+            'generatedAt' => $recommendations['generated_at'] ?? null,
+            'candidates' => $recommendations['candidates'] ?? [],
+            'topCandidateId' => $recommendations['top_candidate_id'] ?? null,
+            'confidence' => $recommendations['confidence'] ?? 'low',
+        ];
+    }
+
     public function update(Request $request, WorkOrder $workOrder): RedirectResponse
     {
         $this->authorize('update', $workOrder);
@@ -298,6 +344,34 @@ class WorkOrderController extends Controller
         $workOrder->update([
             'status' => WorkOrderStatus::from($validated['status']),
         ]);
+
+        return back();
+    }
+
+    /**
+     * Accept a routing recommendation and assign the work order.
+     */
+    public function acceptRoutingRecommendation(Request $request, WorkOrder $workOrder): RedirectResponse
+    {
+        $this->authorize('update', $workOrder);
+
+        $validated = $request->validate([
+            'userId' => 'required|exists:users,id',
+        ]);
+
+        // Update the responsible assignment
+        $workOrder->update([
+            'responsible_id' => $validated['userId'],
+        ]);
+
+        // Clear the routing recommendation from metadata since it's been acted upon
+        $metadata = $workOrder->metadata ?? [];
+        if (isset($metadata['routing_recommendations'])) {
+            $metadata['routing_recommendations']['accepted'] = true;
+            $metadata['routing_recommendations']['accepted_user_id'] = $validated['userId'];
+            $metadata['routing_recommendations']['accepted_at'] = now()->toIso8601String();
+            $workOrder->update(['metadata' => $metadata]);
+        }
 
         return back();
     }

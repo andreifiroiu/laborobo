@@ -22,6 +22,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
+import { DispatcherToggle } from '@/components/agents';
 
 interface ChecklistItem {
     id: string;
@@ -75,6 +76,7 @@ export function PromoteToWorkOrderDialog({
     const [newCriterion, setNewCriterion] = useState('');
     const [convertChecklistToTasks, setConvertChecklistToTasks] = useState(false);
     const [originalTaskAction, setOriginalTaskAction] = useState<OriginalTaskAction>('cancel');
+    const [dispatcherEnabled, setDispatcherEnabled] = useState(false);
 
     const hasChecklist = taskChecklistItems.length > 0;
 
@@ -111,6 +113,7 @@ export function PromoteToWorkOrderDialog({
             acceptanceCriteria,
             convertChecklistToTasks,
             originalTaskAction,
+            dispatcherEnabled,
         }, {
             preserveScroll: true,
             onSuccess: () => {
@@ -138,6 +141,7 @@ export function PromoteToWorkOrderDialog({
                 setNewCriterion('');
                 setConvertChecklistToTasks(false);
                 setOriginalTaskAction('cancel');
+                setDispatcherEnabled(false);
                 setErrors({});
             }
             onOpenChange(newOpen);
@@ -301,6 +305,12 @@ export function PromoteToWorkOrderDialog({
                                 </Label>
                             </div>
                         )}
+
+                        {/* Dispatcher Agent Toggle */}
+                        <DispatcherToggle
+                            checked={dispatcherEnabled}
+                            onCheckedChange={setDispatcherEnabled}
+                        />
 
                         {/* Original Task Action */}
                         <div className="grid gap-3">

@@ -128,43 +128,43 @@ This feature implements a Dispatcher Agent that monitors message threads linked 
 **Dependencies:** Task Groups 1, 2
 **Complexity:** High
 
-- [ ] 3.0 Complete work extraction and routing logic layer
-  - [ ] 3.1 Write 4-6 focused tests for extraction and routing
+- [x] 3.0 Complete work extraction and routing logic layer
+  - [x] 3.1 Write 4-6 focused tests for extraction and routing
     - Test extraction of title, description, scope from messages
     - Test AIConfidence enum assignment to extracted fields
     - Test skill-based routing score calculation
     - Test capacity-based routing score calculation
     - Test combined routing decision with 50/50 weighting
-  - [ ] 3.2 Implement work requirement extraction service
+  - [x] 3.2 Implement work requirement extraction service
     - Location: `app/Services/WorkRequirementExtractor.php`
     - Extract: title, description, scope, success_criteria, estimated_hours, priority, deadline
     - Use LLM to parse unstructured message content
     - Apply AIConfidence::High, ::Medium, ::Low to each field
     - Return structured extraction result with confidence scores
-  - [ ] 3.3 Implement skill matching service
+  - [x] 3.3 Implement skill matching service
     - Location: `app/Services/SkillMatchingService.php`
     - Query UserSkill for team members with matching skills
     - Weight proficiency levels: 1=Basic (0.33), 2=Intermediate (0.66), 3=Advanced (1.0)
     - Support semantic similarity matching when exact match unavailable
     - Calculate skill match score (0-100) per team member
-  - [ ] 3.4 Implement capacity scoring service
+  - [x] 3.4 Implement capacity scoring service
     - Location: `app/Services/CapacityScoreService.php`
     - Use User.getAvailableCapacity() for remaining hours
     - Compare available_capacity against estimated_hours
     - Penalize score by 50% for users with less than 20% available capacity
     - Calculate capacity score (0-100) per team member
-  - [ ] 3.5 Implement routing decision service
+  - [x] 3.5 Implement routing decision service
     - Location: `app/Services/RoutingDecisionService.php`
     - Combine skill score (50%) and capacity score (50%)
     - Present multiple options when top candidates within 10% score difference
     - Always return at least top 3 candidates when available
     - Include AIConfidence level for each recommendation
     - Generate detailed reasoning JSON for each candidate
-  - [ ] 3.6 Implement playbook suggestion logic
+  - [x] 3.6 Implement playbook suggestion logic
     - Enhance WorkRequirementExtractor to suggest playbooks
     - Match extracted scope and tags against Playbook.tags
     - Return relevant SOPs sorted by relevance score
-  - [ ] 3.7 Ensure extraction and routing tests pass
+  - [x] 3.7 Ensure extraction and routing tests pass
     - Run ONLY the 4-6 tests written in 3.1
     - Verify extraction accuracy and confidence assignment
     - Verify routing algorithm produces correct rankings
@@ -185,40 +185,40 @@ This feature implements a Dispatcher Agent that monitors message threads linked 
 **Dependencies:** Task Groups 1-3
 **Complexity:** Medium
 
-- [ ] 4.0 Complete frontend integration layer
-  - [ ] 4.1 Write 3-5 focused tests for UI components
+- [x] 4.0 Complete frontend integration layer
+  - [x] 4.1 Write 3-5 focused tests for UI components
     - Test dispatcher toggle renders in work order creation form
     - Test toggle state persists to work order metadata
     - Test routing recommendations display component renders candidates
-  - [ ] 4.2 Add "Enable Dispatcher Agent" toggle to work order creation form
+  - [x] 4.2 Add "Enable Dispatcher Agent" toggle to work order creation form
     - Location: `resources/js/components/work/promote-to-work-order-dialog.tsx`
     - Add toggle switch component (off by default)
     - Label: "Enable Dispatcher Agent for routing recommendations"
     - Store toggle state in form data
     - Follow existing toggle patterns in codebase
-  - [ ] 4.3 Update work order creation controller to handle toggle
+  - [x] 4.3 Update work order creation controller to handle toggle
     - Store toggle preference in work_orders.metadata JSON field
     - Key: dispatcher_enabled (boolean)
     - Trigger DispatcherAgent after creation if toggle enabled
-  - [ ] 4.4 Create routing recommendations display component
+  - [x] 4.4 Create routing recommendations display component
     - Location: `resources/js/components/agents/routing-recommendations.tsx`
     - Display top 3+ candidates with scores
     - Show skill matches, proficiency levels, capacity analysis
     - Include confidence badge for each recommendation
     - Allow selection of recommended candidate
     - Expandable detailed reasoning section
-  - [ ] 4.5 Create agent response display component for message threads
-    - Location: `resources/js/components/messages/agent-message.tsx`
+  - [x] 4.5 Create agent response display component for message threads
+    - Location: `resources/js/components/agents/agent-message.tsx`
     - Display structured extraction results
     - Display routing recommendations inline
     - Link to draft work order if created
     - Follow existing message component patterns
-  - [ ] 4.6 Integrate routing recommendations into work order detail page
+  - [x] 4.6 Integrate routing recommendations into work order detail page
     - Location: `resources/js/pages/work/work-orders/[id].tsx`
     - Show recommendations panel when work order has dispatcher metadata
     - Allow accepting/modifying routing suggestion
     - Update responsible_id on acceptance
-  - [ ] 4.7 Ensure frontend tests pass
+  - [x] 4.7 Ensure frontend tests pass
     - Run ONLY the 3-5 tests written in 4.1
     - Verify toggle functionality
     - Verify recommendations display correctly
@@ -239,26 +239,26 @@ This feature implements a Dispatcher Agent that monitors message threads linked 
 **Dependencies:** Task Groups 1-4
 **Complexity:** Low-Medium
 
-- [ ] 5.0 Review existing tests and fill critical gaps only
-  - [ ] 5.1 Review tests from Task Groups 1-4
+- [x] 5.0 Review existing tests and fill critical gaps only
+  - [x] 5.1 Review tests from Task Groups 1-4
     - Review the 4-6 tests from Task 1.1 (agent infrastructure)
     - Review the 4-6 tests from Task 2.1 (message integration)
     - Review the 4-6 tests from Task 3.1 (extraction/routing)
     - Review the 3-5 tests from Task 4.1 (UI components)
     - Total existing tests: approximately 15-23 tests
-  - [ ] 5.2 Analyze test coverage gaps for Dispatcher Agent feature only
+  - [x] 5.2 Analyze test coverage gaps for Dispatcher Agent feature only
     - Identify critical end-to-end workflows lacking coverage
     - Focus ONLY on gaps related to this spec's requirements
     - Do NOT assess entire application test coverage
     - Prioritize integration flows: mention to draft work order
-  - [ ] 5.3 Write up to 8 additional strategic tests maximum
+  - [x] 5.3 Write up to 8 additional strategic tests maximum
     - End-to-end: @dispatcher mention creates draft work order
     - End-to-end: Toggle-enabled work order triggers routing
     - Integration: Full extraction + routing flow
     - Integration: Playbook suggestion accuracy
     - Do NOT write comprehensive coverage for all scenarios
     - Skip edge cases unless business-critical
-  - [ ] 5.4 Run feature-specific tests only
+  - [x] 5.4 Run feature-specific tests only
     - Run ONLY tests related to Dispatcher Agent feature
     - Expected total: approximately 23-31 tests maximum
     - Do NOT run the entire application test suite
@@ -322,7 +322,7 @@ Recommended implementation sequence:
 
 ### Frontend (React/TypeScript)
 - `resources/js/components/agents/routing-recommendations.tsx`
-- `resources/js/components/messages/agent-message.tsx`
+- `resources/js/components/agents/agent-message.tsx`
 
 ### Tests (Pest)
 - `tests/Feature/Agents/DispatcherAgentTest.php`

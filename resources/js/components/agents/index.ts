@@ -4,3 +4,8 @@ export { ActivityDetailModal } from './ActivityDetailModal';
 export { BudgetDisplay } from './BudgetDisplay';
 export { AgentTemplateSelector } from './AgentTemplateSelector';
 export { AgentApprovalItem } from './AgentApprovalItem';
+export { DispatcherToggle } from './dispatcher-toggle';
+export { RoutingRecommendations } from './routing-recommendations';
+export type { RoutingCandidate } from './routing-recommendations';
+export { AgentMessage } from './agent-message';
+export type { AgentMessageContent } from './agent-message';

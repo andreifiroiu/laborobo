@@ -58,6 +58,7 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::patch('/work-orders/{workOrder}/status', [WorkOrderController::class, 'updateStatus'])->name('work-orders.status');
     Route::post('/work-orders/{workOrder}/transition', [WorkOrderTransitionController::class, 'transition'])->name('work-orders.transition');
     Route::patch('/work-orders/{workOrder}/raci', [WorkOrderRaciController::class, 'update'])->name('work-orders.raci');
+    Route::post('/work-orders/{workOrder}/accept-routing', [WorkOrderController::class, 'acceptRoutingRecommendation'])->name('work-orders.accept-routing');
 
     // Tasks
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
