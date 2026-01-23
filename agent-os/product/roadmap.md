@@ -24,7 +24,7 @@
 
 ## Financial Tracking
 17. [x] Budget and Actuals — Budget fields in GlobalAISettings, AgentBudgetService for cost tracking. Missing: Budget estimation UI on work orders, actual cost tracking from time logs, budget vs actuals views, margin calculations. `M`
-18. [ ] Change Order Flow — Change request creation from existing work orders, approval workflow for scope changes, automatic budget adjustment, and change history tracking. `M`
+18. [x] Change Order Flow — Change request creation from existing work orders, approval workflow for scope changes, automatic budget adjustment, and change history tracking. `M`
 
 ## Search, Notifications, and Reporting
 19. [~] Search and Filtering — MentionSearchController for @mentions search implemented. Missing: Comprehensive search across work orders, tasks, deliverables, conversations; advanced filters; saved presets. `M`
