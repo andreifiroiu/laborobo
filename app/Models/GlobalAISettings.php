@@ -28,6 +28,7 @@ class GlobalAISettings extends Model
         'require_approval_scope_changes',
         'pm_copilot_auto_suggest',
         'pm_copilot_auto_approval_threshold',
+        'client_comms_auto_draft',
     ];
 
     protected $casts = [
@@ -46,6 +47,7 @@ class GlobalAISettings extends Model
         'require_approval_scope_changes' => 'boolean',
         'pm_copilot_auto_suggest' => 'boolean',
         'pm_copilot_auto_approval_threshold' => 'float',
+        'client_comms_auto_draft' => 'boolean',
     ];
 
     /**
@@ -56,6 +58,7 @@ class GlobalAISettings extends Model
     protected $attributes = [
         'pm_copilot_auto_suggest' => false,
         'pm_copilot_auto_approval_threshold' => 0.8,
+        'client_comms_auto_draft' => false,
     ];
 
     /**
@@ -134,5 +137,13 @@ class GlobalAISettings extends Model
     public function getRemainingBudgetAttribute(): float
     {
         return max(0, (float) $this->total_monthly_budget - (float) $this->current_month_spend);
+    }
+
+    /**
+     * Check if client comms auto-draft is enabled for this team.
+     */
+    public function isClientCommsAutoDraftEnabled(): bool
+    {
+        return (bool) $this->client_comms_auto_draft;
     }
 }

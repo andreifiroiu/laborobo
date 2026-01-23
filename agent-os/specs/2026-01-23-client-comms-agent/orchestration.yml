@@ -1,0 +1,33 @@
+task_groups:
+  - name: Database Schema and Model Updates
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: ClientCommsAgent Class and Tools
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: CommsContextBuilder Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Draft Creation and Approval Flow
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Manual, Event-Driven, and Scheduled Triggers
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Notification Classes and Email Templates
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: UI Components for Draft Trigger and Preview
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Test Review and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all

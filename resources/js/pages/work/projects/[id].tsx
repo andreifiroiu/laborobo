@@ -44,6 +44,7 @@ import { StatusBadge, ProgressBar, ProjectTeamSection, WorkOrderListSection } fr
 import { CommunicationsPanel } from '@/components/communications';
 import { BudgetFieldsGroup } from '@/components/budget';
 import { ProjectInsightsPanel } from '@/components/pm-copilot';
+import { DraftClientUpdateButton } from '@/components/client-comms';
 import { useProjectInsights } from '@/hooks/use-pm-copilot';
 import {
     Collapsible,
@@ -219,6 +220,10 @@ export default function ProjectDetail({
                             )}
                         </div>
                         <div className="flex items-center gap-2">
+                            <DraftClientUpdateButton
+                                entityType="project"
+                                entityId={project.id}
+                            />
                             <Button
                                 variant="outline"
                                 size="sm"

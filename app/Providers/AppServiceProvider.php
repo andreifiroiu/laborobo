@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Events\DeliverableStatusChanged;
 use App\Events\MessageCreated;
 use App\Events\WorkOrderCreated;
+use App\Events\WorkOrderStatusChanged;
+use App\Listeners\DeliverableStatusChangedListener;
 use App\Listeners\DispatcherMentionListener;
 use App\Listeners\TriggerPMCopilotOnWorkOrderCreated;
+use App\Listeners\WorkOrderStatusChangedListener;
 use App\Models\Team;
 use App\Models\TimeEntry;
 use App\Observers\TeamObserver;
@@ -67,6 +71,8 @@ class AppServiceProvider extends ServiceProvider
         // Register event listeners
         Event::listen(MessageCreated::class, DispatcherMentionListener::class);
         Event::listen(WorkOrderCreated::class, TriggerPMCopilotOnWorkOrderCreated::class);
+        Event::listen(WorkOrderStatusChanged::class, WorkOrderStatusChangedListener::class);
+        Event::listen(DeliverableStatusChanged::class, DeliverableStatusChangedListener::class);
 
         if (! config('opentelemetry.auto_instrumentation.enabled', true)) {
             return;

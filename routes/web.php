@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClientCommsController;
 use App\Http\Controllers\CommunicationsController;
 use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\DocumentsController;
@@ -56,6 +57,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/profitability/by-work-order', [ProfitabilityReportsController::class, 'byWorkOrder'])->name('reports.profitability.by-work-order');
     Route::get('reports/profitability/by-team-member', [ProfitabilityReportsController::class, 'byTeamMember'])->name('reports.profitability.by-team-member');
     Route::get('reports/profitability/by-client', [ProfitabilityReportsController::class, 'byClient'])->name('reports.profitability.by-client');
+
+    // Client Communications
+    Route::post('client-communications/draft', [ClientCommsController::class, 'draftUpdate'])
+        ->name('client-communications.draft');
+    Route::get('client-communications/preview/{message}', [ClientCommsController::class, 'preview'])
+        ->name('client-communications.preview');
 
     Route::get('settings', function () {
         return Inertia::render('settings/index');

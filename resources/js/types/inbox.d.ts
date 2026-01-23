@@ -10,6 +10,9 @@ export interface InboxItem {
     title: string;
     contentPreview: string;
     fullContent: string;
+    description?: string;
+    contentFull?: string;
+    timestamp: string;
     sourceId: string;
     sourceName: string;
     sourceType: 'human' | 'ai_agent';
@@ -26,6 +29,12 @@ export interface InboxItem {
     workflowStateId?: number;
     agentCode?: string;
     pauseReason?: string;
+    // Additional fields for agent draft items (client communications)
+    communicationType?: string | null;
+    recipientName?: string | null;
+    recipientEmail?: string | null;
+    draftStatus?: 'draft' | 'approved' | 'rejected' | 'sent' | null;
+    targetLanguage?: string | null;
 }
 
 // =============================================================================

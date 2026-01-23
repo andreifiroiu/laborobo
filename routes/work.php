@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/projects/{project}/files', [ProjectController::class, 'uploadFile'])->name('projects.files.upload');
     Route::delete('/projects/{project}/files/{document}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
     Route::patch('/projects/{project}/raci', [ProjectRaciController::class, 'update'])->name('projects.raci');
+    Route::get('/projects/{project}/insights', [PMCopilotController::class, 'getProjectInsights'])->name('projects.insights');
 
     // Project-specific rate overrides
     Route::get('/projects/{project}/rates', [ProjectUserRateController::class, 'index'])->name('projects.rates.index');

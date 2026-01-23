@@ -95,6 +95,7 @@ import {
     PlanAlternativesPanel,
     PMCopilotSettingsToggle,
 } from '@/components/pm-copilot';
+import { DraftClientUpdateButton } from '@/components/client-comms';
 import {
     useTriggerPMCopilot,
     usePMCopilotSuggestions,
@@ -1240,6 +1241,11 @@ export default function WorkOrderDetail({
                         )}
 
                         <div className="flex items-center gap-2">
+                            {/* Client Comms Button */}
+                            <DraftClientUpdateButton
+                                entityType="work_order"
+                                entityId={workOrder.id}
+                            />
                             {/* Communications Button */}
                             <Button
                                 variant="outline"

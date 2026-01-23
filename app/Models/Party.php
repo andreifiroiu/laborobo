@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\PartyType;
@@ -8,10 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 class Party extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'team_id',
@@ -28,6 +31,7 @@ class Party extends Model
         'status',
         'primary_contact_id',
         'last_activity',
+        'preferred_language',
     ];
 
     protected $casts = [
@@ -64,5 +68,42 @@ class Party extends Model
     public function scopeOfType($query, PartyType $type)
     {
         return $query->where('type', $type->value);
+    }
+
+    /**
+     * Get the party's preferred language, defaulting to English.
+     */
+    public function getPreferredLanguageAttribute(?string $value): string
+    {
+        return $value ?? 'en';
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     *
+     * Returns the contact_email if available, falls back to email field,
+     * or the primary Contact's email. Returns null if no email is available,
+     * which will skip the mail channel for this notification.
+     */
+    public function routeNotificationForMail(): ?string
+    {
+        // First priority: contact_email field
+        if ($this->contact_email !== null && $this->contact_email !== '') {
+            return $this->contact_email;
+        }
+
+        // Second priority: email field
+        if ($this->email !== null && $this->email !== '') {
+            return $this->email;
+        }
+
+        // Third priority: primary contact's email
+        $primaryContact = $this->primaryContact;
+        if ($primaryContact !== null && $primaryContact->email !== null) {
+            return $primaryContact->email;
+        }
+
+        // No email available - notification will skip mail channel
+        return null;
     }
 }

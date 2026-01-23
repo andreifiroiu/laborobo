@@ -11,6 +11,7 @@ enum AgentType: string
     case ContentCreation = 'content-creation';
     case QualityAssurance = 'quality-assurance';
     case DataAnalysis = 'data-analysis';
+    case ClientCommunication = 'client-communication';
 
     /**
      * Get the human-readable label for the agent type.
@@ -23,6 +24,7 @@ enum AgentType: string
             self::ContentCreation => 'Content Creation',
             self::QualityAssurance => 'Quality Assurance',
             self::DataAnalysis => 'Data Analysis',
+            self::ClientCommunication => 'Client Communication',
         };
     }
 }
