@@ -119,6 +119,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's hourly rates (team default rates).
+     */
+    public function rates(): HasMany
+    {
+        return $this->hasMany(UserRate::class);
+    }
+
+    /**
+     * Get the user's project-specific rate overrides.
+     */
+    public function projectRates(): HasMany
+    {
+        return $this->hasMany(ProjectUserRate::class);
+    }
+
+    /**
      * Get the user's available capacity in hours per week.
      */
     public function getAvailableCapacity(): int

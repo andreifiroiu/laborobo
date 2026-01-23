@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Team;
+use App\Models\TimeEntry;
 use App\Observers\TeamObserver;
+use App\Observers\TimeEntryObserver;
 use Illuminate\Support\ServiceProvider;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Logs\LoggerProviderInterface;
@@ -54,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Team::observe(TeamObserver::class);
+        TimeEntry::observe(TimeEntryObserver::class);
 
         if (! config('opentelemetry.auto_instrumentation.enabled', true)) {
             return;

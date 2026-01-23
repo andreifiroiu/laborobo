@@ -68,6 +68,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import InputError from '@/components/input-error';
+import { BudgetFieldsGroup } from '@/components/budget';
+import type { BudgetType } from '@/types/work';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/work';
 import { TaskKanbanBoard } from '@/components/work/task-kanban';
@@ -138,6 +140,10 @@ interface WorkOrderWithRaci {
     reviewerName?: string | null;
     consultedIds?: number[] | null;
     informedIds?: number[] | null;
+    budgetType?: BudgetType | null;
+    budgetCost?: number | null;
+    budgetHours?: number | null;
+    averageBillingRate?: number;
 }
 
 /**
@@ -478,6 +484,9 @@ export default function WorkOrderDetail({
         priority: workOrder.priority as 'low' | 'medium' | 'high' | 'urgent',
         due_date: workOrder.dueDate || '',
         estimated_hours: workOrder.estimatedHours.toString(),
+        budget_type: (workOrder.budgetType ?? undefined) as BudgetType | undefined,
+        budget_cost: workOrder.budgetCost?.toString() || '',
+        budget_hours: workOrder.budgetHours?.toString() || '',
     });
 
     const taskForm = useForm({
@@ -1523,7 +1532,7 @@ export default function WorkOrderDetail({
 
             {/* Edit Dialog */}
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                <DialogContent>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <form onSubmit={handleUpdateWorkOrder}>
                         <DialogHeader>
                             <DialogTitle>Edit Work Order</DialogTitle>
@@ -1579,6 +1588,22 @@ export default function WorkOrderDetail({
                                     onChange={(e) => editForm.setData('description', e.target.value)}
                                 />
                             </div>
+
+                            {/* Budget Fields Group */}
+                            <BudgetFieldsGroup
+                                budgetType={editForm.data.budget_type}
+                                budgetCost={editForm.data.budget_cost}
+                                budgetHours={editForm.data.budget_hours}
+                                onBudgetTypeChange={(value) => editForm.setData('budget_type', value)}
+                                onBudgetCostChange={(value) => editForm.setData('budget_cost', value)}
+                                onBudgetHoursChange={(value) => editForm.setData('budget_hours', value)}
+                                averageBillingRate={workOrder.averageBillingRate ?? 0}
+                                errors={{
+                                    budget_type: editForm.errors.budget_type,
+                                    budget_cost: editForm.errors.budget_cost,
+                                    budget_hours: editForm.errors.budget_hours,
+                                }}
+                            />
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>

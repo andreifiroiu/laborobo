@@ -2,6 +2,8 @@
 // Work Section Types
 // =============================================================================
 
+export type BudgetType = 'fixed_price' | 'time_and_materials' | 'monthly_subscription';
+
 export interface Party {
     id: string;
     name: string;
@@ -31,13 +33,18 @@ export interface Project {
     startDate: string;
     targetEndDate: string | null;
     budgetHours: number | null;
+    budgetType: BudgetType | null;
+    budgetCost: number | null;
     actualHours: number;
+    actualCost: number | null;
+    actualRevenue: number | null;
     progress: number;
     tags: string[];
     isPrivate?: boolean;
     workOrderLists: WorkOrderList[];
     ungroupedWorkOrders: WorkOrderInList[];
     userRaciRoles?: RaciRole[];
+    averageBillingRate?: number;
 }
 
 export interface WorkOrder {
@@ -53,6 +60,11 @@ export interface WorkOrder {
     dueDate: string | null;
     estimatedHours: number;
     actualHours: number;
+    budgetType: BudgetType | null;
+    budgetCost: number | null;
+    budgetHours: number | null;
+    actualCost: number | null;
+    actualRevenue: number | null;
     acceptanceCriteria: string[];
     sopAttached: boolean;
     sopName: string | null;
@@ -62,6 +74,7 @@ export interface WorkOrder {
     workOrderListId?: string | null;
     positionInList?: number;
     userRaciRoles?: RaciRole[];
+    averageBillingRate?: number;
 }
 
 export interface WorkOrderInList {

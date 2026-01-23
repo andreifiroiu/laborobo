@@ -1,0 +1,41 @@
+task_groups:
+  - name: User Rates Data Models
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Budget and Cost Fields on Entities
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Cost Calculation Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Cost Aggregation Methods
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Rate Management API
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Profitability Reports API
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Rate Configuration UI
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Budget Entry UI
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Profitability Reports UI
+    claude_code_subagent: frontend-developer
+    standards:
+      - all
+  - name: Test Review and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all

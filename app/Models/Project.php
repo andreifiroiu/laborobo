@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\BudgetType;
 use App\Enums\ProjectStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,7 +34,11 @@ class Project extends Model
         'start_date',
         'target_end_date',
         'budget_hours',
+        'budget_type',
+        'budget_cost',
         'actual_hours',
+        'actual_cost',
+        'actual_revenue',
         'progress',
         'tags',
         'is_private',
@@ -41,10 +46,14 @@ class Project extends Model
 
     protected $casts = [
         'status' => ProjectStatus::class,
+        'budget_type' => BudgetType::class,
         'start_date' => 'date',
         'target_end_date' => 'date',
         'budget_hours' => 'decimal:2',
+        'budget_cost' => 'decimal:2',
         'actual_hours' => 'decimal:2',
+        'actual_cost' => 'decimal:2',
+        'actual_revenue' => 'decimal:2',
         'tags' => 'array',
         'consulted_ids' => 'array',
         'informed_ids' => 'array',
@@ -242,6 +251,7 @@ class Project extends Model
         if ($workOrders->isEmpty()) {
             $this->progress = 0;
             $this->save();
+
             return;
         }
 
@@ -261,6 +271,21 @@ class Project extends Model
     public function recalculateActualHours(): void
     {
         $this->actual_hours = $this->tasks()->sum('tasks.actual_hours');
+        $this->save();
+
+        // Also recalculate costs
+        $this->recalculateActualCost();
+    }
+
+    /**
+     * Recalculate actual cost and revenue from tasks via work orders.
+     *
+     * Sums actual_cost and actual_revenue from all tasks through work orders.
+     */
+    public function recalculateActualCost(): void
+    {
+        $this->actual_cost = $this->tasks()->sum('tasks.actual_cost');
+        $this->actual_revenue = $this->tasks()->sum('tasks.actual_revenue');
         $this->save();
     }
 }

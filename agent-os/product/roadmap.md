@@ -20,10 +20,10 @@
 
 ## Communications and Context (Complete)
 15. [x] Communications Log — Threaded conversation system tied to work items (projects, work orders, tasks), real-time message updates, @mentions, reactions, and context preservation. CommunicationThread, Message, MessageMention, MessageReaction, MessageAttachment models with full CRUD, polymorphic endpoints for projects/work-orders/tasks. `L`
-16. [~] Document Management — Document model and FileUploadService implemented. File uploads on projects and deliverables working. Missing: document preview, commenting, folder organization. `M`
+16. [x] Document Management — Document model and FileUploadService implemented. File uploads on projects and deliverables working. Full document management UI with folder organization, document preview with annotations/comments, share links with password protection and expiration, access tracking, and team-wide Documents page. `M`
 
 ## Financial Tracking
-17. [~] Budget and Actuals — Budget fields in GlobalAISettings, AgentBudgetService for cost tracking. Missing: Budget estimation UI on work orders, actual cost tracking from time logs, budget vs actuals views, margin calculations. `M`
+17. [x] Budget and Actuals — Budget fields in GlobalAISettings, AgentBudgetService for cost tracking. Missing: Budget estimation UI on work orders, actual cost tracking from time logs, budget vs actuals views, margin calculations. `M`
 18. [ ] Change Order Flow — Change request creation from existing work orders, approval workflow for scope changes, automatic budget adjustment, and change history tracking. `M`
 
 ## Search, Notifications, and Reporting
@@ -64,9 +64,9 @@
 > |---------|----------|---------|---------|-------|
 > | Foundation | 8 | 0 | 0 | 8 |
 > | Core Operations | 6 | 0 | 0 | 6 |
-> | Communications | 1 | 1 | 0 | 2 |
+> | Communications | 2 | 0 | 0 | 2 |
 > | Financial Tracking | 0 | 1 | 1 | 2 |
 > | Search/Notifications/Reporting | 1 | 2 | 0 | 3 |
 > | AI Agent Platform | 1 | 1 | 8 | 10 |
 > | Optional Modules | 0 | 0 | 4 | 4 |
-> | **Total** | **17** | **5** | **13** | **35** |
+> | **Total** | **18** | **4** | **13** | **35** |

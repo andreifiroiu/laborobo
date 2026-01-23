@@ -8,17 +8,19 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/react';
-import { Settings, Users, Bot, Plug, CreditCard, Bell, FileText } from 'lucide-react';
+import { Settings, Users, Bot, Plug, CreditCard, Bell, FileText, DollarSign } from 'lucide-react';
 
 interface SettingsNavItem {
   title: string;
   value: string;
+  href?: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const settingsNavItems: SettingsNavItem[] = [
   { title: 'Workspace', value: 'workspace', icon: Settings },
   { title: 'Team & Permissions', value: 'team', icon: Users },
+  { title: 'Rates', value: 'rates', href: '/account/settings/rates', icon: DollarSign },
   { title: 'AI Agents', value: 'ai-agents', icon: Bot },
   { title: 'Integrations', value: 'integrations', icon: Plug },
   { title: 'Billing', value: 'billing', icon: CreditCard },
@@ -29,6 +31,20 @@ const settingsNavItems: SettingsNavItem[] = [
 export function SettingsSidebar() {
   const searchParams = new URLSearchParams(window.location.search);
   const activeTab = searchParams.get('tab') || 'workspace';
+  const currentPath = window.location.pathname;
+
+  const isItemActive = (item: SettingsNavItem): boolean => {
+    // For items with custom href, check if current path matches
+    if (item.href) {
+      return currentPath === item.href;
+    }
+    // For tab-based items, check the query param
+    return activeTab === item.value;
+  };
+
+  const getItemHref = (item: SettingsNavItem): string => {
+    return item.href ?? `/settings?tab=${item.value}`;
+  };
 
   return (
     <Sidebar collapsible="none" className="border-r border-border">
@@ -40,10 +56,10 @@ export function SettingsSidebar() {
               <SidebarMenuItem key={item.value}>
                 <SidebarMenuButton
                   asChild
-                  isActive={activeTab === item.value}
+                  isActive={isItemActive(item)}
                 >
                   <Link
-                    href={`/settings?tab=${item.value}`}
+                    href={getItemHref(item)}
                     preserveScroll
                   >
                     <item.icon />

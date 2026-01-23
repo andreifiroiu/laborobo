@@ -32,6 +32,8 @@ class Task extends Model
         'due_date',
         'estimated_hours',
         'actual_hours',
+        'actual_cost',
+        'actual_revenue',
         'checklist_items',
         'dependencies',
         'is_blocked',
@@ -45,6 +47,8 @@ class Task extends Model
         'due_date' => 'date',
         'estimated_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
+        'actual_cost' => 'decimal:2',
+        'actual_revenue' => 'decimal:2',
         'checklist_items' => 'array',
         'dependencies' => 'array',
         'is_blocked' => 'boolean',
@@ -197,7 +201,23 @@ class Task extends Model
         $this->actual_hours = $this->timeEntries()->sum('hours');
         $this->save();
 
-        // Also update parent work order
-        $this->workOrder->recalculateActualHours();
+        // Also recalculate costs
+        $this->recalculateActualCost();
+    }
+
+    /**
+     * Recalculate actual cost and revenue from time entries.
+     *
+     * Sums calculated_cost and calculated_revenue from all time entries
+     * and bubbles up to parent work order.
+     */
+    public function recalculateActualCost(): void
+    {
+        $this->actual_cost = $this->timeEntries()->sum('calculated_cost');
+        $this->actual_revenue = $this->timeEntries()->sum('calculated_revenue');
+        $this->save();
+
+        // Bubble up to parent work order
+        $this->workOrder->recalculateActualCost();
     }
 }

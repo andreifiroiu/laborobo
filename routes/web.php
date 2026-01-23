@@ -5,6 +5,7 @@ use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\PlaybooksController;
+use App\Http\Controllers\Reports\ProfitabilityReportsController;
 use App\Http\Controllers\Reports\TimeReportsController;
 use App\Http\Controllers\TodayController;
 use Illuminate\Support\Facades\Route;
@@ -49,14 +50,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/time/by-project', [TimeReportsController::class, 'byProject'])->name('reports.time.by-project');
     Route::get('reports/time/actual-vs-estimated', [TimeReportsController::class, 'actualVsEstimated'])->name('reports.time.actual-vs-estimated');
 
+    // Profitability Reports
+    Route::get('reports/profitability', [ProfitabilityReportsController::class, 'index'])->name('reports.profitability.index');
+    Route::get('reports/profitability/by-project', [ProfitabilityReportsController::class, 'byProject'])->name('reports.profitability.by-project');
+    Route::get('reports/profitability/by-work-order', [ProfitabilityReportsController::class, 'byWorkOrder'])->name('reports.profitability.by-work-order');
+    Route::get('reports/profitability/by-team-member', [ProfitabilityReportsController::class, 'byTeamMember'])->name('reports.profitability.by-team-member');
+    Route::get('reports/profitability/by-client', [ProfitabilityReportsController::class, 'byClient'])->name('reports.profitability.by-client');
+
     Route::get('settings', function () {
         return Inertia::render('settings/index');
     })->name('settings.index');
 
-    // Keep dashboard for now (can remove later)
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    // Redirect dashboard to today
+    Route::redirect('dashboard', '/today')->name('dashboard');
 });
 
 require __DIR__.'/settings.php';

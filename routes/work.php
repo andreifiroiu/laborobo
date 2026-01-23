@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\MentionSearchController;
 use App\Http\Controllers\ProjectRaciController;
+use App\Http\Controllers\ProjectUserRateController;
 use App\Http\Controllers\Work\CommunicationController;
 use App\Http\Controllers\Work\DeliverableController;
 use App\Http\Controllers\Work\DeliverableVersionController;
@@ -33,6 +34,12 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/projects/{project}/files', [ProjectController::class, 'uploadFile'])->name('projects.files.upload');
     Route::delete('/projects/{project}/files/{document}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
     Route::patch('/projects/{project}/raci', [ProjectRaciController::class, 'update'])->name('projects.raci');
+
+    // Project-specific rate overrides
+    Route::get('/projects/{project}/rates', [ProjectUserRateController::class, 'index'])->name('projects.rates.index');
+    Route::post('/projects/{project}/rates', [ProjectUserRateController::class, 'store'])->name('projects.rates.store');
+    Route::patch('/projects/{project}/rates/{rate}', [ProjectUserRateController::class, 'update'])->name('projects.rates.update');
+    Route::delete('/projects/{project}/rates/{rate}', [ProjectUserRateController::class, 'destroy'])->name('projects.rates.destroy');
 
     // Work Order Lists
     Route::post('/work-order-lists', [WorkOrderListController::class, 'store'])->name('work-order-lists.store');

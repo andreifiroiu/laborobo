@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\BudgetType;
 use App\Enums\Priority;
 use App\Enums\WorkOrderStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,7 +39,11 @@ class WorkOrder extends Model
         'priority',
         'due_date',
         'estimated_hours',
+        'budget_type',
+        'budget_cost',
         'actual_hours',
+        'actual_cost',
+        'actual_revenue',
         'acceptance_criteria',
         'sop_attached',
         'sop_name',
@@ -47,9 +52,13 @@ class WorkOrder extends Model
     protected $casts = [
         'status' => WorkOrderStatus::class,
         'priority' => Priority::class,
+        'budget_type' => BudgetType::class,
         'due_date' => 'date',
         'estimated_hours' => 'decimal:2',
+        'budget_cost' => 'decimal:2',
         'actual_hours' => 'decimal:2',
+        'actual_cost' => 'decimal:2',
+        'actual_revenue' => 'decimal:2',
         'acceptance_criteria' => 'array',
         'sop_attached' => 'boolean',
         'consulted_ids' => 'array',
@@ -254,7 +263,23 @@ class WorkOrder extends Model
         $this->actual_hours = $this->tasks()->sum('actual_hours');
         $this->save();
 
-        // Also update parent project
-        $this->project->recalculateActualHours();
+        // Also recalculate costs
+        $this->recalculateActualCost();
+    }
+
+    /**
+     * Recalculate actual cost and revenue from tasks.
+     *
+     * Sums actual_cost and actual_revenue from all tasks
+     * and bubbles up to parent project.
+     */
+    public function recalculateActualCost(): void
+    {
+        $this->actual_cost = $this->tasks()->sum('actual_cost');
+        $this->actual_revenue = $this->tasks()->sum('actual_revenue');
+        $this->save();
+
+        // Bubble up to parent project
+        $this->project->recalculateActualCost();
     }
 }

@@ -14,6 +14,7 @@ use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TeamController;
 use App\Http\Controllers\Settings\TeamMemberController;
 use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
+use App\Http\Controllers\Settings\UserRateController;
 use App\Http\Controllers\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -50,6 +51,10 @@ Route::middleware('auth')->group(function () {
         Route::patch('/teams/{team}', [TeamController::class, 'update'])->name('account.teams.update');
         Route::delete('/teams/{team}', [TeamController::class, 'destroy'])->name('account.teams.destroy');
         Route::post('/teams/{team}/switch', [TeamController::class, 'switch'])->name('account.teams.switch');
+
+        // Account Settings - Rates (rates are immutable for history tracking, only create is allowed)
+        Route::get('/settings/rates', [UserRateController::class, 'index'])->name('settings.rates.index');
+        Route::post('/settings/rates', [UserRateController::class, 'store'])->name('settings.rates.store');
     });
 
     // ========================================================================

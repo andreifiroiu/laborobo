@@ -11,6 +11,7 @@ import {
     Trash2,
     Lock,
     Unlock,
+    DollarSign,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -41,14 +42,28 @@ import {
 import InputError from '@/components/input-error';
 import { StatusBadge, ProgressBar, ProjectTeamSection, WorkOrderListSection } from '@/components/work';
 import { CommunicationsPanel } from '@/components/communications';
+import { BudgetFieldsGroup } from '@/components/budget';
 import { ProjectDocumentsSection } from './components/project-documents-section';
 import { useState } from 'react';
-import type { ProjectDetailProps } from '@/types/work';
+import type { ProjectDetailProps, BudgetType } from '@/types/work';
 import type { BreadcrumbItem } from '@/types';
 import type { FolderNode } from '@/components/documents/folder-tree';
 
 interface ProjectDetailPageProps extends ProjectDetailProps {
     folders: FolderNode[];
+}
+
+/**
+ * Formats a number as USD currency.
+ */
+function formatCurrency(value: number | null | undefined): string {
+    if (value === null || value === undefined) return '-';
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(value);
 }
 
 export default function ProjectDetail({
@@ -80,6 +95,8 @@ export default function ProjectDetail({
         status: project.status,
         target_end_date: project.targetEndDate || '',
         budget_hours: project.budgetHours?.toString() || '',
+        budget_type: project.budgetType as BudgetType | undefined,
+        budget_cost: project.budgetCost?.toString() || '',
     });
 
     const workOrderForm = useForm({
@@ -138,6 +155,26 @@ export default function ProjectDetail({
     const completedWorkOrders = workOrders.filter(
         (wo) => wo.status === 'delivered' || wo.status === 'approved'
     ).length;
+
+    // Determine budget display value based on budget type
+    const getBudgetDisplayValue = () => {
+        if (!project.budgetType) return null;
+
+        if (project.budgetType === 'fixed_price' || project.budgetType === 'monthly_subscription') {
+            return project.budgetCost ? formatCurrency(project.budgetCost) : 'Not set';
+        }
+
+        if (project.budgetType === 'time_and_materials') {
+            const hours = project.budgetHours ?? 0;
+            const rate = project.averageBillingRate ?? 0;
+            const estimated = hours * rate;
+            return estimated > 0 ? `~${formatCurrency(estimated)}` : 'Not set';
+        }
+
+        return null;
+    };
+
+    const budgetDisplayValue = getBudgetDisplayValue();
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -217,7 +254,7 @@ export default function ProjectDetail({
                     </div>
 
                     {/* Project Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                         <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                             <User className="h-5 w-5 text-muted-foreground" />
                             <div>
@@ -242,6 +279,15 @@ export default function ProjectDetail({
                                 </div>
                             </div>
                         </div>
+                        {budgetDisplayValue && (
+                            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                                <DollarSign className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <div className="text-xs text-muted-foreground">Budget</div>
+                                    <div className="font-medium">{budgetDisplayValue}</div>
+                                </div>
+                            </div>
+                        )}
                         <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                             <Calendar className="h-5 w-5 text-muted-foreground" />
                             <div>
@@ -301,7 +347,7 @@ export default function ProjectDetail({
 
             {/* Edit Dialog */}
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                <DialogContent>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <form onSubmit={handleUpdateProject}>
                         <DialogHeader>
                             <DialogTitle>Edit Project</DialogTitle>
@@ -359,28 +405,32 @@ export default function ProjectDetail({
                                     onChange={(e) => editForm.setData('description', e.target.value)}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label>Target End Date</Label>
-                                    <Input
-                                        type="date"
-                                        value={editForm.data.target_end_date}
-                                        onChange={(e) =>
-                                            editForm.setData('target_end_date', e.target.value)
-                                        }
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Budget Hours</Label>
-                                    <Input
-                                        type="number"
-                                        value={editForm.data.budget_hours}
-                                        onChange={(e) =>
-                                            editForm.setData('budget_hours', e.target.value)
-                                        }
-                                    />
-                                </div>
+                            <div className="grid gap-2">
+                                <Label>Target End Date</Label>
+                                <Input
+                                    type="date"
+                                    value={editForm.data.target_end_date}
+                                    onChange={(e) =>
+                                        editForm.setData('target_end_date', e.target.value)
+                                    }
+                                />
                             </div>
+
+                            {/* Budget Fields Group */}
+                            <BudgetFieldsGroup
+                                budgetType={editForm.data.budget_type}
+                                budgetCost={editForm.data.budget_cost}
+                                budgetHours={editForm.data.budget_hours}
+                                onBudgetTypeChange={(value) => editForm.setData('budget_type', value)}
+                                onBudgetCostChange={(value) => editForm.setData('budget_cost', value)}
+                                onBudgetHoursChange={(value) => editForm.setData('budget_hours', value)}
+                                averageBillingRate={project.averageBillingRate ?? 0}
+                                errors={{
+                                    budget_type: editForm.errors.budget_type,
+                                    budget_cost: editForm.errors.budget_cost,
+                                    budget_hours: editForm.errors.budget_hours,
+                                }}
+                            />
                         </div>
                         <DialogFooter>
                             <Button

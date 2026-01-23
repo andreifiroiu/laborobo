@@ -24,6 +24,10 @@ class TimeEntry extends Model
         'mode',
         'note',
         'is_billable',
+        'cost_rate',
+        'billing_rate',
+        'calculated_cost',
+        'calculated_revenue',
         'started_at',
         'stopped_at',
     ];
@@ -33,6 +37,10 @@ class TimeEntry extends Model
         'hours' => 'decimal:2',
         'mode' => TimeTrackingMode::class,
         'is_billable' => 'boolean',
+        'cost_rate' => 'decimal:2',
+        'billing_rate' => 'decimal:2',
+        'calculated_cost' => 'decimal:2',
+        'calculated_revenue' => 'decimal:2',
         'started_at' => 'datetime',
         'stopped_at' => 'datetime',
     ];
