@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\AgentMemoryScope;
+use App\Models\AgentChainExecution;
 use App\Models\AIAgent;
 use App\Models\Party;
 use App\Models\Project;
@@ -12,7 +13,9 @@ use App\Models\Task;
 use App\Models\Team;
 use App\Models\WorkOrder;
 use App\ValueObjects\AgentContext;
+use App\ValueObjects\ChainContext;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 /**
  * Service for assembling relevant context for agent runs.
@@ -20,6 +23,8 @@ use Illuminate\Database\Eloquent\Model;
  * Builds context at three levels (project, client, org) based on the
  * entity being operated on. Implements token limit enforcement with
  * intelligent truncation prioritizing recent and relevant data.
+ *
+ * Also supports chain context aggregation for multi-agent workflows.
  */
 class ContextBuilder
 {
@@ -35,6 +40,7 @@ class ContextBuilder
 
     public function __construct(
         private readonly AgentMemoryService $memoryService,
+        private readonly ?OutputTransformerService $transformerService = null,
     ) {}
 
     /**
@@ -90,6 +96,190 @@ class ContextBuilder
 
         // Truncate if necessary to fit within token limit
         return $this->truncateContext($context, $maxTokens);
+    }
+
+    /**
+     * Build context for an agent within a chain execution.
+     *
+     * Aggregates outputs from prior chain steps and merges them with
+     * entity-based context. Applies context filtering rules from the
+     * current step configuration.
+     *
+     * @param  ChainContext  $chainContext  The accumulated chain context
+     * @param  AgentChainExecution  $execution  The chain execution record
+     * @param  AIAgent  $agent  The agent that will use this context
+     * @param  int  $maxTokens  Maximum tokens for the context
+     * @return AgentContext The assembled context for the agent
+     */
+    public function buildFromChainContext(
+        ChainContext $chainContext,
+        AgentChainExecution $execution,
+        AIAgent $agent,
+        int $maxTokens = self::DEFAULT_MAX_TOKENS,
+    ): AgentContext {
+        // Get the current step configuration
+        $currentStepIndex = $execution->current_step_index;
+        $chain = $execution->chain;
+        $steps = $chain->getSteps();
+        $currentStepConfig = $steps[$currentStepIndex] ?? [];
+
+        // Build base context from the triggerable entity if available
+        $projectContext = [];
+        $clientContext = [];
+        $orgContext = [];
+        $metadata = [
+            'chain_execution_id' => $execution->id,
+            'chain_id' => $chain->id,
+            'chain_name' => $chain->name,
+            'current_step_index' => $currentStepIndex,
+            'agent_id' => $agent->id,
+            'built_at' => now()->toIso8601String(),
+        ];
+
+        // If there's a triggerable entity, build entity-based context
+        if ($execution->triggerable !== null) {
+            $contextHierarchy = $this->resolveContextHierarchy($execution->triggerable);
+
+            if ($contextHierarchy['project'] !== null) {
+                $projectContext = $this->buildProjectContext($contextHierarchy['project']);
+            }
+
+            if ($contextHierarchy['party'] !== null) {
+                $clientContext = $this->buildClientContext($contextHierarchy['party']);
+            }
+
+            if ($contextHierarchy['team'] !== null) {
+                $orgContext = $this->buildOrgContext($contextHierarchy['team']);
+            }
+        }
+
+        // Get previous step outputs with filtering applied
+        $previousOutputs = $this->getFilteredPreviousOutputs(
+            $chainContext,
+            $currentStepConfig
+        );
+
+        // Add previous step outputs to project context
+        if (! empty($previousOutputs)) {
+            $projectContext['previous_step_outputs'] = $previousOutputs;
+        }
+
+        // Add chain memories if available
+        $chainMemories = $this->memoryService->getAllChainMemories($execution->team, $execution->id);
+        if ($chainMemories->isNotEmpty()) {
+            $projectContext['chain_memories'] = $chainMemories->pluck('value', 'key')->toArray();
+        }
+
+        $context = new AgentContext(
+            projectContext: $projectContext,
+            clientContext: $clientContext,
+            orgContext: $orgContext,
+            metadata: $metadata,
+        );
+
+        // Truncate if necessary to fit within token limit
+        return $this->truncateContext($context, $maxTokens);
+    }
+
+    /**
+     * Get filtered previous outputs from the chain context.
+     *
+     * Applies context_include and context_exclude filtering rules
+     * from the step configuration.
+     *
+     * @param  ChainContext  $chainContext  The chain context
+     * @param  array<string, mixed>  $stepConfig  The current step configuration
+     * @return array<int, array<string, mixed>> Filtered previous outputs
+     */
+    private function getFilteredPreviousOutputs(
+        ChainContext $chainContext,
+        array $stepConfig,
+    ): array {
+        $filterRules = $stepConfig['context_filter_rules'] ?? [];
+        $includeKeys = $filterRules['context_include'] ?? [];
+        $excludeKeys = $filterRules['context_exclude'] ?? [];
+
+        $allOutputs = $chainContext->getAllOutputs();
+        $filteredOutputs = [];
+
+        foreach ($allOutputs as $stepIndex => $output) {
+            // Apply output transformers if configured
+            $transformerConfigs = $stepConfig['output_transformers'] ?? [];
+            if (! empty($transformerConfigs) && $this->transformerService !== null) {
+                $output = $this->transformerService->applyTransformers($output, $transformerConfigs);
+            }
+
+            // Apply include filter
+            if (! empty($includeKeys)) {
+                $output = $this->filterByKeys($output, $includeKeys, true);
+            }
+
+            // Apply exclude filter
+            if (! empty($excludeKeys)) {
+                $output = $this->filterByKeys($output, $excludeKeys, false);
+            }
+
+            $filteredOutputs[$stepIndex] = $output;
+        }
+
+        return $filteredOutputs;
+    }
+
+    /**
+     * Filter an array by keys, supporting nested dot-notation paths.
+     *
+     * @param  array<string, mixed>  $data  The data to filter
+     * @param  array<string>  $keys  The keys to include/exclude
+     * @param  bool  $include  True to include only these keys, false to exclude them
+     * @return array<string, mixed> Filtered data
+     */
+    private function filterByKeys(array $data, array $keys, bool $include): array
+    {
+        // Handle nested key paths (e.g., 'steps.1.output.recommendations')
+        $topLevelKeys = [];
+        $nestedPaths = [];
+
+        foreach ($keys as $key) {
+            if (str_contains($key, '.')) {
+                $nestedPaths[] = $key;
+            } else {
+                $topLevelKeys[] = $key;
+            }
+        }
+
+        $result = $data;
+
+        if ($include) {
+            // Include mode: only keep specified keys
+            $result = [];
+
+            // Add top-level keys
+            foreach ($topLevelKeys as $key) {
+                if (array_key_exists($key, $data)) {
+                    $result[$key] = $data[$key];
+                }
+            }
+
+            // Add nested paths
+            foreach ($nestedPaths as $path) {
+                $value = Arr::get($data, $path);
+                if ($value !== null) {
+                    Arr::set($result, $path, $value);
+                }
+            }
+        } else {
+            // Exclude mode: remove specified keys
+            foreach ($topLevelKeys as $key) {
+                unset($result[$key]);
+            }
+
+            // Handle nested path exclusions
+            foreach ($nestedPaths as $path) {
+                Arr::forget($result, $path);
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -369,7 +559,7 @@ class ContextBuilder
         }
 
         // Remove fields progressively, starting with less important ones
-        $lowPriorityFields = ['stored_memories', 'tags', 'notes', 'statistics', 'contacts'];
+        $lowPriorityFields = ['stored_memories', 'tags', 'notes', 'statistics', 'contacts', 'chain_memories'];
         $truncated = $section;
 
         foreach ($lowPriorityFields as $field) {
@@ -383,7 +573,7 @@ class ContextBuilder
         }
 
         // If still too large, truncate array fields
-        $arrayFields = ['recent_work_orders', 'pending_tasks', 'active_projects'];
+        $arrayFields = ['recent_work_orders', 'pending_tasks', 'active_projects', 'previous_step_outputs'];
 
         foreach ($arrayFields as $field) {
             if (isset($truncated[$field]) && is_array($truncated[$field])) {
@@ -396,7 +586,7 @@ class ContextBuilder
         }
 
         // Final fallback: keep only essential fields
-        $essentialFields = ['name', 'status', 'description', 'type'];
+        $essentialFields = ['name', 'status', 'description', 'type', 'previous_step_outputs'];
 
         return array_intersect_key($truncated, array_flip($essentialFields));
     }

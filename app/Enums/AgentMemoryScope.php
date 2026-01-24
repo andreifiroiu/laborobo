@@ -9,4 +9,5 @@ enum AgentMemoryScope: string
     case Project = 'project';
     case Client = 'client';
     case Org = 'org';
+    case Chain = 'chain';
 }

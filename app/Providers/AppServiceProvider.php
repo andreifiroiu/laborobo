@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Events\DeliverableStatusChanged;
 use App\Events\MessageCreated;
+use App\Events\TaskStatusChanged;
 use App\Events\WorkOrderCreated;
 use App\Events\WorkOrderStatusChanged;
+use App\Listeners\AgentTriggerListener;
 use App\Listeners\DeliverableStatusChangedListener;
 use App\Listeners\DispatcherMentionListener;
 use App\Listeners\TriggerPMCopilotOnWorkOrderCreated;
@@ -73,6 +75,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(WorkOrderCreated::class, TriggerPMCopilotOnWorkOrderCreated::class);
         Event::listen(WorkOrderStatusChanged::class, WorkOrderStatusChangedListener::class);
         Event::listen(DeliverableStatusChanged::class, DeliverableStatusChangedListener::class);
+
+        // Register AgentTriggerListener for status change events (agent chain triggers)
+        Event::listen(WorkOrderStatusChanged::class, [AgentTriggerListener::class, 'handleWorkOrderStatusChanged']);
+        Event::listen(DeliverableStatusChanged::class, [AgentTriggerListener::class, 'handleDeliverableStatusChanged']);
+        Event::listen(TaskStatusChanged::class, [AgentTriggerListener::class, 'handleTaskStatusChanged']);
 
         if (! config('opentelemetry.auto_instrumentation.enabled', true)) {
             return;

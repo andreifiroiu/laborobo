@@ -1,0 +1,21 @@
+task_groups:
+  - name: Chain and Trigger Data Models
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Chain Orchestration Service
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Context Passing and Memory Services
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: State Change Trigger System
+    claude_code_subagent: laravel-backend-specialist
+    standards:
+      - all
+  - name: Integration Testing and Gap Analysis
+    claude_code_subagent: testing-quality-engineer
+    standards:
+      - all
