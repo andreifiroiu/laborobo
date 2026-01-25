@@ -11,17 +11,22 @@ const insightIcons: Record<InsightType, typeof AlertTriangle> = {
 };
 
 const severityStyles: Record<InsightSeverity, { card: string; icon: string; badge: string }> = {
-    info: {
+    low: {
         card: 'border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20',
         icon: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
         badge: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900',
     },
-    warning: {
+    medium: {
         card: 'border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20',
         icon: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
         badge: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900',
     },
-    danger: {
+    high: {
+        card: 'border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20',
+        icon: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300',
+        badge: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900',
+    },
+    critical: {
         card: 'border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20',
         icon: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
         badge: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900',

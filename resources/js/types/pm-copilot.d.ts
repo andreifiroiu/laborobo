@@ -15,7 +15,7 @@ export type InsightType = 'overdue' | 'bottleneck' | 'resource' | 'scope_creep';
 /**
  * Insight severity levels
  */
-export type InsightSeverity = 'info' | 'warning' | 'danger';
+export type InsightSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 /**
  * Workflow status for PM Copilot

@@ -98,7 +98,7 @@ const mockDeliverableSuggestion: DeliverableSuggestion = {
 const mockInsight: ProjectInsight = {
     id: 'insight-1',
     type: 'bottleneck',
-    severity: 'warning',
+    severity: 'medium',
     title: 'Potential Bottleneck Detected',
     description: 'Task "API Integration" has 3 dependent tasks waiting on it',
     suggestion: 'Consider assigning additional resources or breaking down the task',
