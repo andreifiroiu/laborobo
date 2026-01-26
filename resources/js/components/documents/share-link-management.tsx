@@ -110,6 +110,9 @@ export function ShareLinkManagement({
                     method: 'DELETE',
                     headers: {
                         Accept: 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>(
+                            'meta[name="csrf-token"]'
+                        )?.content ?? '',
                     },
                     credentials: 'same-origin',
                 }
@@ -164,12 +167,42 @@ export function ShareLinkManagement({
         }
     };
 
-    const copyToClipboard = async (link: DocumentShareLink) => {
+    const copyToClipboard = (link: DocumentShareLink) => {
+        const textArea = document.createElement('textarea');
+        textArea.value = link.url;
+
+        // Make it visible but off-screen to ensure it can be selected
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+
+        document.body.appendChild(textArea);
+
+        // Save current focus
+        const activeElement = document.activeElement as HTMLElement;
+
+        textArea.focus();
+        textArea.setSelectionRange(0, textArea.value.length);
+
+        let success = false;
         try {
-            await navigator.clipboard.writeText(link.url);
+            success = document.execCommand('copy');
+        } catch (err) {
+            console.error('execCommand error:', err);
+        }
+
+        document.body.removeChild(textArea);
+
+        // Restore focus
+        if (activeElement) {
+            activeElement.focus();
+        }
+
+        if (success) {
             setCopiedId(link.id);
             setTimeout(() => setCopiedId(null), 2000);
-        } catch {
+        } else {
+            console.error('execCommand returned false');
             setError('Failed to copy to clipboard');
         }
     };
@@ -225,16 +258,16 @@ export function ShareLinkManagement({
                     </p>
                 </div>
             ) : (
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[50px]" />
-                                <TableHead>Created</TableHead>
-                                <TableHead>Expires</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-center">Views</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="w-[40px]" />
+                                <TableHead className="min-w-[120px]">Created</TableHead>
+                                <TableHead className="min-w-[100px]">Expires</TableHead>
+                                <TableHead className="min-w-[100px]">Status</TableHead>
+                                <TableHead className="text-center w-[60px]">Views</TableHead>
+                                <TableHead className="text-right w-[80px]">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

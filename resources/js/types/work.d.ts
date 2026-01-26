@@ -111,6 +111,7 @@ export interface Task {
     workOrderId: string;
     workOrderTitle: string;
     projectId: string;
+    projectName: string;
     assignedToId: string | null;
     assignedToName: string;
     assignedAgentId: string | null;

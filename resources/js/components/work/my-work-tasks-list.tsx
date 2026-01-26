@@ -162,7 +162,7 @@ function TaskCard({ task }: TaskCardProps) {
                     >
                         {task.title}
                     </h4>
-                    <p className="text-xs text-muted-foreground mb-2">{task.workOrderTitle}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{task.projectName} &middot; {task.workOrderTitle}</p>
                 </div>
             </div>
 

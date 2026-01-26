@@ -95,6 +95,9 @@ export function ShareLinkDialog({
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>(
+                        'meta[name="csrf-token"]'
+                    )?.content ?? '',
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({
@@ -119,14 +122,46 @@ export function ShareLinkDialog({
         }
     };
 
-    const copyToClipboard = async () => {
-        if (!createdLink?.url) return;
+    const copyToClipboard = () => {
+        if (!createdLink?.url) {
+            return;
+        }
 
+        const textArea = document.createElement('textarea');
+        textArea.value = createdLink.url;
+
+        // Make it visible but off-screen to ensure it can be selected
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+
+        document.body.appendChild(textArea);
+
+        // Save current focus
+        const activeElement = document.activeElement as HTMLElement;
+
+        textArea.focus();
+        textArea.setSelectionRange(0, textArea.value.length);
+
+        let success = false;
         try {
-            await navigator.clipboard.writeText(createdLink.url);
+            success = document.execCommand('copy');
+        } catch (err) {
+            console.error('execCommand error:', err);
+        }
+
+        document.body.removeChild(textArea);
+
+        // Restore focus
+        if (activeElement) {
+            activeElement.focus();
+        }
+
+        if (success) {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-        } catch {
+        } else {
+            console.error('execCommand returned false');
             setError('Failed to copy to clipboard');
         }
     };
