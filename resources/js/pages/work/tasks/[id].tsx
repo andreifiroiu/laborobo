@@ -139,6 +139,8 @@ interface TaskDetailProps {
     allowedTransitions?: TransitionOption[];
     rejectionFeedback?: RejectionFeedback | null;
     communicationThread?: CommunicationThreadSummary | null;
+    siblingWorkOrders?: Array<{ id: string; title: string }>;
+    siblingTasks?: Array<{ id: string; title: string }>;
 }
 
 export default function TaskDetail({
@@ -151,6 +153,8 @@ export default function TaskDetail({
     allowedTransitions = [],
     rejectionFeedback = null,
     communicationThread = null,
+    siblingWorkOrders = [],
+    siblingTasks = [],
 }: TaskDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [logTimeDialogOpen, setLogTimeDialogOpen] = useState(false);
@@ -175,8 +179,16 @@ export default function TaskDetail({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
-        { title: task.workOrderTitle, href: `/work/work-orders/${task.workOrderId}` },
-        { title: task.title, href: `/work/tasks/${task.id}` },
+        {
+            title: task.workOrderTitle,
+            href: `/work/work-orders/${task.workOrderId}`,
+            siblings: siblingWorkOrders.map((wo) => ({ title: wo.title, href: `/work/work-orders/${wo.id}` })),
+        },
+        {
+            title: task.title,
+            href: `/work/tasks/${task.id}`,
+            siblings: siblingTasks.map((t) => ({ title: t.title, href: `/work/tasks/${t.id}` })),
+        },
     ];
 
     // Determine the initial assignment value for the unified dropdown

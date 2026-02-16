@@ -89,7 +89,29 @@ class WorkOrderController extends Controller
         // Get routing recommendations from metadata if dispatcher was enabled
         $routingRecommendations = $this->getRoutingRecommendations($workOrder);
 
+        // Sibling data for breadcrumb navigation
+        $siblingProjects = Project::forTeam($workOrder->project->team_id)
+            ->notArchived()
+            ->visibleTo($request->user()->id)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        $siblingWorkOrders = WorkOrder::where('project_id', $workOrder->project_id)
+            ->notArchived()
+            ->select('id', 'title')
+            ->orderBy('title')
+            ->get();
+
         return Inertia::render('work/work-orders/[id]', [
+            'siblingProjects' => $siblingProjects->map(fn (Project $p) => [
+                'id' => (string) $p->id,
+                'name' => $p->name,
+            ]),
+            'siblingWorkOrders' => $siblingWorkOrders->map(fn (WorkOrder $wo) => [
+                'id' => (string) $wo->id,
+                'title' => $wo->title,
+            ]),
             'workOrder' => [
                 'id' => (string) $workOrder->id,
                 'title' => $workOrder->title,

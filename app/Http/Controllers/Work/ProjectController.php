@@ -76,7 +76,19 @@ class ProjectController extends Controller
         $thread = $project->communicationThread;
         $messages = $thread ? $thread->messages()->with('author')->orderBy('created_at', 'desc')->get() : collect();
 
+        // Sibling projects for breadcrumb navigation
+        $siblingProjects = Project::forTeam($project->team_id)
+            ->notArchived()
+            ->visibleTo($user->id)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('work/projects/[id]', [
+            'siblingProjects' => $siblingProjects->map(fn (Project $p) => [
+                'id' => (string) $p->id,
+                'name' => $p->name,
+            ]),
             'project' => [
                 'id' => (string) $project->id,
                 'name' => $project->name,

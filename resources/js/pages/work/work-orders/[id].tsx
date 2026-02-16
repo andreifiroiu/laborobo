@@ -226,6 +226,8 @@ interface WorkOrderDetailProps {
     allowedTransitions?: TransitionOption[];
     raciValue?: RaciValue;
     rejectionFeedback?: RejectionFeedback | null;
+    siblingProjects?: Array<{ id: string; name: string }>;
+    siblingWorkOrders?: Array<{ id: string; title: string }>;
 }
 
 /**
@@ -478,6 +480,8 @@ export default function WorkOrderDetail({
     allowedTransitions = [],
     raciValue,
     rejectionFeedback = null,
+    siblingProjects = [],
+    siblingWorkOrders = [],
 }: WorkOrderDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState(false);
@@ -554,8 +558,16 @@ export default function WorkOrderDetail({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
-        { title: workOrder.projectName, href: `/work/projects/${workOrder.projectId}` },
-        { title: workOrder.title, href: `/work/work-orders/${workOrder.id}` },
+        {
+            title: workOrder.projectName,
+            href: `/work/projects/${workOrder.projectId}`,
+            siblings: siblingProjects.map((p) => ({ title: p.name, href: `/work/projects/${p.id}` })),
+        },
+        {
+            title: workOrder.title,
+            href: `/work/work-orders/${workOrder.id}`,
+            siblings: siblingWorkOrders.map((wo) => ({ title: wo.title, href: `/work/work-orders/${wo.id}` })),
+        },
     ];
 
     const editForm = useForm({

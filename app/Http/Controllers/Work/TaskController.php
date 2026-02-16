@@ -115,7 +115,28 @@ class TaskController extends Controller
                 'name' => $agent->name,
             ]);
 
+        // Sibling data for breadcrumb navigation
+        $siblingWorkOrders = WorkOrder::where('project_id', $task->project_id)
+            ->notArchived()
+            ->select('id', 'title')
+            ->orderBy('title')
+            ->get();
+
+        $siblingTasks = Task::where('work_order_id', $task->work_order_id)
+            ->notArchived()
+            ->select('id', 'title')
+            ->orderBy('title')
+            ->get();
+
         return Inertia::render('work/tasks/[id]', [
+            'siblingWorkOrders' => $siblingWorkOrders->map(fn (WorkOrder $wo) => [
+                'id' => (string) $wo->id,
+                'title' => $wo->title,
+            ]),
+            'siblingTasks' => $siblingTasks->map(fn (Task $t) => [
+                'id' => (string) $t->id,
+                'title' => $t->title,
+            ]),
             'task' => [
                 'id' => (string) $task->id,
                 'title' => $task->title,

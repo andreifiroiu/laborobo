@@ -60,6 +60,7 @@ import type { FolderNode } from '@/components/documents/folder-tree';
 
 interface ProjectDetailPageProps extends ProjectDetailProps {
     folders: FolderNode[];
+    siblingProjects: Array<{ id: string; name: string }>;
 }
 
 /**
@@ -86,6 +87,7 @@ export default function ProjectDetail({
     messages,
     parties,
     teamMembers,
+    siblingProjects,
 }: ProjectDetailPageProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [createWorkOrderDialogOpen, setCreateWorkOrderDialogOpen] = useState(false);
@@ -103,7 +105,11 @@ export default function ProjectDetail({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
-        { title: project.name, href: `/work/projects/${project.id}` },
+        {
+            title: project.name,
+            href: `/work/projects/${project.id}`,
+            siblings: siblingProjects.map((p) => ({ title: p.name, href: `/work/projects/${p.id}` })),
+        },
     ];
 
     const editForm = useForm({

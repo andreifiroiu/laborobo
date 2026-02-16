@@ -82,8 +82,8 @@ export function PMCopilotSettingsToggle({
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {isStagedMode
-                                ? 'Review deliverables before generating tasks'
-                                : 'Generate deliverables and tasks together'}
+                                ? 'Deliverables are generated first — review and approve them before tasks are created'
+                                : 'Deliverables and tasks are generated in one step without a review pause'}
                         </p>
                     </div>
                 </div>
