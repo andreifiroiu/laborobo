@@ -1183,6 +1183,27 @@ export default function WorkOrderDetail({
                 // Then transition to 'done'
                 const result = await transitionTo('done');
                 if (result.ok) {
+                    // Reorder: move the completed task after all non-done/non-archived tasks
+                    const updatedTasks = localTasks.map((t) =>
+                        t.id === taskId ? { ...t, status: 'done' } : t
+                    );
+                    const notDone = updatedTasks.filter((t) => t.status !== 'done' && t.status !== 'archived');
+                    const done = updatedTasks.filter((t) => t.status === 'done' || t.status === 'archived');
+                    const reordered = [...notDone, ...done];
+                    setLocalTasks(reordered);
+
+                    // Persist new order to backend
+                    fetch(`/work/work-orders/${workOrder.id}/tasks/reorder`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN':
+                                document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        },
+                        body: JSON.stringify({ taskIds: reordered.map((t) => t.id) }),
+                    }).catch(() => {});
+
                     router.reload({ only: ['tasks'] });
                 } else {
                     console.error('Task transition failed:', result.message);
@@ -1193,7 +1214,7 @@ export default function WorkOrderDetail({
                 setCompletingTaskId(null);
             }
         },
-        []
+        [localTasks, workOrder.id]
     );
 
     // Helper functions for assignment confirmation dialog
