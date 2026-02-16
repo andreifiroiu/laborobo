@@ -36,6 +36,8 @@ import {
     GripVertical,
     List,
     LayoutGrid,
+    Archive,
+    ArchiveRestore,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -236,6 +238,7 @@ interface SortableTaskCardProps {
     onStatusChange: (task: WorkOrderDetailProps['tasks'][0]) => void;
     onPromote: (task: WorkOrderDetailProps['tasks'][0]) => void;
     onDelete: (task: WorkOrderDetailProps['tasks'][0]) => void;
+    onArchive: (task: WorkOrderDetailProps['tasks'][0]) => void;
     getStatusOptions: (currentStatus: string) => Array<{ value: string; label: string }>;
 }
 
@@ -246,6 +249,7 @@ function SortableTaskCard({
     onStatusChange,
     onPromote,
     onDelete,
+    onArchive,
     getStatusOptions,
 }: SortableTaskCardProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
@@ -260,7 +264,11 @@ function SortableTaskCard({
         <div
             ref={setNodeRef}
             style={style}
-            className="bg-card border-border hover:border-primary/50 rounded-lg border p-4 transition-colors"
+            className={`rounded-lg border p-4 transition-colors ${
+                task.status === 'archived'
+                    ? 'bg-muted/50 border-border opacity-50'
+                    : 'bg-card border-border hover:border-primary/50'
+            }`}
         >
             <div className="flex items-start gap-3">
                 <div
@@ -278,6 +286,7 @@ function SortableTaskCard({
                         task.status === 'cancelled' ||
                         task.status === 'in_review' ||
                         task.status === 'blocked' ||
+                        task.status === 'archived' ||
                         completingTaskId === task.id
                     }
                     className={`mt-1 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
@@ -353,6 +362,24 @@ function SortableTaskCard({
                         >
                             <ArrowUpCircle className="mr-2 h-4 w-4" />
                             Promote to Work Order
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onArchive(task);
+                            }}
+                        >
+                            {task.status === 'archived' ? (
+                                <>
+                                    <ArchiveRestore className="mr-2 h-4 w-4" />
+                                    Unarchive
+                                </>
+                            ) : (
+                                <>
+                                    <Archive className="mr-2 h-4 w-4" />
+                                    Archive
+                                </>
+                            )}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -492,6 +519,9 @@ export default function WorkOrderDetail({
     const [selectedTaskTransition, setSelectedTaskTransition] = useState<string | null>(null);
     const [isTaskTransitioning, setIsTaskTransitioning] = useState(false);
     const [taskTransitionError, setTaskTransitionError] = useState<string | null>(null);
+
+    // Task archive state
+    const [showArchivedTasks, setShowArchivedTasks] = useState(false);
 
     // PM Copilot state
     const [pmCopilotMode, setPMCopilotMode] = useState<PMCopilotMode>(workOrder.pmCopilotMode ?? 'full');
@@ -1015,6 +1045,18 @@ export default function WorkOrderDetail({
         setTaskDeleteDialogOpen(true);
     }, []);
 
+    const handleTaskArchive = useCallback((task: TaskType) => {
+        if (task.status === 'archived') {
+            router.post(`/work/tasks/${task.id}/restore`, {}, { preserveScroll: true });
+        } else {
+            router.post(`/work/tasks/${task.id}/archive`, {}, { preserveScroll: true });
+        }
+    }, []);
+
+    const handleBulkArchiveCompletedTasks = useCallback(() => {
+        router.post(`/work/work-orders/${workOrder.id}/tasks/bulk-archive-completed`, {}, { preserveScroll: true });
+    }, [workOrder.id]);
+
     const handleTaskTransitionConfirm = useCallback(async () => {
         if (!selectedTask || !selectedTaskTransition) return;
 
@@ -1173,8 +1215,12 @@ export default function WorkOrderDetail({
         return { role: roleLabel as AssignmentChange['role'], user };
     };
 
-    const completedTasks = tasks.filter((t) => t.status === 'done').length;
-    const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+    const nonArchivedTasks = tasks.filter((t) => t.status !== 'archived');
+    const completedTasks = nonArchivedTasks.filter((t) => t.status === 'done').length;
+    const progress = nonArchivedTasks.length > 0 ? Math.round((completedTasks / nonArchivedTasks.length) * 100) : 0;
+    const hasDoneTasks = tasks.some((t) => t.status === 'done');
+    const hasArchivedTasks = tasks.some((t) => t.status === 'archived');
+    const displayTasks = showArchivedTasks ? localTasks : localTasks.filter((t) => t.status !== 'archived');
 
     const dueDate = workOrder.dueDate ? new Date(workOrder.dueDate) : null;
     const now = new Date();
@@ -1267,6 +1313,17 @@ export default function WorkOrderDetail({
                                         <Edit className="mr-2 h-4 w-4" />
                                         Edit
                                     </DropdownMenuItem>
+                                    {workOrder.status === 'archived' ? (
+                                        <DropdownMenuItem onClick={() => router.post(`/work/work-orders/${workOrder.id}/restore`, {}, { preserveScroll: true })}>
+                                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                                            Unarchive
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        <DropdownMenuItem onClick={() => router.post(`/work/work-orders/${workOrder.id}/archive`, {}, { preserveScroll: true })}>
+                                            <Archive className="mr-2 h-4 w-4" />
+                                            Archive
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={handleDelete} className="text-destructive">
                                         <Trash2 className="mr-2 h-4 w-4" />
@@ -1380,10 +1437,10 @@ export default function WorkOrderDetail({
                     )}
 
                     {/* Conditional Layout Based on View */}
-                    {taskView === 'board' && localTasks.length > 0 ? (
+                    {taskView === 'board' && displayTasks.length > 0 ? (
                         /* Full-width board view */
                         <div className="h-[calc(100vh-320px)] min-h-[400px]">
-                            <TaskKanbanBoard tasks={localTasks} workOrderId={workOrder.id} />
+                            <TaskKanbanBoard tasks={displayTasks} workOrderId={workOrder.id} />
                         </div>
                     ) : (
                         /* 3-column grid layout for list view */
@@ -1391,13 +1448,34 @@ export default function WorkOrderDetail({
                             {/* Column 1: Tasks Section */}
                             <div>
                                 <div className="mb-4 flex items-center justify-between">
-                                    <h2 className="text-foreground text-lg font-bold">Tasks</h2>
-                                    <Button size="sm" onClick={openCreateTaskDialog}>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Add Task
-                                    </Button>
+                                    <div className="flex items-center gap-3">
+                                        <h2 className="text-foreground text-lg font-bold">Tasks</h2>
+                                        {hasArchivedTasks && (
+                                            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={showArchivedTasks}
+                                                    onChange={(e) => setShowArchivedTasks(e.target.checked)}
+                                                    className="rounded border-muted-foreground/50"
+                                                />
+                                                Show archived
+                                            </label>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {hasDoneTasks && (
+                                            <Button variant="outline" size="sm" onClick={handleBulkArchiveCompletedTasks}>
+                                                <Archive className="mr-2 h-4 w-4" />
+                                                Archive completed
+                                            </Button>
+                                        )}
+                                        <Button size="sm" onClick={openCreateTaskDialog}>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Add Task
+                                        </Button>
+                                    </div>
                                 </div>
-                                {localTasks.length === 0 ? (
+                                {displayTasks.length === 0 ? (
                                     <div className="bg-muted/50 rounded-xl py-8 text-center">
                                         <p className="text-muted-foreground mb-4">No tasks yet</p>
                                         <Button onClick={openCreateTaskDialog}>
@@ -1411,11 +1489,11 @@ export default function WorkOrderDetail({
                                         onDragEnd={handleTaskDragEnd}
                                     >
                                         <SortableContext
-                                            items={localTasks.map((t) => t.id)}
+                                            items={displayTasks.map((t) => t.id)}
                                             strategy={verticalListSortingStrategy}
                                         >
                                             <div className="space-y-3">
-                                                {localTasks.map((task) => (
+                                                {displayTasks.map((task) => (
                                                     <SortableTaskCard
                                                         key={task.id}
                                                         task={task}
@@ -1424,6 +1502,7 @@ export default function WorkOrderDetail({
                                                         onStatusChange={handleTaskStatusChange}
                                                         onPromote={handleTaskPromote}
                                                         onDelete={handleTaskDelete}
+                                                        onArchive={handleTaskArchive}
                                                         getStatusOptions={getTaskStatusOptions}
                                                     />
                                                 ))}

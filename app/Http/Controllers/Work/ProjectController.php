@@ -69,7 +69,7 @@ class ProjectController extends Controller
             'workOrders.tasks.assignedTo', 'workOrders.tasks.reviewer',
             'documents',
             'workOrderLists.workOrders.tasks',
-            'workOrderLists.workOrders.assignedTo',
+            'workOrderLists.workOrders.accountable',
         ]);
 
         // Get communication thread and messages
@@ -101,7 +101,7 @@ class ProjectController extends Controller
                 'status' => $wo->status->value,
                 'priority' => $wo->priority->value,
                 'dueDate' => $wo->due_date?->format('Y-m-d'),
-                'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                'assignedToName' => $wo->accountable?->name ?? 'Unassigned',
                 'tasksCount' => $wo->tasks->count(),
                 'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
                 'workOrderListId' => $wo->work_order_list_id ? (string) $wo->work_order_list_id : null,
@@ -119,14 +119,14 @@ class ProjectController extends Controller
                     'status' => $wo->status->value,
                     'priority' => $wo->priority->value,
                     'dueDate' => $wo->due_date?->format('Y-m-d'),
-                    'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                    'assignedToName' => $wo->accountable?->name ?? 'Unassigned',
                     'tasksCount' => $wo->tasks->count(),
                     'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
                     'positionInList' => $wo->position_in_list,
                 ]),
             ]),
             'ungroupedWorkOrders' => $project->ungroupedWorkOrders()
-                ->with(['tasks', 'assignedTo'])
+                ->with(['tasks', 'accountable'])
                 ->get()
                 ->map(fn (WorkOrder $wo) => [
                     'id' => (string) $wo->id,
@@ -134,7 +134,7 @@ class ProjectController extends Controller
                     'status' => $wo->status->value,
                     'priority' => $wo->priority->value,
                     'dueDate' => $wo->due_date?->format('Y-m-d'),
-                    'assignedToName' => $wo->assignedTo?->name ?? 'Unassigned',
+                    'assignedToName' => $wo->accountable?->name ?? 'Unassigned',
                     'tasksCount' => $wo->tasks->count(),
                     'completedTasksCount' => $wo->tasks->where('status', 'done')->count(),
                     'positionInList' => $wo->position_in_list,

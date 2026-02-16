@@ -296,6 +296,44 @@ class WorkOrderController extends Controller
         ];
     }
 
+    public function archive(Request $request, WorkOrder $workOrder): RedirectResponse
+    {
+        $this->authorize('update', $workOrder);
+
+        $workOrder->update(['status' => WorkOrderStatus::Archived]);
+
+        // Recalculate project progress
+        $workOrder->project->recalculateProgress();
+
+        return back();
+    }
+
+    public function restore(Request $request, WorkOrder $workOrder): RedirectResponse
+    {
+        $this->authorize('update', $workOrder);
+
+        $workOrder->update(['status' => WorkOrderStatus::Active]);
+
+        // Recalculate project progress
+        $workOrder->project->recalculateProgress();
+
+        return back();
+    }
+
+    public function bulkArchiveDelivered(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('update', $project);
+
+        $project->workOrders()
+            ->where('status', WorkOrderStatus::Delivered)
+            ->update(['status' => WorkOrderStatus::Archived]);
+
+        // Recalculate project progress
+        $project->recalculateProgress();
+
+        return back();
+    }
+
     public function update(Request $request, WorkOrder $workOrder): RedirectResponse
     {
         $this->authorize('update', $workOrder);

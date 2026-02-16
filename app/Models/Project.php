@@ -246,7 +246,9 @@ class Project extends Model
 
     public function recalculateProgress(): void
     {
-        $workOrders = $this->workOrders;
+        $workOrders = $this->workOrders->filter(
+            fn ($wo) => $wo->status !== \App\Enums\WorkOrderStatus::Archived
+        );
 
         if ($workOrders->isEmpty()) {
             $this->progress = 0;
@@ -259,7 +261,9 @@ class Project extends Model
         $completedTasks = 0;
 
         foreach ($workOrders as $workOrder) {
-            $tasks = $workOrder->tasks;
+            $tasks = $workOrder->tasks->filter(
+                fn ($task) => $task->status !== \App\Enums\TaskStatus::Archived
+            );
             $totalTasks += $tasks->count();
             $completedTasks += $tasks->where('status', 'done')->count();
         }

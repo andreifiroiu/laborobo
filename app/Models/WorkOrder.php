@@ -200,6 +200,16 @@ class WorkOrder extends Model
         return $query->where('status', $status);
     }
 
+    public function scopeArchived(Builder $query): Builder
+    {
+        return $query->where('status', WorkOrderStatus::Archived);
+    }
+
+    public function scopeNotArchived(Builder $query): Builder
+    {
+        return $query->where('status', '!=', WorkOrderStatus::Archived);
+    }
+
     public function scopeInList(Builder $query, ?int $listId): Builder
     {
         return $query->where('work_order_list_id', $listId);

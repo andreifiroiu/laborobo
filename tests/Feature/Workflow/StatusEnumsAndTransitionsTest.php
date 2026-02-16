@@ -49,7 +49,7 @@ test('TaskStatus enum has all required cases including new workflow statuses', f
         expect($actualCases)->toContain($expectedCase);
     }
 
-    expect(count(TaskStatus::cases()))->toBe(8);
+    expect(count(TaskStatus::cases()))->toBe(9);
 });
 
 test('TaskStatus enum has label and color methods for all cases', function () {
@@ -63,6 +63,7 @@ test('TaskStatus enum has label and color methods for all cases', function () {
     expect(TaskStatus::Blocked->color())->toBe('red');
     expect(TaskStatus::Cancelled->color())->toBe('red');
     expect(TaskStatus::RevisionRequested->color())->toBe('orange');
+    expect(TaskStatus::Archived->color())->toBe('slate');
 });
 
 test('WorkOrderStatus enum has all required cases including new workflow statuses', function () {
@@ -75,6 +76,7 @@ test('WorkOrderStatus enum has all required cases including new workflow statuse
         'Blocked',
         'Cancelled',
         'RevisionRequested',
+        'Archived',
     ];
 
     $actualCases = array_map(fn ($case) => $case->name, WorkOrderStatus::cases());
@@ -83,7 +85,7 @@ test('WorkOrderStatus enum has all required cases including new workflow statuse
         expect($actualCases)->toContain($expectedCase);
     }
 
-    expect(count(WorkOrderStatus::cases()))->toBe(8);
+    expect(count(WorkOrderStatus::cases()))->toBe(9);
 });
 
 test('WorkOrderStatus enum has label and color methods for all cases', function () {

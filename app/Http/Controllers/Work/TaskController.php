@@ -287,6 +287,44 @@ class TaskController extends Controller
         return back();
     }
 
+    public function archive(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $task->update(['status' => TaskStatus::Archived]);
+
+        // Recalculate project progress
+        $task->project->recalculateProgress();
+
+        return back();
+    }
+
+    public function restoreTask(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $task->update(['status' => TaskStatus::Todo]);
+
+        // Recalculate project progress
+        $task->project->recalculateProgress();
+
+        return back();
+    }
+
+    public function bulkArchiveCompleted(Request $request, WorkOrder $workOrder): RedirectResponse
+    {
+        $this->authorize('update', $workOrder);
+
+        $workOrder->tasks()
+            ->where('status', TaskStatus::Done)
+            ->update(['status' => TaskStatus::Archived]);
+
+        // Recalculate project progress
+        $workOrder->project->recalculateProgress();
+
+        return back();
+    }
+
     public function destroy(Request $request, Task $task): RedirectResponse
     {
         $this->authorize('delete', $task);

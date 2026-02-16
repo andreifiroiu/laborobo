@@ -163,6 +163,16 @@ class Task extends Model
         return $query->where('status', $status);
     }
 
+    public function scopeArchived($query)
+    {
+        return $query->where('status', TaskStatus::Archived);
+    }
+
+    public function scopeNotArchived($query)
+    {
+        return $query->where('status', '!=', TaskStatus::Archived);
+    }
+
     public function scopeOrdered($query)
     {
         return $query->orderBy('position_in_work_order');

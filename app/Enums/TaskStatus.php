@@ -14,6 +14,7 @@ enum TaskStatus: string
     case Blocked = 'blocked';
     case Cancelled = 'cancelled';
     case RevisionRequested = 'revision_requested';
+    case Archived = 'archived';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum TaskStatus: string
             self::Blocked => 'Blocked',
             self::Cancelled => 'Cancelled',
             self::RevisionRequested => 'Revision Requested',
+            self::Archived => 'Archived',
         };
     }
 
@@ -40,6 +42,7 @@ enum TaskStatus: string
             self::Blocked => 'red',
             self::Cancelled => 'red',
             self::RevisionRequested => 'orange',
+            self::Archived => 'slate',
         };
     }
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MoreVertical, FolderMinus, Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { GripVertical, MoreVertical, FolderMinus, Edit, Trash2, AlertTriangle, Archive, ArchiveRestore } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,11 +52,20 @@ export function WorkOrderListItem({
         transition,
     };
 
-    const completedStatuses = ['delivered', 'approved'];
+    const completedStatuses = ['delivered', 'approved', 'archived'];
+    const isArchived = workOrder.status === 'archived';
     const isOverdue =
         !!workOrder.dueDate &&
         new Date(workOrder.dueDate) < new Date() &&
         !completedStatuses.includes(workOrder.status);
+
+    const handleArchive = () => {
+        router.post(`/work/work-orders/${workOrder.id}/archive`, {}, { preserveScroll: true });
+    };
+
+    const handleUnarchive = () => {
+        router.post(`/work/work-orders/${workOrder.id}/restore`, {}, { preserveScroll: true });
+    };
 
     const handleRemoveFromList = () => {
         router.post(
@@ -90,9 +99,11 @@ export function WorkOrderListItem({
             style={style}
             className={cn(
                 'flex items-center gap-2 p-3 bg-card border rounded-lg group',
-                isOverdue
-                    ? 'border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20'
-                    : 'border-border',
+                isArchived
+                    ? 'opacity-50 bg-muted/50 border-border'
+                    : isOverdue
+                        ? 'border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20'
+                        : 'border-border',
                 isDragging && 'opacity-50',
                 isDragOverlay && 'shadow-lg'
             )}
@@ -163,6 +174,18 @@ export function WorkOrderListItem({
                             Edit Work Order
                         </Link>
                     </DropdownMenuItem>
+                    {isArchived ? (
+                        <DropdownMenuItem onClick={handleUnarchive}>
+                            <ArchiveRestore className="h-4 w-4 mr-2" />
+                            Unarchive
+                        </DropdownMenuItem>
+                    ) : (
+                        <DropdownMenuItem onClick={handleArchive}>
+                            <Archive className="h-4 w-4 mr-2" />
+                            Archive
+                        </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                         onClick={() => setDeleteDialogOpen(true)}
                         className="text-destructive focus:text-destructive"

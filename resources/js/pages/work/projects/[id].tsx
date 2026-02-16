@@ -156,6 +156,10 @@ export default function ProjectDetail({
         router.post(`/work/projects/${project.id}/archive`);
     };
 
+    const handleBulkArchiveDelivered = () => {
+        router.post(`/work/projects/${project.id}/work-orders/bulk-archive-delivered`, {}, { preserveScroll: true });
+    };
+
     const handleTogglePrivacy = () => {
         router.patch(`/work/projects/${project.id}`, {
             isPrivate: !project.isPrivate,
@@ -377,6 +381,7 @@ export default function ProjectDetail({
                         workOrderLists={workOrderLists}
                         ungroupedWorkOrders={ungroupedWorkOrders}
                         onCreateWorkOrder={handleOpenCreateWorkOrderDialog}
+                        onBulkArchiveDelivered={handleBulkArchiveDelivered}
                     />
 
                     {/* Documents Section */}

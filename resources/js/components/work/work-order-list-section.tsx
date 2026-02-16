@@ -18,7 +18,7 @@ import {
     verticalListSortingStrategy,
     arrayMove,
 } from '@dnd-kit/sortable';
-import { Plus } from 'lucide-react';
+import { Plus, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WorkOrderListGroup } from './work-order-list-group';
 import { WorkOrderListItem } from './work-order-list-item';
@@ -31,6 +31,7 @@ interface WorkOrderListSectionProps {
     workOrderLists: WorkOrderList[];
     ungroupedWorkOrders: WorkOrderInList[];
     onCreateWorkOrder: (listId?: string) => void;
+    onBulkArchiveDelivered?: () => void;
 }
 
 export function WorkOrderListSection({
@@ -39,8 +40,10 @@ export function WorkOrderListSection({
     workOrderLists,
     ungroupedWorkOrders,
     onCreateWorkOrder,
+    onBulkArchiveDelivered,
 }: WorkOrderListSectionProps) {
     const [createListDialogOpen, setCreateListDialogOpen] = useState(false);
+    const [showArchived, setShowArchived] = useState(false);
     const [activeItem, setActiveItem] = useState<WorkOrderInList | null>(null);
     const [lists, setLists] = useState(workOrderLists);
     const [ungrouped, setUngrouped] = useState(ungroupedWorkOrders);
@@ -290,16 +293,54 @@ export function WorkOrderListSection({
         );
     };
 
+    // Filter archived work orders
+    const filterWOs = (wos: WorkOrderInList[]) =>
+        showArchived ? wos : wos.filter((wo) => wo.status !== 'archived');
+
+    const filteredLists = lists.map((l) => ({ ...l, workOrders: filterWOs(l.workOrders) }));
+    const filteredUngrouped = filterWOs(ungrouped);
+
     const totalWorkOrders =
-        lists.reduce((acc, l) => acc + l.workOrders.length, 0) + ungrouped.length;
+        filteredLists.reduce((acc, l) => acc + l.workOrders.length, 0) + filteredUngrouped.length;
+
+    const hasDeliveredWOs =
+        lists.some((l) => l.workOrders.some((wo) => wo.status === 'delivered')) ||
+        ungrouped.some((wo) => wo.status === 'delivered');
+
+    const hasArchivedWOs =
+        lists.some((l) => l.workOrders.some((wo) => wo.status === 'archived')) ||
+        ungrouped.some((wo) => wo.status === 'archived');
 
     return (
         <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-foreground">
-                    Work Orders ({totalWorkOrders})
-                </h2>
+                <div className="flex items-center gap-3">
+                    <h2 className="text-lg font-bold text-foreground">
+                        Work Orders ({totalWorkOrders})
+                    </h2>
+                    {hasArchivedWOs && (
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={showArchived}
+                                onChange={(e) => setShowArchived(e.target.checked)}
+                                className="rounded border-muted-foreground/50"
+                            />
+                            Show archived
+                        </label>
+                    )}
+                </div>
                 <div className="flex items-center gap-2">
+                    {hasDeliveredWOs && onBulkArchiveDelivered && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onBulkArchiveDelivered}
+                        >
+                            <Archive className="h-4 w-4 mr-2" />
+                            Archive delivered
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"
@@ -332,7 +373,7 @@ export function WorkOrderListSection({
                     onDragCancel={handleDragCancel}
                 >
                     <div className="space-y-4">
-                        {lists.map((list) => (
+                        {filteredLists.map((list) => (
                             <WorkOrderListGroup
                                 key={list.id}
                                 list={list}
@@ -350,7 +391,7 @@ export function WorkOrderListSection({
                                 description: null,
                                 color: null,
                                 position: 999999,
-                                workOrders: ungrouped,
+                                workOrders: filteredUngrouped,
                             }}
                             projectId={projectId}
                             onCreateWorkOrder={() => onCreateWorkOrder()}

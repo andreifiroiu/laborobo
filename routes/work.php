@@ -62,6 +62,9 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::post('/work-orders/{workOrder}/transition', [WorkOrderTransitionController::class, 'transition'])->name('work-orders.transition');
     Route::patch('/work-orders/{workOrder}/raci', [WorkOrderRaciController::class, 'update'])->name('work-orders.raci');
     Route::post('/work-orders/{workOrder}/accept-routing', [WorkOrderController::class, 'acceptRoutingRecommendation'])->name('work-orders.accept-routing');
+    Route::post('/work-orders/{workOrder}/archive', [WorkOrderController::class, 'archive'])->name('work-orders.archive');
+    Route::post('/work-orders/{workOrder}/restore', [WorkOrderController::class, 'restore'])->name('work-orders.restore');
+    Route::post('/projects/{project}/work-orders/bulk-archive-delivered', [WorkOrderController::class, 'bulkArchiveDelivered'])->name('projects.work-orders.bulk-archive-delivered');
 
     // Work Order Agent Settings
     Route::patch('/work-orders/{workOrder}/agent-settings', [WorkOrderAgentSettingsController::class, 'update'])->name('work-orders.agent-settings');
@@ -85,6 +88,9 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::delete('/tasks/{task}/checklist/{itemId}', [TaskController::class, 'deleteChecklistItem'])->name('tasks.checklist.delete');
     Route::post('/tasks/{task}/promote', [TaskController::class, 'promote'])->name('tasks.promote');
     Route::post('/work-orders/{workOrder}/tasks/reorder', [TaskController::class, 'reorder'])->name('work-orders.tasks.reorder');
+    Route::post('/tasks/{task}/archive', [TaskController::class, 'archive'])->name('tasks.archive');
+    Route::post('/tasks/{task}/restore', [TaskController::class, 'restoreTask'])->name('tasks.restore');
+    Route::post('/work-orders/{workOrder}/tasks/bulk-archive-completed', [TaskController::class, 'bulkArchiveCompleted'])->name('work-orders.tasks.bulk-archive-completed');
 
     // Time Entries
     Route::get('/time-entries', [TimeEntryController::class, 'index'])->name('time-entries.index');
