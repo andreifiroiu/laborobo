@@ -42,6 +42,7 @@ export function InsightCard({ insight, onClick }: InsightCardProps) {
     const Icon = insightIcons[insight.type];
     const styles = severityStyles[insight.severity];
     const isClickable = !!onClick;
+    const affectedItems = insight.affectedItems ?? [];
 
     return (
         <div
@@ -82,9 +83,9 @@ export function InsightCard({ insight, onClick }: InsightCardProps) {
                     <p className="text-sm text-muted-foreground">{insight.description}</p>
 
                     {/* Affected Items */}
-                    {insight.affectedItems?.length > 0 && (
+                    {affectedItems.length > 0 && (
                         <p className="text-xs text-muted-foreground mt-2">
-                            {insight.affectedItems.length} {insight.affectedItems.length === 1 ? 'item' : 'items'} affected
+                            {affectedItems.length} {affectedItems.length === 1 ? 'item' : 'items'} affected
                         </p>
                     )}
 

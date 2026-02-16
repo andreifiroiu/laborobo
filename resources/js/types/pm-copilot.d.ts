@@ -93,7 +93,7 @@ export interface ProjectInsight {
     title: string;
     description: string;
     suggestion: string;
-    affectedItems: AffectedItem[];
+    affectedItems?: AffectedItem[];
     confidence: AIConfidence;
 }
 
