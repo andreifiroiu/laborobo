@@ -1,4 +1,5 @@
-import { Calendar, Clock, User, Briefcase, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, User, Briefcase, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
+import { Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import type { TodayTask } from '@/types/today';
@@ -125,23 +126,31 @@ export function TaskSheet({ task, onClose, onCompleteTask, onUpdateTask }: TaskS
                             </div>
                         </div>
 
-                        <SheetFooter className="mt-6 flex gap-2">
-                            {task.status === 'todo' && (
-                                <Button variant="outline" onClick={handleStartTask} className="flex-1">
-                                    Start Task
-                                </Button>
-                            )}
-                            {task.status !== 'completed' && (
-                                <Button onClick={handleComplete} className="flex-1">
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Mark Complete
-                                </Button>
-                            )}
-                            {task.status === 'completed' && (
-                                <Button variant="outline" onClick={onClose} className="flex-1">
-                                    Close
-                                </Button>
-                            )}
+                        <SheetFooter className="mt-6 flex flex-col gap-2">
+                            <div className="flex gap-2">
+                                {task.status === 'todo' && (
+                                    <Button variant="outline" onClick={handleStartTask} className="flex-1">
+                                        Start Task
+                                    </Button>
+                                )}
+                                {task.status !== 'completed' && (
+                                    <Button onClick={handleComplete} className="flex-1">
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Mark Complete
+                                    </Button>
+                                )}
+                                {task.status === 'completed' && (
+                                    <Button variant="outline" onClick={onClose} className="flex-1">
+                                        Close
+                                    </Button>
+                                )}
+                            </div>
+                            <Button variant="outline" asChild className="w-full">
+                                <Link href={`/work/tasks/${task.id}`}>
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    View Full Details
+                                </Link>
+                            </Button>
                         </SheetFooter>
                     </>
                 )}
