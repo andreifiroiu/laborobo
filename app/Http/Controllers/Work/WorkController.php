@@ -349,6 +349,7 @@ class WorkController extends Controller
                 'workOrderId' => (string) $task->work_order_id,
                 'workOrderTitle' => $task->workOrder?->title ?? 'Unknown',
                 'projectId' => (string) $task->project_id,
+                'projectName' => $task->project?->name ?? 'Unknown',
                 'assignedToId' => $task->assigned_to_id ? (string) $task->assigned_to_id : null,
                 'assignedToName' => $task->assignedTo?->name ?? 'Unassigned',
                 'status' => $task->status->value,

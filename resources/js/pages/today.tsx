@@ -60,14 +60,50 @@ export default function Today({
         }
     };
 
-    const handleCompleteTask = (id: string) => {
-        // TODO: Implement API call
-        console.log('Completed task:', id);
+    const handleCompleteTask = async (id: string) => {
+        try {
+            const response = await fetch(`/work/tasks/${id}/transition`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN':
+                        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ status: 'done' }),
+            });
+
+            if (response.ok) {
+                setSelectedTask(null);
+                router.reload({ only: ['tasks'] });
+            }
+        } catch (error) {
+            console.error('Failed to complete task:', error);
+        }
     };
 
-    const handleUpdateTask = (id: string, status: TodayTask['status']) => {
-        // TODO: Implement API call
-        console.log('Updated task:', id, status);
+    const handleUpdateTask = async (id: string, status: TodayTask['status']) => {
+        const backendStatus = status === 'completed' ? 'done' : status;
+
+        try {
+            const response = await fetch(`/work/tasks/${id}/transition`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN':
+                        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ status: backendStatus }),
+            });
+
+            if (response.ok) {
+                setSelectedTask(null);
+                router.reload({ only: ['tasks'] });
+            }
+        } catch (error) {
+            console.error('Failed to update task:', error);
+        }
     };
 
     // Handlers for blockers

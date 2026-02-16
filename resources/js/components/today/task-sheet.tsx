@@ -43,14 +43,12 @@ export function TaskSheet({ task, onClose, onCompleteTask, onUpdateTask }: TaskS
     const handleComplete = () => {
         if (task) {
             onCompleteTask?.(task.id);
-            onClose();
         }
     };
 
     const handleStartTask = () => {
         if (task) {
             onUpdateTask?.(task.id, 'in_progress');
-            onClose();
         }
     };
 

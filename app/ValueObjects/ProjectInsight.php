@@ -61,12 +61,12 @@ final readonly class ProjectInsight
      * Convert the insight to an array for serialization.
      *
      * @return array{
+     *     id: string,
      *     type: string,
      *     severity: string,
      *     title: string,
      *     description: string,
-     *     affected_items: array<int, array{id: int, type: string, title: string}>,
-     *     affected_items_count: int,
+     *     affectedItems: array<int, array{id: int, type: string, title: string}>,
      *     suggestion: string|null,
      *     confidence: string
      * }
@@ -74,12 +74,12 @@ final readonly class ProjectInsight
     public function toArray(): array
     {
         return [
+            'id' => md5($this->type . $this->severity . $this->title),
             'type' => $this->type,
             'severity' => $this->severity,
             'title' => $this->title,
             'description' => $this->description,
-            'affected_items' => $this->affectedItems,
-            'affected_items_count' => count($this->affectedItems),
+            'affectedItems' => $this->affectedItems,
             'suggestion' => $this->suggestion,
             'confidence' => $this->confidence->value,
         ];
@@ -93,7 +93,7 @@ final readonly class ProjectInsight
      *     severity: string,
      *     title: string,
      *     description: string,
-     *     affected_items?: array<int, array{id: int, type: string, title: string}>,
+     *     affectedItems?: array<int, array{id: int, type: string, title: string}>,
      *     suggestion?: string|null,
      *     confidence?: string
      * }  $data
@@ -105,7 +105,7 @@ final readonly class ProjectInsight
             severity: $data['severity'],
             title: $data['title'],
             description: $data['description'],
-            affectedItems: $data['affected_items'] ?? [],
+            affectedItems: $data['affectedItems'] ?? [],
             suggestion: $data['suggestion'] ?? null,
             confidence: self::parseConfidence($data['confidence'] ?? 'medium'),
         );

@@ -354,8 +354,7 @@ test('project insight value object serializes correctly', function () {
     expect($array['severity'])->toBe('high');
     expect($array['title'])->toBe('Overdue Tasks');
     expect($array['description'])->toBe('5 tasks are overdue');
-    expect($array['affected_items'])->toHaveCount(2);
-    expect($array['affected_items_count'])->toBe(2);
+    expect($array['affectedItems'])->toHaveCount(2);
     expect($array['suggestion'])->toBe('Review and prioritize these tasks');
     expect($array['confidence'])->toBe('high');
 

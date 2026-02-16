@@ -82,7 +82,7 @@ export function InsightCard({ insight, onClick }: InsightCardProps) {
                     <p className="text-sm text-muted-foreground">{insight.description}</p>
 
                     {/* Affected Items */}
-                    {insight.affectedItems.length > 0 && (
+                    {insight.affectedItems?.length > 0 && (
                         <p className="text-xs text-muted-foreground mt-2">
                             {insight.affectedItems.length} {insight.affectedItems.length === 1 ? 'item' : 'items'} affected
                         </p>
