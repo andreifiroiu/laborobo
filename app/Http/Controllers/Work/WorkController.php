@@ -219,7 +219,7 @@ class WorkController extends Controller
     {
         return Task::forTeam($team->id)
             ->assignedTo($user->id)
-            ->whereNotIn('status', [TaskStatus::Done, TaskStatus::Cancelled])
+            ->whereNotIn('status', [TaskStatus::Done, TaskStatus::Cancelled, TaskStatus::Archived])
             ->with(['workOrder', 'project', 'assignedTo'])
             ->orderBy('due_date')
             ->get()

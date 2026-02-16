@@ -407,6 +407,14 @@ function SortableTaskCard({
     );
 }
 
+/** Format a Date as YYYY-MM-DD using local timezone. */
+const formatLocalDate = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
 /**
  * Calculate smart default due date based on work order due date.
  * If work order due date is within 1 week and in the future, use it.
@@ -426,7 +434,7 @@ const calculateDefaultDueDate = (workOrderDueDate: string | null): string => {
     }
 
     // Default to 7 days from now
-    return oneWeekFromNow.toISOString().split('T')[0];
+    return formatLocalDate(oneWeekFromNow);
 };
 
 /**
@@ -438,22 +446,22 @@ const getPresetDate = (preset: 'today' | 'tomorrow' | 'nextMonday' | 'nextMonth'
 
     switch (preset) {
         case 'today':
-            return today.toISOString().split('T')[0];
+            return formatLocalDate(today);
         case 'tomorrow': {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
-            return tomorrow.toISOString().split('T')[0];
+            return formatLocalDate(tomorrow);
         }
         case 'nextMonday': {
             const nextMonday = new Date(today);
             const daysUntilMonday = (8 - today.getDay()) % 7 || 7;
             nextMonday.setDate(nextMonday.getDate() + daysUntilMonday);
-            return nextMonday.toISOString().split('T')[0];
+            return formatLocalDate(nextMonday);
         }
         case 'nextMonth': {
             const nextMonth = new Date(today);
             nextMonth.setMonth(nextMonth.getMonth() + 1);
-            return nextMonth.toISOString().split('T')[0];
+            return formatLocalDate(nextMonth);
         }
     }
 };
