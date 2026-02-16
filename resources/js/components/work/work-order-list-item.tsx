@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, MoreVertical, FolderMinus, Edit, Trash2 } from 'lucide-react';
+import { GripVertical, MoreVertical, FolderMinus, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +52,12 @@ export function WorkOrderListItem({
         transition,
     };
 
+    const completedStatuses = ['delivered', 'approved'];
+    const isOverdue =
+        !!workOrder.dueDate &&
+        new Date(workOrder.dueDate) < new Date() &&
+        !completedStatuses.includes(workOrder.status);
+
     const handleRemoveFromList = () => {
         router.post(
             `/work/work-orders/${workOrder.id}/remove-from-list`,
@@ -83,7 +89,10 @@ export function WorkOrderListItem({
             ref={setNodeRef}
             style={style}
             className={cn(
-                'flex items-center gap-2 p-3 bg-card border border-border rounded-lg group',
+                'flex items-center gap-2 p-3 bg-card border rounded-lg group',
+                isOverdue
+                    ? 'border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20'
+                    : 'border-border',
                 isDragging && 'opacity-50',
                 isDragOverlay && 'shadow-lg'
             )}
@@ -103,6 +112,9 @@ export function WorkOrderListItem({
                 className="flex-1 min-w-0 hover:text-primary transition-colors"
             >
                 <div className="flex items-center gap-2 mb-1">
+                    {isOverdue && (
+                        <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 dark:text-red-400" />
+                    )}
                     <span className="font-medium truncate">{workOrder.title}</span>
                     <Badge variant="outline" className="flex-shrink-0">
                         {workOrder.status}
@@ -113,11 +125,23 @@ export function WorkOrderListItem({
                     >
                         {workOrder.priority}
                     </Badge>
+                    {isOverdue && (
+                        <Badge variant="destructive" className="flex-shrink-0">
+                            Overdue
+                        </Badge>
+                    )}
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
                     {workOrder.assignedToName} •{' '}
                     {workOrder.completedTasksCount}/{workOrder.tasksCount} tasks
-                    {workOrder.dueDate && ` • Due ${new Date(workOrder.dueDate).toLocaleDateString()}`}
+                    {workOrder.dueDate && (
+                        <>
+                            {' • '}
+                            <span className={isOverdue ? 'text-red-500 dark:text-red-400 font-medium' : ''}>
+                                Due {new Date(workOrder.dueDate).toLocaleDateString()}
+                            </span>
+                        </>
+                    )}
                 </div>
             </Link>
 
