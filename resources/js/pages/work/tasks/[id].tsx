@@ -784,13 +784,26 @@ export default function TaskDetail({
                             </div>
                         </div>
                         <div className="bg-muted flex items-center gap-3 rounded-lg p-3">
-                            <Calendar className="text-muted-foreground h-5 w-5" />
-                            <div>
-                                <div className="text-muted-foreground text-xs">Due Date</div>
-                                <div className="font-medium">
-                                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set'}
-                                </div>
-                            </div>
+                            {(() => {
+                                const taskDueDate = task.dueDate ? new Date(task.dueDate) : null;
+                                const taskIsOverdue = taskDueDate ? taskDueDate < new Date() && task.status !== 'done' : false;
+                                return (
+                                    <>
+                                        <Calendar className={`h-5 w-5 ${taskIsOverdue ? 'text-destructive' : 'text-muted-foreground'}`} />
+                                        <div>
+                                            <div className="text-muted-foreground text-xs">Due Date</div>
+                                            <div className={`font-medium ${taskIsOverdue ? 'text-destructive' : ''}`}>
+                                                {task.dueDate ? (
+                                                    <>
+                                                        {new Date(task.dueDate).toLocaleDateString()}
+                                                        {taskIsOverdue && ' (overdue)'}
+                                                    </>
+                                                ) : 'Not set'}
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>

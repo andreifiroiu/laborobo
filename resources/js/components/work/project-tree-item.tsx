@@ -389,7 +389,13 @@ function WorkOrderInListTreeItem({ workOrder, tasks, onCreateTask }: WorkOrderIn
                             {workOrder.completedTasksCount}/{workOrder.tasksCount} tasks
                         </span>
                         {workOrder.dueDate && (
-                            <span>Due {new Date(workOrder.dueDate).toLocaleDateString()}</span>
+                            <span className={
+                                new Date(workOrder.dueDate) < new Date() && !['done', 'archived', 'cancelled'].includes(workOrder.status)
+                                    ? 'text-destructive font-medium'
+                                    : ''
+                            }>
+                                Due {new Date(workOrder.dueDate).toLocaleDateString()}
+                            </span>
                         )}
                     </div>
                 </Link>
