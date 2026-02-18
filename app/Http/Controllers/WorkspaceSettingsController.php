@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgentTemplate;
 use App\Models\AIAgent;
 use App\Models\AgentActivityLog;
 use App\Models\AuditLog;
@@ -64,10 +65,17 @@ class WorkspaceSettingsController extends Controller
         // Check if current user is team owner
         $isTeamOwner = $user->ownsTeam($team);
 
-        // Get AI agents with configurations
-        $aiAgents = AIAgent::with(['configurations' => function ($q) use ($team) {
+        // Get AI agents with configurations (scoped to current team)
+        $teamAgents = AIAgent::whereHas('configurations', function ($q) use ($team) {
             $q->where('team_id', $team->id);
-        }])->get()->map(function ($agent) use ($team) {
+        })->with(['configurations' => function ($q) use ($team) {
+            $q->where('team_id', $team->id);
+        }])->get();
+
+        // Compute which template IDs are already in use by this team
+        $usedTemplateIds = $teamAgents->pluck('template_id')->filter()->values()->all();
+
+        $aiAgents = $teamAgents->map(function ($agent) {
             $config = $agent->configurations->first();
             return [
                 'id' => $agent->id,
@@ -232,6 +240,17 @@ class WorkspaceSettingsController extends Controller
             'isTeamOwner' => $isTeamOwner,
             'currentUserId' => $user->id,
             'aiAgents' => $aiAgents,
+            'usedTemplateIds' => $usedTemplateIds,
+            'agentTemplates' => AgentTemplate::active()->get()->map(fn ($t) => [
+                'id' => $t->id,
+                'code' => $t->code,
+                'name' => $t->name,
+                'type' => $t->type->value,
+                'description' => $t->description,
+                'defaultTools' => $t->default_tools ?? [],
+                'defaultPermissions' => $t->default_permissions ?? [],
+                'isActive' => $t->is_active,
+            ]),
             'globalAISettings' => [
                 'totalMonthlyBudget' => $globalAISettings->total_monthly_budget,
                 'currentMonthSpend' => $globalAISettings->current_month_spend,
@@ -312,13 +331,13 @@ class WorkspaceSettingsController extends Controller
     public function updateGlobalAI(Request $request)
     {
         $validated = $request->validate([
-            'total_monthly_budget' => 'required|numeric|min:0',
-            'per_project_budget_cap' => 'required|numeric|min:0',
-            'approval_client_facing_content' => 'boolean',
-            'approval_financial_data' => 'boolean',
-            'approval_contractual_changes' => 'boolean',
-            'approval_work_order_creation' => 'boolean',
-            'approval_task_assignment' => 'boolean',
+            'total_monthly_budget' => 'sometimes|numeric|min:0',
+            'per_project_budget_cap' => 'sometimes|numeric|min:0',
+            'approval_client_facing_content' => 'sometimes|boolean',
+            'approval_financial_data' => 'sometimes|boolean',
+            'approval_contractual_changes' => 'sometimes|boolean',
+            'approval_work_order_creation' => 'sometimes|boolean',
+            'approval_task_assignment' => 'sometimes|boolean',
         ]);
 
         $team = $request->user()->currentTeam;

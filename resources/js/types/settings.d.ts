@@ -257,6 +257,7 @@ export interface SettingsPageProps {
     isTeamOwner: boolean;
     currentUserId: number;
     aiAgents: AIAgent[];
+    usedTemplateIds?: number[];
     globalAISettings: GlobalAISettings;
     agentActivityLogs: AgentActivityLog[];
     agentTemplates?: AgentTemplate[];

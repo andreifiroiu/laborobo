@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
     // AI Agents
     // ========================================================================
     Route::post('/settings/agents', [AIAgentsController::class, 'store'])->name('settings.agents.store');
+    Route::delete('/settings/agents/{agent}', [AIAgentsController::class, 'destroy'])->name('settings.agents.destroy');
     Route::patch('/settings/agents/{agent}', [AIAgentsController::class, 'update'])->name('settings.agents.update');
     Route::patch('/settings/agents/{agent}/configuration', [AIAgentsController::class, 'updateConfiguration'])->name('settings.agents.configuration.update');
     Route::post('/settings/agents/{agent}/run', [AIAgentsController::class, 'run'])->name('settings.agents.run');

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronDown, Plus, Filter, Calendar } from 'lucide-react';
+import { ChevronDown, Plus, Filter, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -15,6 +15,7 @@ import {
     BudgetDisplay,
     AgentTemplateSelector,
 } from '@/components/agents';
+import { RemoveAgentDialog } from './remove-agent-dialog';
 import type { AIAgent, GlobalAISettings, AgentActivityLog } from '@/types/settings';
 
 interface AIAgentsSectionProps {
@@ -23,6 +24,7 @@ interface AIAgentsSectionProps {
     activityLogs: AgentActivityLog[];
     agentTemplates?: AgentTemplate[];
     agentTools?: AgentTool[];
+    usedTemplateIds?: number[];
 }
 
 interface AgentTemplate {
@@ -62,11 +64,19 @@ export function AIAgentsSection({
     activityLogs,
     agentTemplates = [],
     agentTools = [],
+    usedTemplateIds = [],
 }: AIAgentsSectionProps) {
     const [expandedAgentId, setExpandedAgentId] = useState<number | null>(null);
+    const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
     const [activeTab, setActiveTab] = useState<AgentTab>('config');
     const [selectedActivity, setSelectedActivity] = useState<ExtendedAgentActivityLog | null>(null);
     const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
+    const [editingBudget, setEditingBudget] = useState(false);
+    const [budgetForm, setBudgetForm] = useState({
+        totalMonthlyBudget: globalSettings.totalMonthlyBudget,
+        perProjectBudgetCap: globalSettings.perProjectBudgetCap,
+    });
+    const [savingBudget, setSavingBudget] = useState(false);
 
     // Activity filters
     const [activityStatusFilter, setActivityStatusFilter] = useState<string>('all');
@@ -139,6 +149,21 @@ export function AIAgentsSection({
         setTemplateSelectorOpen(false);
     };
 
+    const handleSaveBudget = () => {
+        setSavingBudget(true);
+        router.patch('/settings/global-ai', {
+            total_monthly_budget: budgetForm.totalMonthlyBudget,
+            per_project_budget_cap: budgetForm.perProjectBudgetCap,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setEditingBudget(false);
+                setSavingBudget(false);
+            },
+            onError: () => setSavingBudget(false),
+        });
+    };
+
     // Transform config to permissions format for the panel
     const getPermissionsFromConfig = (config: AIAgent['configuration']) => ({
         canCreateWorkOrders: config?.permissions?.canCreateWorkOrders ?? false,
@@ -171,15 +196,12 @@ export function AIAgentsSection({
     };
 
     return (
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h2 className="text-2xl font-semibold mb-2">AI Agents</h2>
-                    <p className="text-muted-foreground">
-                        Configure AI agents, budgets, and permissions
-                    </p>
-                </div>
-                <Button onClick={() => setTemplateSelectorOpen(true)}>
+                <p className="text-muted-foreground">
+                    Configure AI agents, budgets, and permissions
+                </p>
+                <Button className="ml-4" onClick={() => setTemplateSelectorOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Agent
                 </Button>
@@ -187,30 +209,82 @@ export function AIAgentsSection({
 
             {/* Global Budget */}
             <Card className="mb-6">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Global AI Budget</CardTitle>
+                    {!editingBudget && (
+                        <Button variant="ghost" size="sm" onClick={() => setEditingBudget(true)}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-3 gap-6">
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-1">Monthly Budget</p>
-                            <p className="text-2xl font-semibold">
-                                ${globalSettings.totalMonthlyBudget}
-                            </p>
+                    {editingBudget ? (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="totalMonthlyBudget">Monthly Budget ($)</Label>
+                                    <Input
+                                        id="totalMonthlyBudget"
+                                        type="number"
+                                        min={0}
+                                        step={0.01}
+                                        value={budgetForm.totalMonthlyBudget}
+                                        onChange={(e) => setBudgetForm(prev => ({ ...prev, totalMonthlyBudget: parseFloat(e.target.value) || 0 }))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="perProjectBudgetCap">Per-Project Cap ($)</Label>
+                                    <Input
+                                        id="perProjectBudgetCap"
+                                        type="number"
+                                        min={0}
+                                        step={0.01}
+                                        value={budgetForm.perProjectBudgetCap}
+                                        onChange={(e) => setBudgetForm(prev => ({ ...prev, perProjectBudgetCap: parseFloat(e.target.value) || 0 }))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button onClick={handleSaveBudget} disabled={savingBudget}>
+                                    {savingBudget ? 'Saving...' : 'Save'}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setBudgetForm({
+                                            totalMonthlyBudget: globalSettings.totalMonthlyBudget,
+                                            perProjectBudgetCap: globalSettings.perProjectBudgetCap,
+                                        });
+                                        setEditingBudget(false);
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-1">Current Spend</p>
-                            <p className="text-2xl font-semibold text-spend-primary">
-                                ${Number(globalSettings.currentMonthSpend).toFixed(2)}
-                            </p>
+                    ) : (
+                        <div className="grid grid-cols-3 gap-6">
+                            <div>
+                                <p className="text-sm text-muted-foreground mb-1">Monthly Budget</p>
+                                <p className="text-2xl font-semibold">
+                                    ${globalSettings.totalMonthlyBudget}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground mb-1">Current Spend</p>
+                                <p className="text-2xl font-semibold text-spend-primary">
+                                    ${Number(globalSettings.currentMonthSpend).toFixed(2)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground mb-1">Remaining</p>
+                                <p className="text-2xl font-semibold">
+                                    ${(Number(globalSettings.totalMonthlyBudget) - Number(globalSettings.currentMonthSpend)).toFixed(2)}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-1">Remaining</p>
-                            <p className="text-2xl font-semibold">
-                                ${(Number(globalSettings.totalMonthlyBudget) - Number(globalSettings.currentMonthSpend)).toFixed(2)}
-                            </p>
-                        </div>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -252,6 +326,16 @@ export function AIAgentsSection({
                                     >
                                         {agent.status}
                                     </Badge>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setAgentToDelete(agent);
+                                        }}
+                                        className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                        title="Remove agent"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                     <ChevronDown
                                         className={`w-5 h-5 text-muted-foreground transition-transform ${
                                             isExpanded ? 'rotate-180' : ''
@@ -462,6 +546,14 @@ export function AIAgentsSection({
                 isOpen={templateSelectorOpen}
                 onClose={() => setTemplateSelectorOpen(false)}
                 onSelectTemplate={handleCreateAgent}
+                usedTemplateIds={usedTemplateIds}
+            />
+
+            {/* Remove Agent Confirmation */}
+            <RemoveAgentDialog
+                open={!!agentToDelete}
+                onOpenChange={(open) => !open && setAgentToDelete(null)}
+                agent={agentToDelete}
             />
         </div>
     );

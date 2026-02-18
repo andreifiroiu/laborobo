@@ -35,6 +35,8 @@ export default function Settings({
     isTeamOwner,
     currentUserId,
     aiAgents,
+    usedTemplateIds,
+    agentTemplates,
     globalAISettings,
     agentActivityLogs,
     notificationPreferences,
@@ -79,6 +81,8 @@ export default function Settings({
                                         agents={aiAgents}
                                         globalSettings={globalAISettings}
                                         activityLogs={agentActivityLogs}
+                                        agentTemplates={agentTemplates}
+                                        usedTemplateIds={usedTemplateIds}
                                     />
                                 )}
                                 {activeTab === 'integrations' && (

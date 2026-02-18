@@ -81,9 +81,9 @@ class AIAgentsController extends Controller
     {
         $validated = $request->validate([
             'template_id' => 'nullable|exists:agent_templates,id',
-            'name' => 'required|string|max:255',
+            'name' => 'required_without:template_id|nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'type' => 'required_without:template_id|nullable|string',
+            'type' => 'nullable|string',
         ]);
 
         $team = $request->user()->currentTeam;
@@ -91,15 +91,26 @@ class AIAgentsController extends Controller
 
         if (isset($validated['template_id'])) {
             $template = AgentTemplate::findOrFail($validated['template_id']);
+
+            // Prevent duplicate: check if team already has an agent from this template
+            $alreadyExists = AIAgent::where('template_id', $template->id)
+                ->whereHas('configurations', fn ($q) => $q->where('team_id', $team->id))
+                ->exists();
+
+            if ($alreadyExists) {
+                return back()->withErrors(['template_id' => 'An agent from this template has already been added.']);
+            }
         }
 
+        $name = $validated['name'] ?? $template?->name ?? 'Unnamed Agent';
+
         // Generate a unique code for the agent
-        $code = Str::slug($validated['name']) . '-' . $team->id . '-' . Str::random(4);
+        $code = Str::slug($name) . '-' . $team->id . '-' . Str::random(4);
 
         // Create the agent
         $agent = AIAgent::create([
             'code' => $code,
-            'name' => $validated['name'],
+            'name' => $name,
             'type' => $template?->type ?? AgentType::tryFrom($validated['type'] ?? 'project-management') ?? AgentType::ProjectManagement,
             'description' => $validated['description'] ?? $template?->description,
             'capabilities' => $template?->default_tools ?? [],
@@ -250,6 +261,29 @@ class AIAgentsController extends Controller
         ]);
 
         return back()->with('success', 'Agent output rejected');
+    }
+
+    /**
+     * Remove an agent from the current team.
+     */
+    public function destroy(Request $request, AIAgent $agent): RedirectResponse
+    {
+        $team = $request->user()->currentTeam;
+
+        // Delete the team's configuration for this agent
+        AgentConfiguration::where('team_id', $team->id)
+            ->where('ai_agent_id', $agent->id)
+            ->delete();
+
+        // If no other teams reference this agent, clean up entirely
+        if ($agent->configurations()->count() === 0) {
+            $agent->activityLogs()->delete();
+            $agent->workflowStates()->delete();
+            $agent->memories()->delete();
+            $agent->delete();
+        }
+
+        return back()->with('success', 'Agent removed successfully');
     }
 
     /**
