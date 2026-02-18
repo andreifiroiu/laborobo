@@ -61,6 +61,11 @@ abstract class BaseAgent
     protected ?AgentContext $context = null;
 
     /**
+     * The ID of the user running this agent.
+     */
+    protected ?int $runningUserId = null;
+
+    /**
      * Message history for multi-turn conversations.
      *
      * @var array<int, array{role: string, content: string}>
@@ -93,13 +98,20 @@ abstract class BaseAgent
      */
     public function provider(): array
     {
-        $defaultProvider = $this->globalSettings?->default_provider ?? 'anthropic';
-        $defaultModel = $this->globalSettings?->default_model ?? 'claude-3-sonnet-20240229';
+        $provider = $this->configuration->ai_provider
+            ?? $this->aiAgent->template?->default_ai_provider
+            ?? $this->globalSettings?->default_provider
+            ?? 'anthropic';
+
+        $model = $this->configuration->ai_model
+            ?? $this->aiAgent->template?->default_ai_model
+            ?? $this->globalSettings?->default_model
+            ?? 'claude-sonnet-4-5-20250929';
 
         return [
-            'provider' => $defaultProvider,
-            'model' => $defaultModel,
-            'api_key' => $this->getApiKey($defaultProvider),
+            'provider' => $provider,
+            'model' => $model,
+            'api_key' => $this->getApiKey($provider),
         ];
     }
 
@@ -210,6 +222,16 @@ abstract class BaseAgent
     }
 
     /**
+     * Set the user running this agent (for API key resolution).
+     */
+    public function setRunningUser(int $userId): self
+    {
+        $this->runningUserId = $userId;
+
+        return $this;
+    }
+
+    /**
      * Build the full system prompt including context.
      */
     public function buildSystemPrompt(): string
@@ -260,15 +282,16 @@ abstract class BaseAgent
     }
 
     /**
-     * Get the API key for a provider from environment.
+     * Get the API key for a provider using 3-tier resolution:
+     * 1. User's private key (if runningUserId set)
+     * 2. Team shared key
+     * 3. Environment variable via config
      */
     protected function getApiKey(string $provider): ?string
     {
-        return match ($provider) {
-            'anthropic' => config('services.anthropic.api_key'),
-            'openai' => config('services.openai.api_key'),
-            default => null,
-        };
+        $teamId = $this->configuration->team_id;
+
+        return \App\Models\TeamApiKey::resolveKey($provider, $teamId, $this->runningUserId);
     }
 
     /**

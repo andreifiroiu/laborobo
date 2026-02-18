@@ -49,7 +49,11 @@ class AIAgentsController extends Controller
      */
     public function updateConfig(Request $request, AIAgent $agent): RedirectResponse
     {
+        $providerKeys = implode(',', array_keys(config('ai-providers.providers', [])));
+
         $validated = $request->validate([
+            'ai_provider' => "nullable|string|in:{$providerKeys}",
+            'ai_model' => 'nullable|string|max:100',
             'daily_run_limit' => 'required|integer|min:1',
             'weekly_run_limit' => 'required|integer|min:1',
             'monthly_budget_cap' => 'required|numeric|min:0',
@@ -124,6 +128,8 @@ class AIAgentsController extends Controller
         AgentConfiguration::create([
             'team_id' => $team->id,
             'ai_agent_id' => $agent->id,
+            'ai_provider' => $template?->default_ai_provider,
+            'ai_model' => $template?->default_ai_model,
             'enabled' => true,
             'daily_run_limit' => 50,
             'weekly_run_limit' => 200,
@@ -160,7 +166,11 @@ class AIAgentsController extends Controller
      */
     public function updateConfiguration(Request $request, AIAgent $agent): RedirectResponse
     {
+        $providerKeys = implode(',', array_keys(config('ai-providers.providers', [])));
+
         $validated = $request->validate([
+            'ai_provider' => "nullable|string|in:{$providerKeys}",
+            'ai_model' => 'nullable|string|max:100',
             'can_create_work_orders' => 'boolean',
             'can_modify_tasks' => 'boolean',
             'can_access_client_data' => 'boolean',

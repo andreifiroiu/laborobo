@@ -11,6 +11,7 @@ use App\Models\BillingInfo;
 use App\Models\GlobalAISettings;
 use App\Models\Invoice;
 use App\Models\NotificationPreference;
+use App\Models\TeamApiKey;
 use App\Models\TeamIntegration;
 use App\Models\WorkspaceSettings;
 use Illuminate\Http\Request;
@@ -87,6 +88,8 @@ class WorkspaceSettingsController extends Controller
                 'status' => $config?->enabled ? 'enabled' : 'disabled',
                 'configuration' => $config ? [
                     'enabled' => $config->enabled,
+                    'aiProvider' => $config->ai_provider,
+                    'aiModel' => $config->ai_model,
                     'dailyRunLimit' => $config->daily_run_limit,
                     'weeklyRunLimit' => $config->weekly_run_limit,
                     'monthlyBudgetCap' => $config->monthly_budget_cap,
@@ -221,6 +224,30 @@ class WorkspaceSettingsController extends Controller
                 'pdfUrl' => $invoice->pdf_url,
             ]);
 
+        // Get AI providers from config
+        $aiProviders = collect(config('ai-providers.providers', []))->map(fn ($p, $code) => [
+            'code' => $code,
+            'name' => $p['name'],
+            'description' => $p['description'],
+            'icon' => $p['icon'],
+            'docsUrl' => $p['docs_url'],
+            'models' => collect($p['models'] ?? [])->map(fn ($label, $id) => [
+                'id' => $id,
+                'label' => $label,
+            ])->values(),
+        ])->values();
+
+        // Get API keys visible to this user
+        $apiKeys = TeamApiKey::forTeamAndUser($team->id, $user->id)->map(fn ($k) => [
+            'id' => $k->id,
+            'provider' => $k->provider,
+            'keyLastFour' => $k->key_last_four,
+            'label' => $k->label,
+            'scope' => $k->isTeamLevel() ? 'team' : 'user',
+            'lastUsedAt' => $k->last_used_at?->toISOString(),
+            'createdAt' => $k->created_at->toISOString(),
+        ]);
+
         return Inertia::render('settings/index', [
             'workspaceSettings' => [
                 'name' => $workspaceSettings->name,
@@ -250,6 +277,8 @@ class WorkspaceSettingsController extends Controller
                 'defaultTools' => $t->default_tools ?? [],
                 'defaultPermissions' => $t->default_permissions ?? [],
                 'isActive' => $t->is_active,
+                'defaultAiProvider' => $t->default_ai_provider,
+                'defaultAiModel' => $t->default_ai_model,
             ]),
             'globalAISettings' => [
                 'totalMonthlyBudget' => $globalAISettings->total_monthly_budget,
@@ -305,6 +334,8 @@ class WorkspaceSettingsController extends Controller
             'integrations' => $integrations,
             'billingInfo' => $billingInfo,
             'invoices' => $invoices,
+            'aiProviders' => $aiProviders,
+            'apiKeys' => $apiKeys,
         ]);
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Settings\AgentActivityController;
 use App\Http\Controllers\Settings\AgentTemplateController;
 use App\Http\Controllers\Settings\AgentWorkflowController;
 use App\Http\Controllers\Settings\AIAgentsController;
+use App\Http\Controllers\Settings\ApiKeysController;
 use App\Http\Controllers\Settings\AuditLogController;
 use App\Http\Controllers\Settings\IntegrationsController;
 use App\Http\Controllers\Settings\InvitationController;
@@ -99,6 +100,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/workflow-states/{workflowState}', [AgentWorkflowController::class, 'show'])->name('settings.workflow-states.show');
     Route::post('/settings/workflow-states/{workflowState}/approve', [AgentWorkflowController::class, 'approve'])->name('settings.workflow-states.approve');
     Route::post('/settings/workflow-states/{workflowState}/reject', [AgentWorkflowController::class, 'reject'])->name('settings.workflow-states.reject');
+
+    // ========================================================================
+    // API Keys
+    // ========================================================================
+    Route::post('/settings/api-keys', [ApiKeysController::class, 'store'])->name('settings.api-keys.store');
+    Route::delete('/settings/api-keys/{apiKey}', [ApiKeysController::class, 'destroy'])->name('settings.api-keys.destroy');
 
     // ========================================================================
     // Notifications

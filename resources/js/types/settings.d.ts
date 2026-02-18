@@ -56,6 +56,8 @@ export interface AgentBehaviorSettings {
 
 export interface AgentConfiguration {
     enabled: boolean;
+    aiProvider: string | null;
+    aiModel: string | null;
     dailyRunLimit: number;
     weeklyRunLimit: number;
     monthlyBudgetCap: number;
@@ -136,6 +138,8 @@ export interface AgentTemplate {
     defaultTools: string[];
     defaultPermissions: string[];
     isActive: boolean;
+    defaultAiProvider: string | null;
+    defaultAiModel: string | null;
 }
 
 export interface AgentTool {
@@ -249,6 +253,25 @@ export interface Invoice {
     pdfUrl: string | null;
 }
 
+export interface AIProvider {
+    code: string;
+    name: string;
+    description: string;
+    icon: string;
+    docsUrl: string;
+    models: { id: string; label: string }[];
+}
+
+export interface TeamApiKey {
+    id: number;
+    provider: string;
+    keyLastFour: string;
+    label: string | null;
+    scope: 'user' | 'team';
+    lastUsedAt: string | null;
+    createdAt: string;
+}
+
 export interface SettingsPageProps {
     workspaceSettings: WorkspaceSettings;
     teamMembers: TeamMember[];
@@ -267,4 +290,6 @@ export interface SettingsPageProps {
     integrations: Integration[];
     billingInfo: BillingInfo | null;
     invoices: Invoice[];
+    aiProviders: AIProvider[];
+    apiKeys: TeamApiKey[];
 }

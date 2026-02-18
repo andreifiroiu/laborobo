@@ -35,6 +35,8 @@ interface AgentTemplate {
     defaultTools: string[];
     defaultPermissions: string[];
     isActive: boolean;
+    defaultAiProvider?: string | null;
+    defaultAiModel?: string | null;
 }
 
 interface AgentTemplateSelectorProps {
@@ -42,6 +44,7 @@ interface AgentTemplateSelectorProps {
     isOpen: boolean;
     onClose: () => void;
     onSelectTemplate: (template: AgentTemplate | null, customName?: string, customDescription?: string) => void;
+    usedTemplateIds?: number[];
 }
 
 // Map agent types to icons
@@ -75,6 +78,7 @@ export function AgentTemplateSelector({
     isOpen,
     onClose,
     onSelectTemplate,
+    usedTemplateIds = [],
 }: AgentTemplateSelectorProps) {
     const [selectedTemplate, setSelectedTemplate] = useState<AgentTemplate | null>(null);
     const [isCustomMode, setIsCustomMode] = useState(false);
@@ -194,17 +198,22 @@ export function AgentTemplateSelector({
                         {filteredTemplates.map((template) => {
                             const Icon = getIcon(template);
                             const isSelected = selectedTemplate?.id === template.id;
+                            const isUsed = usedTemplateIds.includes(template.id);
 
                             return (
                                 <Card
                                     key={template.id}
                                     className={cn(
-                                        'cursor-pointer transition-all',
-                                        isSelected
+                                        'transition-all',
+                                        isUsed
+                                            ? 'opacity-50 cursor-not-allowed'
+                                            : 'cursor-pointer',
+                                        isSelected && !isUsed
                                             ? 'ring-2 ring-primary'
-                                            : 'hover:bg-muted/50'
+                                            : !isUsed && 'hover:bg-muted/50'
                                     )}
                                     onClick={() => {
+                                        if (isUsed) return;
                                         setSelectedTemplate(template);
                                         setIsCustomMode(false);
                                     }}
@@ -215,14 +224,28 @@ export function AgentTemplateSelector({
                                                 <Icon className="w-5 h-5 text-muted-foreground" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <CardTitle className="text-base">
-                                                    {template.name}
-                                                </CardTitle>
+                                                <div className="flex items-center gap-2">
+                                                    <CardTitle className="text-base">
+                                                        {template.name}
+                                                    </CardTitle>
+                                                    {template.defaultAiProvider && (
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {template.defaultAiProvider}
+                                                            {template.defaultAiModel ? ` / ${template.defaultAiModel}` : ''}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                                 <CardDescription className="mt-1">
                                                     {template.description}
                                                 </CardDescription>
                                             </div>
-                                            <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                                            {isUsed ? (
+                                                <Badge variant="secondary" className="flex-shrink-0 text-xs">
+                                                    Already added
+                                                </Badge>
+                                            ) : (
+                                                <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                                            )}
                                         </div>
                                     </CardHeader>
                                     {isSelected && (

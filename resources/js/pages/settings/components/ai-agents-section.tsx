@@ -16,7 +16,7 @@ import {
     AgentTemplateSelector,
 } from '@/components/agents';
 import { RemoveAgentDialog } from './remove-agent-dialog';
-import type { AIAgent, GlobalAISettings, AgentActivityLog } from '@/types/settings';
+import type { AIAgent, GlobalAISettings, AgentActivityLog, AIProvider } from '@/types/settings';
 
 interface AIAgentsSectionProps {
     agents: AIAgent[];
@@ -25,6 +25,7 @@ interface AIAgentsSectionProps {
     agentTemplates?: AgentTemplate[];
     agentTools?: AgentTool[];
     usedTemplateIds?: number[];
+    aiProviders?: AIProvider[];
 }
 
 interface AgentTemplate {
@@ -65,6 +66,7 @@ export function AIAgentsSection({
     agentTemplates = [],
     agentTools = [],
     usedTemplateIds = [],
+    aiProviders = [],
 }: AIAgentsSectionProps) {
     const [expandedAgentId, setExpandedAgentId] = useState<number | null>(null);
     const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
@@ -390,6 +392,58 @@ export function AIAgentsSection({
                                                             }`}
                                                         />
                                                     </button>
+                                                </div>
+
+                                                {/* AI Provider & Model */}
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>AI Provider</Label>
+                                                        <Select
+                                                            value={config.aiProvider ?? '__default__'}
+                                                            onValueChange={(value) => {
+                                                                const provider = value === '__default__' ? null : value;
+                                                                handlePermissionChange(agent.id, {
+                                                                    ai_provider: provider,
+                                                                    ai_model: null,
+                                                                });
+                                                            }}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select provider" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="__default__">(Use default)</SelectItem>
+                                                                {aiProviders.map((p) => (
+                                                                    <SelectItem key={p.code} value={p.code}>
+                                                                        {p.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>AI Model</Label>
+                                                        <Select
+                                                            value={config.aiModel ?? '__default__'}
+                                                            onValueChange={(value) => {
+                                                                handlePermissionChange(agent.id, {
+                                                                    ai_model: value === '__default__' ? null : value,
+                                                                });
+                                                            }}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select model" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="__default__">(Use default)</SelectItem>
+                                                                {(aiProviders.find((p) => p.code === config.aiProvider)?.models ?? []).map((m) => (
+                                                                    <SelectItem key={m.id} value={m.id}>
+                                                                        {m.label}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
                                                 </div>
 
                                                 {/* Run Limits */}

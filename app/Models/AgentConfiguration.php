@@ -15,6 +15,8 @@ class AgentConfiguration extends Model
     protected $fillable = [
         'team_id',
         'ai_agent_id',
+        'ai_provider',
+        'ai_model',
         'enabled',
         'daily_run_limit',
         'weekly_run_limit',

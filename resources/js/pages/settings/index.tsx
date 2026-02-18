@@ -9,6 +9,7 @@ import { NotificationsSection } from './components/notifications-section';
 import { AuditLogSection } from './components/audit-log-section';
 import { IntegrationsSection } from './components/integrations-section';
 import { BillingSection } from './components/billing-section';
+import { ApiKeysSection } from './components/api-keys-section';
 import { ComingSoonSection } from './components/coming-soon-section';
 import type { BreadcrumbItem } from '@/types';
 import type { SettingsPageProps } from '@/types/settings';
@@ -21,6 +22,7 @@ const tabTitles: Record<string, string> = {
     'workspace': 'Workspace',
     'team': 'Team & Permissions',
     'ai-agents': 'AI Agents',
+    'api-keys': 'API Keys',
     'integrations': 'Integrations',
     'billing': 'Billing',
     'notifications': 'Notifications',
@@ -44,6 +46,8 @@ export default function Settings({
     integrations,
     billingInfo,
     invoices,
+    aiProviders,
+    apiKeys,
 }: SettingsPageProps) {
     const searchParams = new URLSearchParams(window.location.search);
     const activeTab = searchParams.get('tab') || 'workspace';
@@ -83,7 +87,11 @@ export default function Settings({
                                         activityLogs={agentActivityLogs}
                                         agentTemplates={agentTemplates}
                                         usedTemplateIds={usedTemplateIds}
+                                        aiProviders={aiProviders}
                                     />
+                                )}
+                                {activeTab === 'api-keys' && (
+                                    <ApiKeysSection providers={aiProviders} apiKeys={apiKeys} />
                                 )}
                                 {activeTab === 'integrations' && (
                                     <IntegrationsSection integrations={integrations} />

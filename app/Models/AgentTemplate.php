@@ -22,6 +22,8 @@ class AgentTemplate extends Model
         'default_tools',
         'default_permissions',
         'is_active',
+        'default_ai_provider',
+        'default_ai_model',
     ];
 
     protected $casts = [

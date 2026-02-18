@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/react';
-import { Settings, Users, Bot, Plug, CreditCard, Bell, FileText, DollarSign } from 'lucide-react';
+import { Settings, Users, Bot, Key, Plug, CreditCard, Bell, FileText, DollarSign } from 'lucide-react';
 
 interface SettingsNavItem {
   title: string;
@@ -22,6 +22,7 @@ const settingsNavItems: SettingsNavItem[] = [
   { title: 'Team & Permissions', value: 'team', icon: Users },
   { title: 'Rates', value: 'rates', href: '/account/settings/rates', icon: DollarSign },
   { title: 'AI Agents', value: 'ai-agents', icon: Bot },
+  { title: 'API Keys', value: 'api-keys', icon: Key },
   { title: 'Integrations', value: 'integrations', icon: Plug },
   { title: 'Billing', value: 'billing', icon: CreditCard },
   { title: 'Notifications', value: 'notifications', icon: Bell },
