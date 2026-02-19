@@ -546,6 +546,8 @@ export default function WorkOrderDetail({
     // PM Copilot state
     const [pmCopilotMode, setPMCopilotMode] = useState<PMCopilotMode>(workOrder.pmCopilotMode ?? 'full');
     const [approvedAlternativeId, setApprovedAlternativeId] = useState<string | null>(null);
+    const [pmCopilotFeedback, setPmCopilotFeedback] = useState<string | null>(null);
+    const [pmCopilotError, setPmCopilotError] = useState<string | null>(null);
 
     // PM Copilot hooks
     const { trigger: triggerPMCopilot, isLoading: isPMCopilotRunning } = useTriggerPMCopilot();
@@ -1022,10 +1024,25 @@ export default function WorkOrderDetail({
      * Handle PM Copilot trigger
      */
     const handlePMCopilotTrigger = useCallback(async () => {
+        setPmCopilotFeedback(null);
+        setPmCopilotError(null);
+
         const result = await triggerPMCopilot(workOrder.id);
         if (result.success) {
-            // Fetch suggestions after workflow completes
-            await fetchSuggestions();
+            const suggestionsResult = await fetchSuggestions();
+            const alternatives = suggestionsResult?.data?.alternatives ?? [];
+            if (alternatives.length > 0) {
+                const totalDeliverables = alternatives.reduce((sum, alt) => sum + (alt.deliverables?.length ?? 0), 0);
+                const totalTasks = alternatives.reduce((sum, alt) => sum + (alt.tasks?.length ?? 0), 0);
+                const parts: string[] = [`${alternatives.length} alternative${alternatives.length !== 1 ? 's' : ''}`];
+                if (totalDeliverables > 0) parts.push(`${totalDeliverables} deliverable${totalDeliverables !== 1 ? 's' : ''}`);
+                if (totalTasks > 0) parts.push(`${totalTasks} task${totalTasks !== 1 ? 's' : ''}`);
+                setPmCopilotFeedback(`Plan generated — ${parts.join(' with ')} suggested.`);
+            } else {
+                setPmCopilotFeedback('Plan generated — review the suggestions below.');
+            }
+        } else {
+            setPmCopilotError(`Failed to generate plan: ${result.error || 'Unknown error'}`);
         }
     }, [triggerPMCopilot, workOrder.id, fetchSuggestions]);
 
@@ -1659,6 +1676,8 @@ export default function WorkOrderDetail({
                                         onTrigger={handlePMCopilotTrigger}
                                         isRunning={isPMCopilotRunning}
                                         disabled={isApproving || isRejecting}
+                                        feedbackMessage={pmCopilotFeedback}
+                                        feedbackError={pmCopilotError}
                                     />
 
                                     <PMCopilotSettingsToggle

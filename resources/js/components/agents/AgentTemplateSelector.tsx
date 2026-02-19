@@ -139,10 +139,10 @@ export function AgentTemplateSelector({
                     {/* Custom Agent Option */}
                     <Card
                         className={cn(
-                            'cursor-pointer transition-all',
+                            'cursor-pointer transition-all border-2',
                             isCustomMode
-                                ? 'ring-2 ring-primary'
-                                : 'hover:bg-muted/50'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-transparent hover:bg-muted/50'
                         )}
                         onClick={() => {
                             setIsCustomMode(true);
@@ -204,13 +204,13 @@ export function AgentTemplateSelector({
                                 <Card
                                     key={template.id}
                                     className={cn(
-                                        'transition-all',
+                                        'transition-all border-2',
                                         isUsed
-                                            ? 'opacity-50 cursor-not-allowed'
+                                            ? 'opacity-50 cursor-not-allowed border-transparent'
                                             : 'cursor-pointer',
                                         isSelected && !isUsed
-                                            ? 'ring-2 ring-primary'
-                                            : !isUsed && 'hover:bg-muted/50'
+                                            ? 'border-primary bg-primary/5'
+                                            : !isUsed && 'border-transparent hover:bg-muted/50'
                                     )}
                                     onClick={() => {
                                         if (isUsed) return;

@@ -135,6 +135,8 @@ export interface PMCopilotTriggerButtonProps {
     onTrigger: () => void;
     isRunning?: boolean;
     disabled?: boolean;
+    feedbackMessage?: string | null;
+    feedbackError?: string | null;
 }
 
 /**
