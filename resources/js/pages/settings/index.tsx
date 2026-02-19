@@ -47,6 +47,7 @@ export default function Settings({
     billingInfo,
     invoices,
     aiProviders,
+    agentTools,
     apiKeys,
 }: SettingsPageProps) {
     const searchParams = new URLSearchParams(window.location.search);
@@ -86,6 +87,7 @@ export default function Settings({
                                         globalSettings={globalAISettings}
                                         activityLogs={agentActivityLogs}
                                         agentTemplates={agentTemplates}
+                                        agentTools={agentTools}
                                         usedTemplateIds={usedTemplateIds}
                                         aiProviders={aiProviders}
                                     />

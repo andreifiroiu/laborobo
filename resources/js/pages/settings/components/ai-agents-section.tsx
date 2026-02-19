@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ChevronDown, Plus, Filter, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
     AgentPermissionsPanel,
     AgentToolsPanel,
@@ -122,7 +121,7 @@ export function AIAgentsSection({
         return agentTools.filter((tool) => agent.tools.includes(tool.name));
     };
 
-    const handlePermissionChange = (agentId: number, updates: Record<string, unknown>) => {
+    const handlePermissionChange = (agentId: number, updates: Record<string, string | number | boolean | null>) => {
         router.patch(
             `/settings/agents/${agentId}/configuration`,
             updates,
