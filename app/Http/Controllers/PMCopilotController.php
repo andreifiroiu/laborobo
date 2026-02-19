@@ -68,12 +68,19 @@ class PMCopilotController extends Controller
                     'workflow_state_id' => $workflowState->id,
                     'error' => $workflowError->getMessage(),
                 ]);
-                $status = 'error';
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PM Copilot workflow failed: ' . $workflowError->getMessage(),
+                    'error' => $workflowError->getMessage(),
+                    'workflow_state_id' => $workflowState->id,
+                    'status' => 'error',
+                ], 500);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'PM Copilot workflow started',
+                'message' => 'PM Copilot workflow completed',
                 'workflow_state_id' => $workflowState->id,
                 'status' => $status,
             ]);
@@ -113,21 +120,77 @@ class PMCopilotController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'No PM Copilot workflow found for this work order',
-                'deliverable_suggestions' => [],
-                'task_suggestions' => [],
+                'alternatives' => [],
+                'insights' => [],
             ], 404);
         }
 
         $stateData = $workflowState->state_data ?? [];
-        $deliverableSuggestions = $stateData['deliverable_suggestions'] ?? [];
-        $taskSuggestions = $stateData['task_suggestions'] ?? [];
+        $deliverableAlternatives = $stateData['deliverable_alternatives'] ?? [];
+        $taskBreakdown = $stateData['task_breakdown'] ?? [];
+        $insights = $stateData['insights'] ?? [];
+
+        // Map task breakdown by deliverable title for merging into alternatives
+        $tasksByDeliverable = [];
+        foreach ($taskBreakdown as $breakdown) {
+            $deliverableTitle = $breakdown['deliverable_title'] ?? '';
+            $tasksByDeliverable[$deliverableTitle] = $breakdown['tasks'] ?? [];
+        }
+
+        // Transform workflow state into the frontend PlanAlternative shape
+        $alternatives = array_map(function (array $alt) use ($tasksByDeliverable) {
+            $deliverables = $alt['deliverables'] ?? [];
+
+            // Collect tasks for all deliverables in this alternative
+            $tasks = [];
+            foreach ($deliverables as $deliverable) {
+                $title = $deliverable['title'] ?? '';
+                if (isset($tasksByDeliverable[$title])) {
+                    $tasks = array_merge($tasks, $tasksByDeliverable[$title]);
+                }
+            }
+
+            return [
+                'id' => (string) ($alt['alternative_id'] ?? ''),
+                'name' => $alt['name'] ?? 'Untitled',
+                'description' => $alt['reasoning'] ?? '',
+                'confidence' => $alt['confidence'] ?? 'medium',
+                'deliverables' => array_map(fn (array $d) => [
+                    'id' => md5($d['title'] ?? ''),
+                    'title' => $d['title'] ?? '',
+                    'description' => $d['description'] ?? '',
+                    'type' => $d['type'] ?? 'other',
+                    'acceptanceCriteria' => $d['acceptance_criteria'] ?? [],
+                    'confidence' => $d['confidence'] ?? 'medium',
+                ], $deliverables),
+                'tasks' => array_map(fn (array $t) => [
+                    'id' => md5($t['title'] ?? ''),
+                    'title' => $t['title'] ?? '',
+                    'description' => $t['description'] ?? '',
+                    'estimatedHours' => $t['estimated_hours'] ?? 0,
+                    'positionInWorkOrder' => $t['position_in_work_order'] ?? 0,
+                    'checklistItems' => $t['checklist_items'] ?? [],
+                    'dependencies' => array_map('strval', $t['dependencies'] ?? []),
+                    'confidence' => $t['confidence'] ?? 'medium',
+                ], $tasks),
+            ];
+        }, $deliverableAlternatives);
+
+        $status = $workflowState->isCompleted() ? 'completed' : ($workflowState->isPaused() ? 'paused' : 'running');
 
         return response()->json([
             'success' => true,
-            'workflow_state_id' => $workflowState->id,
-            'status' => $workflowState->isCompleted() ? 'completed' : ($workflowState->isPaused() ? 'paused' : 'running'),
-            'deliverable_suggestions' => $deliverableSuggestions,
-            'task_suggestions' => $taskSuggestions,
+            'workOrderId' => (string) $workOrder->id,
+            'workflowState' => [
+                'status' => $status,
+                'currentStep' => $workflowState->current_node,
+                'progress' => $status === 'completed' ? 100 : 50,
+                'error' => null,
+            ],
+            'alternatives' => $alternatives,
+            'insights' => $insights,
+            'createdAt' => $workflowState->created_at?->toIso8601String() ?? '',
+            'updatedAt' => $workflowState->updated_at?->toIso8601String() ?? '',
         ]);
     }
 
