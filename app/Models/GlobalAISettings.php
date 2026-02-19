@@ -13,6 +13,8 @@ class GlobalAISettings extends Model
 
     protected $fillable = [
         'team_id',
+        'default_provider',
+        'default_model',
         'total_monthly_budget',
         'current_month_spend',
         'per_project_budget_cap',
@@ -56,6 +58,8 @@ class GlobalAISettings extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
+        'default_provider' => 'anthropic',
+        'default_model' => 'claude-sonnet-4-20250514',
         'pm_copilot_auto_suggest' => false,
         'pm_copilot_auto_approval_threshold' => 0.8,
         'client_comms_auto_draft' => false,

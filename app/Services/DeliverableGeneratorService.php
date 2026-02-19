@@ -8,8 +8,10 @@ use App\Enums\AIConfidence;
 use App\Enums\DeliverableType;
 use App\Models\Playbook;
 use App\Models\WorkOrder;
+use App\Services\AI\LLMService;
 use App\ValueObjects\DeliverableSuggestion;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -31,6 +33,10 @@ class DeliverableGeneratorService
     private const MIN_ALTERNATIVES = 2;
 
     private const MAX_ALTERNATIVES = 3;
+
+    public function __construct(
+        private readonly ?LLMService $llmService = null,
+    ) {}
 
     /**
      * Generate deliverable alternatives for a work order.
@@ -196,9 +202,18 @@ class DeliverableGeneratorService
     private function generateSuggestions(
         WorkOrder $workOrder,
         Collection $playbooks,
-        array $_context,
+        array $context,
         AIConfidence $baseConfidence
     ): array {
+        // Try LLM-based generation first
+        if ($this->llmService !== null) {
+            $llmSuggestions = $this->generateViaLLM($workOrder, $context);
+            if ($llmSuggestions !== null) {
+                return $llmSuggestions;
+            }
+        }
+
+        // Fall back to rule-based heuristics
         $suggestions = [];
 
         // Strategy 1: Playbook-based suggestion (if playbook available)
@@ -504,6 +519,46 @@ class DeliverableGeneratorService
      * @param  array<string, mixed>  $workOrderContext
      * @param  array<int, array<string, mixed>>  $playbookContext
      */
+    /**
+     * Attempt to generate deliverable suggestions via LLM.
+     *
+     * @param  array{work_order: array, playbooks: array, prompt: string}  $context
+     * @return array<DeliverableSuggestion>|null
+     */
+    private function generateViaLLM(WorkOrder $workOrder, array $context): ?array
+    {
+        try {
+            $response = $this->llmService->complete(
+                systemPrompt: 'You are a project management assistant specializing in deliverable planning. Always respond with valid JSON.',
+                userPrompt: $context['prompt'],
+                teamId: $workOrder->team_id,
+            );
+
+            if ($response === null) {
+                return null;
+            }
+
+            $decoded = json_decode($response->content, true);
+            if (! is_array($decoded)) {
+                return null;
+            }
+
+            $suggestions = array_map(
+                fn (array $d) => DeliverableSuggestion::fromArray($d),
+                $decoded
+            );
+
+            return ! empty($suggestions) ? $suggestions : null;
+        } catch (\Throwable $e) {
+            Log::warning('LLM deliverable generation failed, falling back to heuristics', [
+                'work_order_id' => $workOrder->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     private function constructLLMPrompt(array $workOrderContext, array $playbookContext): string
     {
         $prompt = <<<'PROMPT'

@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Agents\BaseAgent;
+use App\Agents\ClientCommsAgent;
+use App\Agents\DispatcherAgent;
+use App\Agents\PMCopilotAgent;
 use App\Models\AgentActivityLog;
 use App\Models\AgentConfiguration;
 use App\Models\AIAgent;
 use App\ValueObjects\AgentContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use NeuronAI\Chat\Messages\UserMessage;
 use Throwable;
 
 /**
@@ -18,7 +23,7 @@ use Throwable;
  * Handles the complete lifecycle of an agent execution:
  * 1. Budget validation
  * 2. Context building
- * 3. Agent execution
+ * 3. Agent execution (via NeuronAI)
  * 4. Activity logging
  */
 class AgentRunner
@@ -51,6 +56,7 @@ class AgentRunner
         $contextAccessed = [];
         $output = null;
         $error = null;
+        $result = [];
 
         try {
             // Step 1: Validate budget
@@ -82,7 +88,13 @@ class AgentRunner
             }
 
             // Step 3: Execute agent logic
-            $result = $this->executeAgent($agent, $config, $input, $context);
+            // Check if input requests a direct tool execution
+            if (isset($input['tool']) && isset($input['tool_params'])) {
+                $result = $this->executeDirectToolCall($agent, $config, $input);
+            } else {
+                $result = $this->executeAgent($agent, $config, $input, $context);
+            }
+
             $output = $result['output'];
             $toolCalls = $result['tool_calls'] ?? [];
 
@@ -138,11 +150,10 @@ class AgentRunner
     }
 
     /**
-     * Execute the agent logic.
+     * Execute the agent via NeuronAI chat.
      *
-     * This method is designed to be replaced with actual LLM integration
-     * when neuron-ai is available. For now, it provides a placeholder
-     * that can process tool calls and return mock responses.
+     * Resolves the agent instance, configures it with context, and runs
+     * the prompt through the LLM with tool access.
      *
      * @param  AIAgent  $agent  The AI agent
      * @param  AgentConfiguration  $config  The agent's configuration
@@ -156,55 +167,142 @@ class AgentRunner
         array $input,
         ?AgentContext $context,
     ): array {
-        // When neuron-ai is available, this will use the actual LLM.
-        // For now, return a placeholder response that acknowledges the input.
+        $prompt = $input['prompt'] ?? json_encode($input);
 
-        $toolCalls = [];
-        $tokensUsed = 0;
+        // Resolve and configure the agent instance
+        $agentInstance = $this->resolveAgentInstance($agent, $config);
 
-        // Check if input requests a tool execution
-        if (isset($input['tool']) && isset($input['tool_params'])) {
-            $toolName = $input['tool'];
-            $toolParams = $input['tool_params'];
-
-            $toolResult = $this->toolGateway->execute(
-                $agent,
-                $config,
-                $toolName,
-                $toolParams,
-            );
-
-            $toolCalls[] = [
-                'tool' => $toolName,
-                'params' => $toolParams,
-                'result' => $toolResult->toArray(),
-                'status' => $toolResult->status,
-            ];
-
-            $output = $toolResult->success
-                ? json_encode($toolResult->data)
-                : "Tool execution failed: {$toolResult->error}";
-        } else {
-            // Placeholder response for prompt-based input
-            $prompt = $input['prompt'] ?? json_encode($input);
-            $output = $this->generatePlaceholderResponse($agent, $prompt, $context);
+        if ($context !== null) {
+            $agentInstance->setContext($context);
         }
 
-        // Estimate token usage based on input/output length
-        $inputTokens = (int) ceil(strlen(json_encode($input) ?: '') / 4);
-        $outputTokens = (int) ceil(strlen($output ?? '') / 4);
-        $contextTokens = $context?->getTokenEstimate() ?? 0;
-        $tokensUsed = $inputTokens + $outputTokens + $contextTokens;
+        // Check if API key is available for real LLM call
+        $providerConfig = $agentInstance->getProviderConfig();
 
-        // Estimate cost based on token usage
+        if ($providerConfig['api_key'] === null) {
+            // No API key: fall back to placeholder
+            $output = $this->generatePlaceholderResponse($agent, $prompt, $context);
+
+            return [
+                'output' => $output,
+                'tool_calls' => [],
+                'cost' => 0.0,
+                'tokens_used' => 0,
+            ];
+        }
+
+        // Execute via NeuronAI chat
+        $response = $agentInstance->chat(new UserMessage($prompt));
+
+        $usage = $response->getUsage();
+        $inputTokens = $usage?->inputTokens ?? 0;
+        $outputTokens = $usage?->outputTokens ?? 0;
+        $tokensUsed = $inputTokens + $outputTokens;
+
+        // Estimate cost from tokens
         $cost = $this->calculateCostFromTokens($tokensUsed);
+
+        return [
+            'output' => $response->getContent(),
+            'tool_calls' => [],
+            'cost' => $cost,
+            'tokens_used' => $tokensUsed,
+        ];
+    }
+
+    /**
+     * Execute a direct tool call (when input specifies tool + tool_params).
+     *
+     * @return array{output: string|null, tool_calls: array<int, array<string, mixed>>, cost: float, tokens_used: int}
+     */
+    protected function executeDirectToolCall(
+        AIAgent $agent,
+        AgentConfiguration $config,
+        array $input,
+    ): array {
+        $toolName = $input['tool'];
+        $toolParams = $input['tool_params'];
+
+        $toolResult = $this->toolGateway->execute(
+            $agent,
+            $config,
+            $toolName,
+            $toolParams,
+        );
+
+        $toolCalls = [[
+            'tool' => $toolName,
+            'params' => $toolParams,
+            'result' => $toolResult->toArray(),
+            'status' => $toolResult->status,
+        ]];
+
+        $output = $toolResult->success
+            ? json_encode($toolResult->data)
+            : "Tool execution failed: {$toolResult->error}";
 
         return [
             'output' => $output,
             'tool_calls' => $toolCalls,
-            'cost' => $cost,
-            'tokens_used' => $tokensUsed,
+            'cost' => 0.0,
+            'tokens_used' => 0,
         ];
+    }
+
+    /**
+     * Resolve an AIAgent model into a concrete BaseAgent subclass instance.
+     */
+    protected function resolveAgentInstance(AIAgent $agent, AgentConfiguration $config): BaseAgent
+    {
+        $agentClass = $this->resolveAgentClass($agent);
+
+        return new $agentClass(
+            $agent,
+            $config,
+            $this->toolGateway,
+            $this->budgetService,
+        );
+    }
+
+    /**
+     * Map an AIAgent model to its concrete agent class.
+     *
+     * @return class-string<BaseAgent>
+     */
+    protected function resolveAgentClass(AIAgent $agent): string
+    {
+        $templateSlug = $agent->template?->slug ?? $agent->type ?? 'default';
+
+        return match ($templateSlug) {
+            'dispatcher', 'work-router' => DispatcherAgent::class,
+            'client-comms', 'communication' => ClientCommsAgent::class,
+            'pm-copilot', 'project-management' => PMCopilotAgent::class,
+            default => $this->resolveDefaultAgentClass($agent),
+        };
+    }
+
+    /**
+     * Resolve a default agent class when no specific match is found.
+     *
+     * Falls back to PMCopilotAgent as the most general-purpose agent.
+     *
+     * @return class-string<BaseAgent>
+     */
+    private function resolveDefaultAgentClass(AIAgent $agent): string
+    {
+        // Check capabilities for hints
+        $capabilities = $agent->capabilities ?? [];
+
+        if (in_array('routing', $capabilities, true) || in_array('dispatch', $capabilities, true)) {
+            return DispatcherAgent::class;
+        }
+
+        if (in_array('communication', $capabilities, true) || in_array('client-comms', $capabilities, true)) {
+            return ClientCommsAgent::class;
+        }
+
+        // Default to PM Copilot as the most general-purpose agent
+        return PMCopilotAgent::class;
     }
 
     /**
@@ -308,9 +406,7 @@ class AgentRunner
     }
 
     /**
-     * Generate a placeholder response for testing purposes.
-     *
-     * This will be replaced with actual LLM calls when neuron-ai is available.
+     * Generate a placeholder response when no API key is available.
      */
     protected function generatePlaceholderResponse(
         AIAgent $agent,
@@ -319,13 +415,13 @@ class AgentRunner
     ): string {
         $agentName = $agent->name;
 
-        $response = "[{$agentName}] Received prompt: " . substr($prompt, 0, 100);
+        $response = "[{$agentName}] Received prompt: ".substr($prompt, 0, 100);
 
         if ($context !== null && ! $context->isEmpty()) {
             $response .= ' (with context loaded)';
         }
 
-        $response .= "\n\nNote: This is a placeholder response. LLM integration pending.";
+        $response .= "\n\nNote: This is a placeholder response. Configure an API key to enable LLM integration.";
 
         return $response;
     }

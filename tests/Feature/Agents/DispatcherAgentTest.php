@@ -109,7 +109,7 @@ test('DispatcherAgent returns dispatcher-specific tools', function () {
         $this->budgetService
     );
 
-    $tools = $dispatcherAgent->tools();
+    $tools = $dispatcherAgent->getLaboTools();
     expect($tools)->toBeArray();
 
     // Verify dispatcher tools are available

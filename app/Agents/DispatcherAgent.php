@@ -18,12 +18,12 @@ use App\Enums\AIConfidence;
 class DispatcherAgent extends BaseAgent
 {
     /**
-     * Get the system instructions for the Dispatcher Agent.
+     * Get the base instructions for the Dispatcher Agent.
      *
      * Provides dispatcher-specific instructions for work routing,
      * requirement extraction, and team member matching.
      */
-    public function instructions(): string
+    public function getBaseInstructions(): string
     {
         // Check for custom instructions in configuration first
         $customInstructions = $this->configuration->custom_instructions ?? null;
@@ -36,15 +36,15 @@ class DispatcherAgent extends BaseAgent
     }
 
     /**
-     * Get the tools available to the Dispatcher Agent.
+     * Get the Laborobo tools available to the Dispatcher Agent.
      *
      * Returns dispatcher-specific tools filtered through ToolGateway permissions.
      *
      * @return array<string, ToolInterface>
      */
-    public function tools(): array
+    public function getLaboTools(): array
     {
-        $allTools = parent::tools();
+        $allTools = parent::getLaboTools();
 
         // Filter to only include dispatcher-relevant tools
         $dispatcherToolNames = [

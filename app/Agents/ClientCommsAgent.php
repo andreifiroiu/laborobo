@@ -53,12 +53,12 @@ class ClientCommsAgent extends BaseAgent
     ];
 
     /**
-     * Get the system instructions for the Client Comms Agent.
+     * Get the base instructions for the Client Comms Agent.
      *
      * Provides communication-specific instructions for drafting professional
      * client-facing messages with appropriate tone and formatting.
      */
-    public function instructions(): string
+    public function getBaseInstructions(): string
     {
         // Check for custom instructions in configuration first
         $customInstructions = $this->configuration->custom_instructions ?? null;
@@ -71,15 +71,15 @@ class ClientCommsAgent extends BaseAgent
     }
 
     /**
-     * Get the tools available to the Client Comms Agent.
+     * Get the Laborobo tools available to the Client Comms Agent.
      *
      * Returns communication-specific tools filtered through ToolGateway permissions.
      *
      * @return array<string, ToolInterface>
      */
-    public function tools(): array
+    public function getLaboTools(): array
     {
-        $allTools = parent::tools();
+        $allTools = parent::getLaboTools();
 
         // Filter to only include communication-relevant tools
         return array_filter(

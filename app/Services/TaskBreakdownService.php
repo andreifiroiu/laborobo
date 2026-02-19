@@ -7,8 +7,10 @@ namespace App\Services;
 use App\Enums\AIConfidence;
 use App\Models\Playbook;
 use App\Models\WorkOrder;
+use App\Services\AI\LLMService;
 use App\ValueObjects\TaskSuggestion;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -35,6 +37,10 @@ class TaskBreakdownService
      * Default estimated hours when no context available.
      */
     private const DEFAULT_TASK_HOURS = 2.0;
+
+    public function __construct(
+        private readonly ?LLMService $llmService = null,
+    ) {}
 
     /**
      * Generate task breakdown alternatives for a work order.
@@ -230,9 +236,18 @@ class TaskBreakdownService
         WorkOrder $workOrder,
         array $deliverables,
         Collection $playbooks,
-        array $_context,
+        array $context,
         AIConfidence $baseConfidence
     ): array {
+        // Try LLM-based generation first
+        if ($this->llmService !== null) {
+            $llmAlternatives = $this->generateViaLLM($workOrder, $context);
+            if ($llmAlternatives !== null) {
+                return $llmAlternatives;
+            }
+        }
+
+        // Fall back to rule-based heuristics
         $alternatives = [];
 
         // Strategy 1: Playbook-based breakdown (if playbook with tasks available)
@@ -575,9 +590,7 @@ class TaskBreakdownService
     /**
      * Detect dependencies for a task based on task patterns and keywords.
      *
-     * @param  TaskSuggestion  $task
      * @param  array<TaskSuggestion>  $allTasks
-     * @param  int  $currentIndex
      * @return array<int>
      */
     private function detectDependencies(TaskSuggestion $task, array $allTasks, int $currentIndex): array
@@ -676,6 +689,63 @@ class TaskBreakdownService
      * @param  array<int, array<string, mixed>>  $deliverablesContext
      * @param  array<int, array<string, mixed>>  $playbookContext
      */
+    /**
+     * Attempt to generate task breakdown via LLM.
+     *
+     * @param  array{work_order: array, deliverables: array, playbooks: array, prompt: string}  $context
+     * @return array<int, array{tasks: array<TaskSuggestion>, confidence: AIConfidence, reasoning: string}>|null
+     */
+    private function generateViaLLM(WorkOrder $workOrder, array $context): ?array
+    {
+        try {
+            $response = $this->llmService->complete(
+                systemPrompt: 'You are a project management assistant specializing in task breakdown and estimation. Always respond with valid JSON.',
+                userPrompt: $context['prompt'],
+                teamId: $workOrder->team_id,
+            );
+
+            if ($response === null) {
+                return null;
+            }
+
+            $decoded = json_decode($response->content, true);
+            if (! is_array($decoded)) {
+                return null;
+            }
+
+            $alternatives = [];
+            foreach ($decoded as $alt) {
+                if (! isset($alt['tasks']) || ! is_array($alt['tasks'])) {
+                    continue;
+                }
+
+                $tasks = array_map(
+                    fn (array $t) => TaskSuggestion::fromArray($t),
+                    $alt['tasks']
+                );
+
+                $alternatives[] = [
+                    'tasks' => $tasks,
+                    'confidence' => match (strtolower($alt['confidence'] ?? 'medium')) {
+                        'high' => AIConfidence::High,
+                        'low' => AIConfidence::Low,
+                        default => AIConfidence::Medium,
+                    },
+                    'reasoning' => $alt['reasoning'] ?? 'Generated via LLM',
+                ];
+            }
+
+            return ! empty($alternatives) ? $alternatives : null;
+        } catch (\Throwable $e) {
+            Log::warning('LLM task breakdown generation failed, falling back to heuristics', [
+                'work_order_id' => $workOrder->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     private function constructLLMPrompt(array $workOrderContext, array $deliverablesContext, array $playbookContext): string
     {
         $prompt = <<<'PROMPT'

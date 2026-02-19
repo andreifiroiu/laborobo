@@ -9,26 +9,25 @@ use App\Models\AgentConfiguration;
 use App\Models\AIAgent;
 use App\Models\GlobalAISettings;
 use App\Services\AgentBudgetService;
+use App\Services\AI\NeuronToolAdapter;
+use App\Services\AI\ProviderFactory;
 use App\Services\ToolGateway;
 use App\ValueObjects\AgentContext;
+use NeuronAI\Agent;
+use NeuronAI\Providers\AIProviderInterface;
 use RuntimeException;
 
 /**
  * Base agent class for Laborobo AI agents.
  *
- * This class provides Laborobo-specific behaviors for AI agents, including:
- * - Provider configuration based on GlobalAISettings
+ * Extends NeuronAI\Agent to provide real LLM calls while layering
+ * Laborobo-specific behaviors:
+ * - Provider configuration based on GlobalAISettings and TeamApiKey
  * - System prompt loading from AgentConfiguration
  * - Tool filtering through ToolGateway permissions
  * - Budget checking before each run
- *
- * Designed to integrate with neuron-ai's Agent class when available.
- * Until neuron-ai is installed, this provides a standalone abstraction.
- *
- * When neuron-ai is available, extend NeuronAI\Agent instead of this class
- * and use the traits/interfaces provided here.
  */
-abstract class BaseAgent
+abstract class BaseAgent extends Agent
 {
     /**
      * The AI agent model this agent instance represents.
@@ -88,39 +87,75 @@ abstract class BaseAgent
     }
 
     /**
-     * Get the AI provider configuration.
+     * Get the AI provider for NeuronAI.
      *
-     * Returns the appropriate provider based on GlobalAISettings.
-     * This method is designed to return a neuron-ai AIProviderInterface
-     * when the package is available.
-     *
-     * @return array{provider: string, model: string, api_key: string|null}
+     * Called by NeuronAI's resolveProvider() during chat().
+     * Resolves provider/model/key from configuration hierarchy.
      */
-    public function provider(): array
+    protected function provider(): AIProviderInterface
     {
-        $provider = $this->configuration->ai_provider
-            ?? $this->aiAgent->template?->default_ai_provider
-            ?? $this->globalSettings?->default_provider
-            ?? 'anthropic';
+        $config = $this->getProviderConfig();
 
-        $model = $this->configuration->ai_model
-            ?? $this->aiAgent->template?->default_ai_model
-            ?? $this->globalSettings?->default_model
-            ?? 'claude-sonnet-4-5-20250929';
+        if ($config['api_key'] === null) {
+            throw new RuntimeException('No API key available for provider: '.$config['provider']);
+        }
 
-        return [
-            'provider' => $provider,
-            'model' => $model,
-            'api_key' => $this->getApiKey($provider),
-        ];
+        return ProviderFactory::create($config['provider'], $config['model'], $config['api_key']);
     }
 
     /**
-     * Get the system instructions for this agent.
+     * Get the system instructions for NeuronAI.
      *
-     * Loads from AgentConfiguration or falls back to AIAgent's template instructions.
+     * Called by NeuronAI's resolveInstructions() during chat().
+     * Returns the full system prompt with base instructions + context.
      */
     public function instructions(): string
+    {
+        return $this->buildSystemPrompt();
+    }
+
+    /**
+     * Get the tools for NeuronAI.
+     *
+     * Called by NeuronAI's getTools() during chat().
+     * Returns Laborobo tools adapted to NeuronAI format, with
+     * execution routed through ToolGateway for permission/budget/audit.
+     *
+     * @return array<\NeuronAI\Tools\ToolInterface>
+     */
+    protected function tools(): array
+    {
+        $labTools = $this->getLaboTools();
+
+        return NeuronToolAdapter::adaptAll(
+            $labTools,
+            $this->toolGateway,
+            $this->aiAgent,
+            $this->configuration,
+        );
+    }
+
+    /**
+     * Get the Laborobo tools available to this agent.
+     *
+     * Returns tools filtered through ToolGateway permissions based on
+     * the agent's configuration. Override in concrete agents to filter
+     * to agent-specific tools.
+     *
+     * @return array<string, ToolInterface>
+     */
+    public function getLaboTools(): array
+    {
+        return $this->toolGateway->getAvailableTools($this->configuration);
+    }
+
+    /**
+     * Get the base instructions for this agent.
+     *
+     * Loads from AgentConfiguration or falls back to AIAgent's template instructions.
+     * Override in concrete agents to provide agent-specific instructions.
+     */
+    public function getBaseInstructions(): string
     {
         // Check for custom instructions in configuration
         $customInstructions = $this->configuration->custom_instructions ?? null;
@@ -141,16 +176,29 @@ abstract class BaseAgent
     }
 
     /**
-     * Get the tools available to this agent.
+     * Get the provider configuration as an array.
      *
-     * Returns tools filtered through ToolGateway permissions based on
-     * the agent's configuration.
+     * Uses 3-tier resolution: agent config → template → global settings → defaults.
      *
-     * @return array<string, ToolInterface>
+     * @return array{provider: string, model: string, api_key: string|null}
      */
-    public function tools(): array
+    public function getProviderConfig(): array
     {
-        return $this->toolGateway->getAvailableTools($this->configuration);
+        $provider = $this->configuration->ai_provider
+            ?? $this->aiAgent->template?->default_ai_provider
+            ?? $this->globalSettings?->default_provider
+            ?? 'anthropic';
+
+        $model = $this->configuration->ai_model
+            ?? $this->aiAgent->template?->default_ai_model
+            ?? $this->globalSettings?->default_model
+            ?? 'claude-sonnet-4-20250514';
+
+        return [
+            'provider' => $provider,
+            'model' => $model,
+            'api_key' => $this->getApiKey($provider),
+        ];
     }
 
     /**
@@ -236,7 +284,7 @@ abstract class BaseAgent
      */
     public function buildSystemPrompt(): string
     {
-        $parts = [$this->instructions()];
+        $parts = [$this->getBaseInstructions()];
 
         if ($this->context !== null && ! $this->context->isEmpty()) {
             $parts[] = "\n\n## Current Context\n";
@@ -252,7 +300,6 @@ abstract class BaseAgent
      * @param  string  $toolName  The name of the tool to execute
      * @param  array<string, mixed>  $params  Parameters for the tool
      * @param  float  $estimatedCost  Estimated cost for the execution
-     * @return \App\ValueObjects\ToolResult
      */
     public function executeTool(string $toolName, array $params, float $estimatedCost = 0.0): \App\ValueObjects\ToolResult
     {

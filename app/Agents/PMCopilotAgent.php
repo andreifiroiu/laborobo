@@ -18,12 +18,12 @@ use App\Enums\AIConfidence;
 class PMCopilotAgent extends BaseAgent
 {
     /**
-     * Get the system instructions for the PM Copilot Agent.
+     * Get the base instructions for the PM Copilot Agent.
      *
      * Provides PM-specific instructions for deliverable generation,
      * task breakdown, and project insights.
      */
-    public function instructions(): string
+    public function getBaseInstructions(): string
     {
         // Check for custom instructions in configuration first
         $customInstructions = $this->configuration->custom_instructions ?? null;
@@ -36,15 +36,15 @@ class PMCopilotAgent extends BaseAgent
     }
 
     /**
-     * Get the tools available to the PM Copilot Agent.
+     * Get the Laborobo tools available to the PM Copilot Agent.
      *
      * Returns PM-specific tools filtered through ToolGateway permissions.
      *
      * @return array<string, ToolInterface>
      */
-    public function tools(): array
+    public function getLaboTools(): array
     {
-        $allTools = parent::tools();
+        $allTools = parent::getLaboTools();
 
         // Filter to only include PM-relevant tools
         $pmToolNames = [

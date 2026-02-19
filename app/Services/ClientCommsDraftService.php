@@ -19,6 +19,8 @@ use App\Models\Message;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\WorkOrder;
+use App\Services\AI\LLMService;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 /**
@@ -40,6 +42,7 @@ class ClientCommsDraftService
         private readonly AgentRunner $_agentRunner,
         private readonly ToolGateway $_toolGateway,
         private readonly AgentBudgetService $_budgetService,
+        private readonly ?LLMService $llmService = null,
     ) {}
 
     /**
@@ -217,10 +220,7 @@ class ClientCommsDraftService
     }
 
     /**
-     * Generate draft content using the ClientCommsAgent.
-     *
-     * For now, this generates placeholder content. When neuron-ai is integrated,
-     * this will execute the actual agent to generate personalized drafts.
+     * Generate draft content using the LLM with template fallback.
      */
     private function generateDraftContent(
         Project|WorkOrder $entity,
@@ -234,16 +234,79 @@ class ClientCommsDraftService
 
         $contactName = $party?->contact_name ?? 'Valued Client';
         $entityName = $entity instanceof Project ? $entity->name : $entity->title;
-        // Target language will be used when neuron-ai integration is complete
-        // $targetLanguage = $context->metadata['target_language'] ?? 'en';
+        $targetLanguage = $context->metadata['target_language'] ?? 'en';
 
-        // Generate placeholder content based on communication type
+        // Try LLM-based generation first
+        if ($this->llmService !== null) {
+            $llmDraft = $this->generateDraftViaLLM($entity, $type, $context, $contactName, $entityName, $targetLanguage, $userNotes);
+            if ($llmDraft !== null) {
+                return $llmDraft;
+            }
+        }
+
+        // Fall back to template-based content
         return match ($type) {
             CommunicationType::StatusUpdate => $this->generateStatusUpdateDraft($contactName, $entityName, $context),
             CommunicationType::DeliverableNotification => $this->generateDeliverableNotificationDraft($contactName, $entityName, $context),
             CommunicationType::ClarificationRequest => $this->generateClarificationRequestDraft($contactName, $entityName, $userNotes),
             CommunicationType::MilestoneAnnouncement => $this->generateMilestoneAnnouncementDraft($contactName, $entityName, $context),
         };
+    }
+
+    /**
+     * Attempt to generate draft content via LLM.
+     */
+    private function generateDraftViaLLM(
+        Project|WorkOrder $entity,
+        CommunicationType $type,
+        \App\ValueObjects\AgentContext $context,
+        string $contactName,
+        string $entityName,
+        string $targetLanguage,
+        ?string $userNotes,
+    ): ?string {
+        try {
+            $clientCommsAgent = new \App\Agents\ClientCommsAgent(
+                new \App\Models\AIAgent,
+                new \App\Models\AgentConfiguration,
+                $this->_toolGateway,
+                $this->_budgetService,
+            );
+
+            $languageInstructions = $clientCommsAgent->buildLanguageInstructions($targetLanguage);
+            $systemPrompt = $clientCommsAgent->getBaseInstructions()."\n\n".$languageInstructions;
+
+            $contextSummary = '';
+            if (! $context->isEmpty()) {
+                $contextSummary = "\n\nContext:\n".$context->toPromptString();
+            }
+
+            $userPrompt = "Draft a {$type->label()} communication for {$entityName}.\n"
+                ."Recipient: {$contactName}\n"
+                .($userNotes !== null ? "Notes: {$userNotes}\n" : '')
+                .$contextSummary
+                ."\n\nRespond with ONLY the communication text (greeting, body, closing). Do not include JSON wrapping.";
+
+            $response = $this->llmService->complete(
+                systemPrompt: $systemPrompt,
+                userPrompt: $userPrompt,
+                teamId: $entity->team_id,
+            );
+
+            if ($response !== null && $response->content !== '') {
+                return $response->content;
+            }
+
+            return null;
+        } catch (\Throwable $e) {
+            Log::warning('LLM draft generation failed, falling back to templates', [
+                'entity_type' => class_basename($entity),
+                'entity_id' => $entity->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function generateStatusUpdateDraft(string $contactName, string $entityName, \App\ValueObjects\AgentContext $context): string
@@ -271,7 +334,7 @@ DRAFT;
     {
         $deliverables = $context->projectContext['work_item']['deliverables'] ?? [];
         $deliverableInfo = ! empty($deliverables)
-            ? "We have completed the following deliverable(s) for your review:\n- " . collect($deliverables)->pluck('title')->implode("\n- ")
+            ? "We have completed the following deliverable(s) for your review:\n- ".collect($deliverables)->pluck('title')->implode("\n- ")
             : 'We have completed a deliverable for your review.';
 
         return <<<DRAFT
@@ -417,7 +480,7 @@ DRAFT;
             return $content;
         }
 
-        return substr($content, 0, $maxLength - 3) . '...';
+        return substr($content, 0, $maxLength - 3).'...';
     }
 
     /**

@@ -121,7 +121,7 @@ test('PMCopilotAgent tools filters to PM-relevant tools only', function () {
         $this->budgetService
     );
 
-    $tools = $pmCopilotAgent->tools();
+    $tools = $pmCopilotAgent->getLaboTools();
     expect($tools)->toBeArray();
 
     // Verify PM-relevant tools are available

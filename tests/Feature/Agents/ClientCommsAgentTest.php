@@ -122,7 +122,7 @@ test('ClientCommsAgent tools filters to communication-relevant tools only', func
         $this->budgetService
     );
 
-    $tools = $clientCommsAgent->tools();
+    $tools = $clientCommsAgent->getLaboTools();
     expect($tools)->toBeArray();
 
     // Verify communication-relevant tools are available
