@@ -6,7 +6,12 @@ namespace App\Agents\Workflows;
 
 use App\Agents\Tools\GetPlaybooksTool;
 use App\Agents\Tools\WorkOrderInfoTool;
+use App\Enums\AIConfidence;
+use App\Enums\InboxItemType;
+use App\Enums\SourceType;
+use App\Enums\Urgency;
 use App\Models\AgentWorkflowState;
+use App\Models\InboxItem;
 use App\Models\WorkOrder;
 use App\Services\ContextBuilder;
 use Illuminate\Support\Facades\App;
@@ -254,6 +259,8 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         ];
 
         $this->complete($results);
+
+        $this->createInboxItem($state, $deliverables, $taskBreakdown);
 
         return [
             'status' => 'completed',
@@ -591,6 +598,120 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         }
 
         return ['Follow playbook guidelines', 'Complete all requirements', 'Verify against criteria'];
+    }
+
+    /**
+     * Create an inbox item for the completed PM Copilot plan.
+     *
+     * @param  array<int, array<string, mixed>>  $alternatives
+     * @param  array<int, array<string, mixed>>  $taskBreakdown
+     */
+    private function createInboxItem(AgentWorkflowState $state, array $alternatives, array $taskBreakdown): void
+    {
+        $input = $state->state_data['input'] ?? [];
+        $workOrderId = $input['work_order_id'] ?? null;
+
+        if ($workOrderId === null) {
+            return;
+        }
+
+        $workOrder = WorkOrder::with('project')->find($workOrderId);
+        if ($workOrder === null) {
+            return;
+        }
+
+        $agent = $state->agent;
+        $topConfidence = $alternatives[0]['confidence'] ?? 'medium';
+
+        InboxItem::create([
+            'team_id' => $input['team_id'] ?? $workOrder->team_id,
+            'type' => InboxItemType::Approval,
+            'title' => "PM Copilot: Plan generated for {$workOrder->title}",
+            'content_preview' => $this->buildContentPreview($alternatives, $taskBreakdown),
+            'full_content' => $this->buildInboxContent($alternatives, $taskBreakdown),
+            'source_type' => SourceType::AIAgent,
+            'source_id' => $agent ? "agent-{$agent->id}" : 'agent-pm-copilot',
+            'source_name' => $agent->name ?? 'PM Copilot',
+            'approvable_type' => AgentWorkflowState::class,
+            'approvable_id' => $state->id,
+            'related_work_order_id' => $workOrder->id,
+            'related_work_order_title' => $workOrder->title,
+            'related_project_id' => $workOrder->project?->id,
+            'related_project_name' => $workOrder->project?->name,
+            'ai_confidence' => AIConfidence::tryFrom($topConfidence) ?? AIConfidence::Medium,
+            'urgency' => Urgency::Normal,
+        ]);
+    }
+
+    /**
+     * Build a summary preview for the inbox item.
+     *
+     * @param  array<int, array<string, mixed>>  $alternatives
+     * @param  array<int, array<string, mixed>>  $taskBreakdown
+     */
+    private function buildContentPreview(array $alternatives, array $taskBreakdown): string
+    {
+        $altCount = count($alternatives);
+        $deliverableCount = 0;
+        foreach ($alternatives as $alt) {
+            $deliverableCount += count($alt['deliverables'] ?? []);
+        }
+        $taskCount = 0;
+        foreach ($taskBreakdown as $breakdown) {
+            $taskCount += count($breakdown['tasks'] ?? []);
+        }
+
+        return "{$altCount} alternative(s) with {$deliverableCount} deliverable(s) and {$taskCount} task(s) suggested";
+    }
+
+    /**
+     * Build rich Markdown content summarizing all alternatives.
+     *
+     * @param  array<int, array<string, mixed>>  $alternatives
+     * @param  array<int, array<string, mixed>>  $taskBreakdown
+     */
+    private function buildInboxContent(array $alternatives, array $taskBreakdown): string
+    {
+        $lines = [];
+
+        foreach ($alternatives as $index => $alt) {
+            $number = $index + 1;
+            $name = $alt['name'] ?? "Alternative {$number}";
+            $confidence = $alt['confidence'] ?? 'unknown';
+            $lines[] = "## Alternative {$number}: {$name} ({$confidence} confidence)";
+            $lines[] = '';
+
+            $deliverables = $alt['deliverables'] ?? [];
+            if (!empty($deliverables)) {
+                $lines[] = '### Deliverables';
+                foreach ($deliverables as $deliverable) {
+                    $type = $deliverable['type'] ?? 'deliverable';
+                    $lines[] = "- {$deliverable['title']} ({$type})";
+                }
+                $lines[] = '';
+            }
+
+            // Find matching task breakdown for this alternative's deliverables
+            foreach ($deliverables as $deliverable) {
+                foreach ($taskBreakdown as $breakdown) {
+                    if (($breakdown['deliverable_title'] ?? '') === ($deliverable['title'] ?? '')) {
+                        $lines[] = '### Tasks';
+                        foreach ($breakdown['tasks'] ?? [] as $task) {
+                            $hours = $task['estimated_hours'] ?? 0;
+                            $lines[] = "- {$task['title']} — {$hours}h";
+                        }
+                        $lines[] = '';
+
+                        break;
+                    }
+                }
+            }
+
+            $lines[] = '---';
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines);
     }
 
     /**

@@ -4,6 +4,7 @@ import type {
     PMCopilotSuggestionsResponse,
     PMCopilotWorkflowState,
     ProjectInsight,
+    TaskAssignmentSuggestion,
 } from '@/types/pm-copilot.d';
 
 /**
@@ -128,16 +129,16 @@ export function usePMCopilotSuggestions(workOrderId: string) {
  * Hook for approving a PM Copilot suggestion.
  * Creates the deliverables/tasks from the approved alternative.
  */
-export function useApproveSuggestion() {
+export function useApproveSuggestion(workOrderId: string) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const approve = useCallback(async (suggestionId: string) => {
+    const approve = useCallback(async (alternativeId: string) => {
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await fetch(`/work/pm-copilot/suggestions/${suggestionId}/approve`, {
+            const response = await fetch(`/work/work-orders/${workOrderId}/pm-copilot/alternatives/${alternativeId}/approve`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -150,12 +151,12 @@ export function useApproveSuggestion() {
             const data = await response.json();
 
             if (!response.ok) {
-                setError(data.message || 'Failed to approve suggestion');
+                setError(data.message || 'Failed to approve alternative');
                 return { success: false, error: data.message };
             }
 
             // Reload the page to get fresh data after approval
-            router.reload({ only: ['tasks', 'deliverables'] });
+            router.reload({ only: ['tasks', 'deliverables', 'workOrder'] });
 
             return { success: true, data };
         } catch (err) {
@@ -165,7 +166,7 @@ export function useApproveSuggestion() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [workOrderId]);
 
     const reset = useCallback(() => {
         setIsLoading(false);
@@ -184,16 +185,16 @@ export function useApproveSuggestion() {
  * Hook for rejecting a PM Copilot suggestion.
  * Marks the suggestion as rejected with optional reason.
  */
-export function useRejectSuggestion() {
+export function useRejectSuggestion(workOrderId: string) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const reject = useCallback(async (suggestionId: string, reason?: string) => {
+    const reject = useCallback(async (alternativeId: string, reason?: string) => {
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await fetch(`/work/pm-copilot/suggestions/${suggestionId}/reject`, {
+            const response = await fetch(`/work/work-orders/${workOrderId}/pm-copilot/alternatives/${alternativeId}/reject`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -207,7 +208,7 @@ export function useRejectSuggestion() {
             const data = await response.json();
 
             if (!response.ok) {
-                setError(data.message || 'Failed to reject suggestion');
+                setError(data.message || 'Failed to reject alternative');
                 return { success: false, error: data.message };
             }
 
@@ -219,7 +220,7 @@ export function useRejectSuggestion() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [workOrderId]);
 
     const reset = useCallback(() => {
         setIsLoading(false);
@@ -330,5 +331,124 @@ export function useProjectInsights(projectId: string) {
         error,
         fetch,
         refetch,
+    };
+}
+
+/**
+ * Hook for delegating plan tasks to AI for assignment suggestions.
+ */
+export function useDelegatePlan(workOrderId: string) {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [suggestions, setSuggestions] = useState<TaskAssignmentSuggestion[]>([]);
+
+    const delegate = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/work/work-orders/${workOrderId}/pm-copilot/delegate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN':
+                        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.message || 'Failed to delegate tasks');
+                return { success: false, error: data.message };
+            }
+
+            // Map snake_case response to camelCase
+            const mapped: TaskAssignmentSuggestion[] = (data.suggestions || []).map(
+                (s: { task_id: number; assignee_type: string; assignee_id: number; assignee_name: string; reasoning: string }) => ({
+                    taskId: String(s.task_id),
+                    assigneeType: s.assignee_type as 'user' | 'agent',
+                    assigneeId: String(s.assignee_id),
+                    assigneeName: s.assignee_name,
+                    reasoning: s.reasoning,
+                }),
+            );
+
+            setSuggestions(mapped);
+
+            if (mapped.length === 0) {
+                setError('No delegation suggestions returned. Ensure an AI API key is configured in Settings.');
+                return { success: false, error: 'No suggestions returned' };
+            }
+
+            return { success: true, suggestions: mapped };
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'An error occurred';
+            setError(message);
+            return { success: false, error: message };
+        } finally {
+            setIsLoading(false);
+        }
+    }, [workOrderId]);
+
+    return {
+        delegate,
+        isLoading,
+        error,
+        suggestions,
+    };
+}
+
+/**
+ * Hook for assigning a task to a user or AI agent.
+ */
+export function useAssignTask(workOrderId: string) {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const assign = useCallback(async (taskId: string, assigneeType: 'user' | 'agent', assigneeId: string) => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`/work/work-orders/${workOrderId}/pm-copilot/tasks/${taskId}/assign`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN':
+                        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    assignee_type: assigneeType,
+                    assignee_id: parseInt(assigneeId, 10),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.message || 'Failed to assign task');
+                return { success: false, error: data.message };
+            }
+
+            // Reload tasks from server
+            router.reload({ only: ['tasks'] });
+
+            return { success: true, data };
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'An error occurred';
+            setError(message);
+            return { success: false, error: message };
+        } finally {
+            setIsLoading(false);
+        }
+    }, [workOrderId]);
+
+    return {
+        assign,
+        isLoading,
+        error,
     };
 }

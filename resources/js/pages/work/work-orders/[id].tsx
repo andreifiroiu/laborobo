@@ -96,6 +96,7 @@ import {
     PMCopilotTriggerButton,
     PlanAlternativesPanel,
     PMCopilotSettingsToggle,
+    PlanExecutionPanel,
 } from '@/components/pm-copilot';
 import { DraftClientUpdateButton } from '@/components/client-comms';
 import { ProjectDocumentsSection } from '@/pages/work/projects/components/project-documents-section';
@@ -104,6 +105,8 @@ import {
     usePMCopilotSuggestions,
     useApproveSuggestion,
     useRejectSuggestion,
+    useDelegatePlan,
+    useAssignTask,
 } from '@/hooks/use-pm-copilot';
 import type { PlanAlternative, PMCopilotMode } from '@/types/pm-copilot.d';
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -165,6 +168,7 @@ interface WorkOrderWithRaci {
         workOrderId: string;
         workflowState: { status: string; currentStep: string | null; progress: number; error: string | null };
         alternatives: PlanAlternative[];
+        approvedAlternativeId?: string | null;
         insights: Array<unknown>;
         createdAt: string;
         updatedAt: string;
@@ -239,6 +243,7 @@ interface WorkOrderDetailProps {
         type: string;
     }>;
     teamMembers: TeamMember[];
+    availableAgents?: Array<{ id: string; name: string; type: string }>;
     statusTransitions?: StatusTransition[];
     allowedTransitions?: TransitionOption[];
     raciValue?: RaciValue;
@@ -494,6 +499,7 @@ export default function WorkOrderDetail({
     communicationThread,
     messages,
     teamMembers,
+    availableAgents = [],
     statusTransitions = [],
     allowedTransitions = [],
     raciValue,
@@ -563,18 +569,32 @@ export default function WorkOrderDetail({
 
     // PM Copilot state
     const [pmCopilotMode, setPMCopilotMode] = useState<PMCopilotMode>(workOrder.pmCopilotMode ?? 'full');
-    const [approvedAlternativeId, setApprovedAlternativeId] = useState<string | null>(null);
+    const [approvedAlternativeId, setApprovedAlternativeId] = useState<string | null>(
+        workOrder.pmCopilotSuggestions?.approvedAlternativeId ?? null
+    );
     const [pmCopilotFeedback, setPmCopilotFeedback] = useState<string | null>(null);
     const [pmCopilotError, setPmCopilotError] = useState<string | null>(null);
 
     // PM Copilot hooks
     const { trigger: triggerPMCopilot, isLoading: isPMCopilotRunning } = useTriggerPMCopilot();
     const { data: pmCopilotData, fetch: fetchSuggestions } = usePMCopilotSuggestions(workOrder.id);
-    const { approve: approveSuggestion, isLoading: isApproving } = useApproveSuggestion();
-    const { reject: rejectSuggestion, isLoading: isRejecting } = useRejectSuggestion();
+    const { approve: approveSuggestion, isLoading: isApproving } = useApproveSuggestion(workOrder.id);
+    const { reject: rejectSuggestion, isLoading: isRejecting } = useRejectSuggestion(workOrder.id);
+    const { delegate: delegatePlan, isLoading: isDelegating, suggestions: aiSuggestions, error: delegationError } = useDelegatePlan(workOrder.id);
+    const { assign: assignTask, isLoading: isAssigningTask } = useAssignTask(workOrder.id);
 
     // Get suggestions from either prop or fetched data
     const suggestions = workOrder.pmCopilotSuggestions ?? pmCopilotData;
+
+    // Sync approvedAlternativeId from fetched data (survives Inertia reload)
+    useEffect(() => {
+        const fromProps = workOrder.pmCopilotSuggestions?.approvedAlternativeId;
+        const fromFetch = pmCopilotData?.approvedAlternativeId;
+        const resolved = fromProps ?? fromFetch ?? null;
+        if (resolved) {
+            setApprovedAlternativeId(resolved);
+        }
+    }, [workOrder.pmCopilotSuggestions?.approvedAlternativeId, pmCopilotData?.approvedAlternativeId]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Work', href: '/work' },
@@ -1071,10 +1091,10 @@ export default function WorkOrderDetail({
         const result = await approveSuggestion(alternativeId);
         if (result.success) {
             setApprovedAlternativeId(alternativeId);
-            // Reload to get new tasks/deliverables
-            router.reload({ only: ['tasks', 'deliverables', 'workOrder'] });
+            // Also re-fetch suggestions so approvedAlternativeId is persisted from backend
+            fetchSuggestions();
         }
-    }, [approveSuggestion]);
+    }, [approveSuggestion, fetchSuggestions]);
 
     /**
      * Handle PM Copilot suggestion rejection
@@ -1714,6 +1734,23 @@ export default function WorkOrderDetail({
                                             isLoading={isApproving || isRejecting}
                                         />
                                     )}
+
+                                    {approvedAlternativeId && tasks.length > 0 && (
+                                        <PlanExecutionPanel
+                                            workOrderId={workOrder.id}
+                                            tasks={tasks}
+                                            teamMembers={teamMembers}
+                                            availableAgents={availableAgents}
+                                            onAssign={(taskId, assigneeType, assigneeId) =>
+                                                assignTask(taskId, assigneeType, assigneeId)
+                                            }
+                                            onDelegateAll={() => delegatePlan()}
+                                            isDelegating={isDelegating}
+                                            isAssigning={isAssigningTask}
+                                            aiSuggestions={aiSuggestions}
+                                            delegationError={delegationError}
+                                        />
+                                    )}
                                 </div>
 
                                 {/* RACI Assignments Section */}
@@ -1768,13 +1805,15 @@ export default function WorkOrderDetail({
                 </div>
 
                 {/* Documents Section */}
-                <ProjectDocumentsSection
-                    projectId={workOrder.projectId}
-                    documents={documents}
-                    folders={folders}
-                    uploadUrl={`/work/work-orders/${workOrder.id}/files`}
-                    deleteUrlPrefix={`/work/work-orders/${workOrder.id}/files`}
-                />
+                <div className="px-6 py-6">
+                    <ProjectDocumentsSection
+                        projectId={workOrder.projectId}
+                        documents={documents}
+                        folders={folders}
+                        uploadUrl={`/work/work-orders/${workOrder.id}/files`}
+                        deleteUrlPrefix={`/work/work-orders/${workOrder.id}/files`}
+                    />
+                </div>
             </div>
 
             {/* Communications Panel */}

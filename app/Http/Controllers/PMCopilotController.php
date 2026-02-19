@@ -9,15 +9,19 @@ use App\Http\Requests\ApproveSuggestionRequest;
 use App\Http\Requests\RejectSuggestionRequest;
 use App\Http\Requests\TriggerPMCopilotRequest;
 use App\Models\AgentWorkflowState;
+use App\Models\AIAgent;
 use App\Models\InboxItem;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\WorkOrder;
 use App\Services\AgentApprovalService;
 use App\Services\AgentOrchestrator;
 use App\Services\ProjectInsightsService;
+use App\Services\TaskDelegationService;
 use App\ValueObjects\DeliverableSuggestion;
 use App\ValueObjects\TaskSuggestion;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -188,6 +192,7 @@ class PMCopilotController extends Controller
                 'error' => null,
             ],
             'alternatives' => $alternatives,
+            'approvedAlternativeId' => $stateData['approved_alternative_id'] ?? null,
             'insights' => $insights,
             'createdAt' => $workflowState->created_at?->toIso8601String() ?? '',
             'updatedAt' => $workflowState->updated_at?->toIso8601String() ?? '',
@@ -394,6 +399,274 @@ class PMCopilotController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to generate project insights',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Approve a plan alternative for a work order.
+     *
+     * Creates deliverables and tasks from the selected alternative
+     * directly from the workflow state data.
+     */
+    public function approveAlternative(WorkOrder $workOrder, string $alternativeId): JsonResponse
+    {
+        $this->authorize('view', $workOrder);
+
+        $workflowState = AgentWorkflowState::query()
+            ->where('workflow_class', PMCopilotWorkflow::class)
+            ->whereJsonContains('state_data->input->work_order_id', $workOrder->id)
+            ->latest()
+            ->first();
+
+        if ($workflowState === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No PM Copilot workflow found for this work order',
+            ], 404);
+        }
+
+        $stateData = $workflowState->state_data ?? [];
+        $alternatives = $stateData['deliverable_alternatives'] ?? [];
+        $taskBreakdown = $stateData['task_breakdown'] ?? [];
+
+        // Find the matching alternative
+        $alternative = null;
+        foreach ($alternatives as $alt) {
+            if ((string) ($alt['alternative_id'] ?? '') === $alternativeId) {
+                $alternative = $alt;
+                break;
+            }
+        }
+
+        if ($alternative === null) {
+            return response()->json([
+                'success' => false,
+                'message' => "Alternative {$alternativeId} not found",
+            ], 404);
+        }
+
+        try {
+            $createdDeliverables = 0;
+            $createdTasks = 0;
+
+            // Map task breakdown by deliverable title
+            $tasksByDeliverable = [];
+            foreach ($taskBreakdown as $breakdown) {
+                $deliverableTitle = $breakdown['deliverable_title'] ?? '';
+                $tasksByDeliverable[$deliverableTitle] = $breakdown['tasks'] ?? [];
+            }
+
+            // Create deliverables from this alternative
+            foreach ($alternative['deliverables'] ?? [] as $deliverableData) {
+                $suggestion = DeliverableSuggestion::fromArray($deliverableData);
+                $suggestion->createDeliverable($workOrder);
+                $createdDeliverables++;
+
+                // Create tasks linked to this deliverable
+                $deliverableTitle = $deliverableData['title'] ?? '';
+                if (isset($tasksByDeliverable[$deliverableTitle])) {
+                    foreach ($tasksByDeliverable[$deliverableTitle] as $taskData) {
+                        $taskSuggestion = TaskSuggestion::fromArray($taskData);
+                        $taskSuggestion->createTask($workOrder);
+                        $createdTasks++;
+                    }
+                }
+            }
+
+            // Mark alternative as approved in state data
+            $stateData['approved_alternative_id'] = $alternativeId;
+            $stateData['approved_at'] = now()->toIso8601String();
+            $workflowState->update(['state_data' => $stateData]);
+
+            Log::info('PM Copilot alternative approved', [
+                'work_order_id' => $workOrder->id,
+                'alternative_id' => $alternativeId,
+                'deliverables_created' => $createdDeliverables,
+                'tasks_created' => $createdTasks,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Alternative approved: {$createdDeliverables} deliverable(s) and {$createdTasks} task(s) created.",
+                'deliverables_created' => $createdDeliverables,
+                'tasks_created' => $createdTasks,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('PM Copilot alternative approval failed', [
+                'work_order_id' => $workOrder->id,
+                'alternative_id' => $alternativeId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve alternative',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject a plan alternative for a work order.
+     */
+    public function rejectAlternative(WorkOrder $workOrder, string $alternativeId): JsonResponse
+    {
+        $this->authorize('view', $workOrder);
+
+        $workflowState = AgentWorkflowState::query()
+            ->where('workflow_class', PMCopilotWorkflow::class)
+            ->whereJsonContains('state_data->input->work_order_id', $workOrder->id)
+            ->latest()
+            ->first();
+
+        if ($workflowState === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No PM Copilot workflow found for this work order',
+            ], 404);
+        }
+
+        try {
+            $stateData = $workflowState->state_data ?? [];
+            $stateData['rejected_alternatives'] = $stateData['rejected_alternatives'] ?? [];
+            $stateData['rejected_alternatives'][] = [
+                'alternative_id' => $alternativeId,
+                'reason' => request()->input('reason'),
+                'rejected_at' => now()->toIso8601String(),
+            ];
+            $workflowState->update(['state_data' => $stateData]);
+
+            Log::info('PM Copilot alternative rejected', [
+                'work_order_id' => $workOrder->id,
+                'alternative_id' => $alternativeId,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Alternative rejected',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('PM Copilot alternative rejection failed', [
+                'work_order_id' => $workOrder->id,
+                'alternative_id' => $alternativeId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject alternative',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Delegate plan tasks to AI for assignment suggestions.
+     *
+     * Uses LLM to analyze unassigned tasks and suggest optimal assignees
+     * (AI agents or human team members). Returns suggestions for user review.
+     */
+    public function delegatePlan(Request $request, WorkOrder $workOrder, TaskDelegationService $delegationService): JsonResponse
+    {
+        $this->authorize('view', $workOrder);
+
+        try {
+            $tasks = $workOrder->tasks()
+                ->whereNull('assigned_to_id')
+                ->whereNull('assigned_agent_id')
+                ->get();
+
+            if ($tasks->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'suggestions' => [],
+                    'message' => 'No unassigned tasks to delegate',
+                ]);
+            }
+
+            $teamId = $request->user()->currentTeam->id;
+            $suggestions = $delegationService->delegateTasks($workOrder, $tasks, $teamId);
+
+            return response()->json([
+                'success' => true,
+                'suggestions' => $suggestions,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('PM Copilot delegation failed', [
+                'work_order_id' => $workOrder->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delegate tasks',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Assign a task to a user or AI agent.
+     *
+     * When assigned to an AI agent, automatically starts a TaskExecutionWorkflow.
+     */
+    public function assignTask(Request $request, WorkOrder $workOrder, Task $task, TaskDelegationService $delegationService): JsonResponse
+    {
+        $this->authorize('view', $workOrder);
+
+        $validated = $request->validate([
+            'assignee_type' => 'required|string|in:user,agent',
+            'assignee_id' => 'required|integer',
+        ]);
+
+        // Verify task belongs to this work order
+        if ($task->work_order_id !== $workOrder->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task does not belong to this work order',
+            ], 400);
+        }
+
+        try {
+            $workflowStatus = null;
+
+            if ($validated['assignee_type'] === 'user') {
+                $task->update([
+                    'assigned_to_id' => $validated['assignee_id'],
+                    'assigned_agent_id' => null,
+                ]);
+            } else {
+                $agent = AIAgent::findOrFail($validated['assignee_id']);
+                $team = $request->user()->currentTeam;
+
+                $task->update([
+                    'assigned_agent_id' => $agent->id,
+                    'assigned_to_id' => null,
+                ]);
+
+                $workflowState = $delegationService->startTaskExecution($task, $agent, $team);
+                $workflowState->refresh();
+
+                $workflowStatus = $workflowState->isCompleted() ? 'completed' : ($workflowState->isPaused() ? 'paused' : 'running');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task assigned successfully',
+                'workflow_status' => $workflowStatus,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Task assignment failed', [
+                'work_order_id' => $workOrder->id,
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign task',
                 'error' => $e->getMessage(),
             ], 500);
         }

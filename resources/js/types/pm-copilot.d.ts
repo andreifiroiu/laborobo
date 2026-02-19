@@ -118,6 +118,7 @@ export interface PMCopilotSuggestionsResponse {
     workOrderId: string;
     workflowState: PMCopilotWorkflowState;
     alternatives: PlanAlternative[];
+    approvedAlternativeId?: string | null;
     insights: ProjectInsight[];
     createdAt: string;
     updatedAt: string;
@@ -197,4 +198,52 @@ export interface PMCopilotSettingsToggleProps {
     currentMode: PMCopilotMode;
     onChange?: (newMode: PMCopilotMode) => void;
     disabled?: boolean;
+}
+
+// =============================================================================
+// Task Delegation Types
+// =============================================================================
+
+/**
+ * AI-suggested task assignment
+ */
+export interface TaskAssignmentSuggestion {
+    taskId: string;
+    assigneeType: 'user' | 'agent';
+    assigneeId: string;
+    assigneeName: string;
+    reasoning: string;
+}
+
+/**
+ * Available assignee option (team member or AI agent)
+ */
+export interface AssigneeOption {
+    id: string;
+    name: string;
+    type: 'user' | 'agent';
+    agentType?: string;
+}
+
+/**
+ * Props for PlanExecutionPanel component
+ */
+export interface PlanExecutionPanelProps {
+    workOrderId: string;
+    tasks: Array<{
+        id: string;
+        title: string;
+        estimatedHours: number;
+        assignedToId: string | null;
+        assignedToName: string;
+        status: string;
+    }>;
+    teamMembers: Array<{ id: string; name: string }>;
+    availableAgents: Array<{ id: string; name: string; type: string }>;
+    onAssign: (taskId: string, assigneeType: 'user' | 'agent', assigneeId: string) => void;
+    onDelegateAll: () => void;
+    isDelegating: boolean;
+    isAssigning: boolean;
+    aiSuggestions: TaskAssignmentSuggestion[];
+    delegationError?: string | null;
 }

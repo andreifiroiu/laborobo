@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Enums\Priority;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AIAgent;
 use App\Models\Document;
 use App\Models\Folder;
 use App\Models\Message;
@@ -201,6 +202,11 @@ class WorkOrderController extends Controller
                     'id' => (string) $user->id,
                     'name' => $user->name,
                 ]),
+            'availableAgents' => AIAgent::whereHas('configurations', fn ($q) => $q->where('team_id', $workOrder->team_id)->where('enabled', true))->get()->map(fn (AIAgent $a) => [
+                'id' => (string) $a->id,
+                'name' => $a->name,
+                'type' => $a->type->value,
+            ]),
             'statusTransitions' => $workOrder->statusTransitions->map(fn ($transition) => [
                 'id' => $transition->id,
                 'fromStatus' => $transition->from_status,

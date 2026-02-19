@@ -5,3 +5,4 @@ export { TaskSuggestionCard } from './task-suggestion-card';
 export { ProjectInsightsPanel } from './project-insights-panel';
 export { InsightCard } from './insight-card';
 export { PMCopilotSettingsToggle } from './pm-copilot-settings-toggle';
+export { PlanExecutionPanel } from './plan-execution-panel';

@@ -76,6 +76,10 @@ Route::middleware(['auth', 'verified'])->prefix('work')->group(function () {
     Route::get('/work-orders/{workOrder}/pm-copilot/suggestions', [PMCopilotController::class, 'getSuggestions'])->name('work-orders.pm-copilot.suggestions');
     Route::post('/pm-copilot/suggestions/{suggestion}/approve', [PMCopilotController::class, 'approveSuggestion'])->name('pm-copilot.suggestions.approve');
     Route::post('/pm-copilot/suggestions/{suggestion}/reject', [PMCopilotController::class, 'rejectSuggestion'])->name('pm-copilot.suggestions.reject');
+    Route::post('/work-orders/{workOrder}/pm-copilot/alternatives/{alternativeId}/approve', [PMCopilotController::class, 'approveAlternative'])->name('work-orders.pm-copilot.alternatives.approve');
+    Route::post('/work-orders/{workOrder}/pm-copilot/alternatives/{alternativeId}/reject', [PMCopilotController::class, 'rejectAlternative'])->name('work-orders.pm-copilot.alternatives.reject');
+    Route::post('/work-orders/{workOrder}/pm-copilot/delegate', [PMCopilotController::class, 'delegatePlan'])->name('work-orders.pm-copilot.delegate');
+    Route::post('/work-orders/{workOrder}/pm-copilot/tasks/{task}/assign', [PMCopilotController::class, 'assignTask'])->name('work-orders.pm-copilot.tasks.assign');
 
     // Tasks
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
