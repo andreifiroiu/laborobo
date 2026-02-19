@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ChevronDown, Plus, Filter, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -79,6 +80,8 @@ export function AIAgentsSection({
         perProjectBudgetCap: globalSettings.perProjectBudgetCap,
     });
     const [savingBudget, setSavingBudget] = useState(false);
+    const [editingAgent, setEditingAgent] = useState<Record<number, { name?: string; instructions?: string }>>({});
+    const [savingAgent, setSavingAgent] = useState<number | null>(null);
 
     // Activity filters
     const [activityStatusFilter, setActivityStatusFilter] = useState<string>('all');
@@ -399,6 +402,85 @@ export function AIAgentsSection({
                                                         />
                                                     </button>
                                                 </div>
+
+                                                {/* Agent Name */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor={`name-${agent.id}`}>Agent Name</Label>
+                                                    <Input
+                                                        id={`name-${agent.id}`}
+                                                        value={editingAgent[agent.id]?.name ?? agent.name}
+                                                        onChange={(e) => setEditingAgent((prev) => ({
+                                                            ...prev,
+                                                            [agent.id]: { ...prev[agent.id], name: e.target.value },
+                                                        }))}
+                                                    />
+                                                </div>
+
+                                                {/* Agent Instructions */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor={`instructions-${agent.id}`}>Agent Instructions</Label>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        System prompt that guides the agent's behavior
+                                                    </p>
+                                                    <Textarea
+                                                        id={`instructions-${agent.id}`}
+                                                        rows={6}
+                                                        value={editingAgent[agent.id]?.instructions ?? agent.instructions ?? ''}
+                                                        onChange={(e) => setEditingAgent((prev) => ({
+                                                            ...prev,
+                                                            [agent.id]: { ...prev[agent.id], instructions: e.target.value },
+                                                        }))}
+                                                        placeholder="Enter instructions for this agent..."
+                                                    />
+                                                </div>
+
+                                                {/* Save / Cancel for name + instructions */}
+                                                {editingAgent[agent.id] && (
+                                                    (editingAgent[agent.id].name !== undefined && editingAgent[agent.id].name !== agent.name) ||
+                                                    (editingAgent[agent.id].instructions !== undefined && editingAgent[agent.id].instructions !== (agent.instructions ?? ''))
+                                                ) && (
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            disabled={savingAgent === agent.id}
+                                                            onClick={() => {
+                                                                setSavingAgent(agent.id);
+                                                                router.patch(
+                                                                    `/settings/agents/${agent.id}`,
+                                                                    {
+                                                                        name: editingAgent[agent.id]?.name ?? agent.name,
+                                                                        instructions: editingAgent[agent.id]?.instructions ?? agent.instructions,
+                                                                    },
+                                                                    {
+                                                                        preserveScroll: true,
+                                                                        onSuccess: () => {
+                                                                            setSavingAgent(null);
+                                                                            setEditingAgent((prev) => {
+                                                                                const next = { ...prev };
+                                                                                delete next[agent.id];
+                                                                                return next;
+                                                                            });
+                                                                        },
+                                                                        onError: () => setSavingAgent(null),
+                                                                    }
+                                                                );
+                                                            }}
+                                                        >
+                                                            {savingAgent === agent.id ? 'Saving...' : 'Save Changes'}
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => setEditingAgent((prev) => {
+                                                                const next = { ...prev };
+                                                                delete next[agent.id];
+                                                                return next;
+                                                            })}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                )}
 
                                                 {/* AI Provider & Model */}
                                                 <div className="grid grid-cols-2 gap-4">

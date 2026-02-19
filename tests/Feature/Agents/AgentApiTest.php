@@ -121,6 +121,9 @@ test('POST /settings/agents creates agent from template', function () {
     expect($agent)->not->toBeNull();
     expect($agent->tools)->toBe(['work-order-info', 'task-list', 'get-team-capacity']);
 
+    // Verify instructions were copied from template
+    expect($agent->instructions)->toBe('You are a dispatcher agent.');
+
     // Verify configuration was created with template permissions
     $this->assertDatabaseHas('agent_configurations', [
         'team_id' => $this->team->id,
@@ -129,6 +132,77 @@ test('POST /settings/agents creates agent from template', function () {
         'can_create_work_orders' => true,
         'can_modify_tasks' => false,
     ]);
+});
+
+test('PATCH /settings/agents/{id} updates agent name and instructions', function () {
+    $response = $this->actingAs($this->user)->patch("/settings/agents/{$this->agent->id}", [
+        'name' => 'Renamed Agent',
+        'instructions' => 'You are a helpful project management assistant. Always be concise.',
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $this->agent->refresh();
+    expect($this->agent->name)->toBe('Renamed Agent');
+    expect($this->agent->instructions)->toBe('You are a helpful project management assistant. Always be concise.');
+});
+
+test('PATCH /settings/agents/{id} can clear agent instructions', function () {
+    $this->agent->update(['instructions' => 'Some instructions']);
+
+    $response = $this->actingAs($this->user)->patch("/settings/agents/{$this->agent->id}", [
+        'name' => $this->agent->name,
+        'instructions' => null,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $this->agent->refresh();
+    expect($this->agent->instructions)->toBeNull();
+});
+
+test('PATCH /settings/agents/{id} detaches from template when name is changed', function () {
+    expect($this->agent->template_id)->not->toBeNull();
+
+    $response = $this->actingAs($this->user)->patch("/settings/agents/{$this->agent->id}", [
+        'name' => 'A Completely New Name',
+    ]);
+
+    $response->assertRedirect();
+
+    $this->agent->refresh();
+    expect($this->agent->template_id)->toBeNull();
+    expect($this->agent->is_custom)->toBeTrue();
+});
+
+test('PATCH /settings/agents/{id} detaches from template when instructions are changed', function () {
+    expect($this->agent->template_id)->not->toBeNull();
+
+    $response = $this->actingAs($this->user)->patch("/settings/agents/{$this->agent->id}", [
+        'name' => $this->agent->name,
+        'instructions' => 'Custom instructions that differ from template.',
+    ]);
+
+    $response->assertRedirect();
+
+    $this->agent->refresh();
+    expect($this->agent->template_id)->toBeNull();
+    expect($this->agent->is_custom)->toBeTrue();
+});
+
+test('PATCH /settings/agents/{id} keeps template when nothing meaningful changes', function () {
+    $originalTemplateId = $this->agent->template_id;
+
+    $response = $this->actingAs($this->user)->patch("/settings/agents/{$this->agent->id}", [
+        'name' => $this->agent->name,
+    ]);
+
+    $response->assertRedirect();
+
+    $this->agent->refresh();
+    expect($this->agent->template_id)->toBe($originalTemplateId);
 });
 
 test('PATCH /settings/agents/{id}/configuration updates permissions and budget', function () {

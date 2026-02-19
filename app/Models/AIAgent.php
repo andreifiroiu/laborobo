@@ -21,6 +21,7 @@ class AIAgent extends Model
         'name',
         'type',
         'description',
+        'instructions',
         'tools',
         'template_id',
         'is_custom',

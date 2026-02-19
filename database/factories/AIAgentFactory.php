@@ -27,6 +27,7 @@ class AIAgentFactory extends Factory
             'name' => fake()->name().' AI',
             'type' => fake()->randomElement(AgentType::cases()),
             'description' => fake()->sentence(),
+            'instructions' => null,
             'tools' => [
                 'task-list',
                 'work-order-info',

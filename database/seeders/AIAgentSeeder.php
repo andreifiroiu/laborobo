@@ -18,6 +18,7 @@ class AIAgentSeeder extends Seeder
                 'name' => 'PM Copilot',
                 'type' => 'project-management',
                 'description' => 'Assists with project planning, status updates, and timeline management',
+                'instructions' => null,
                 'tools' => ['task-list', 'work-order-info', 'create-note'],
             ],
             [
@@ -25,6 +26,7 @@ class AIAgentSeeder extends Seeder
                 'name' => 'Work Dispatcher',
                 'type' => 'work-routing',
                 'description' => 'Intelligently routes work orders to appropriate team members based on skills and availability',
+                'instructions' => null,
                 'tools' => ['task-list', 'work-order-info', 'create-note'],
             ],
             [
@@ -32,6 +34,7 @@ class AIAgentSeeder extends Seeder
                 'name' => 'Content Writer',
                 'type' => 'content-creation',
                 'description' => 'Generates professional documentation, emails, and client communications',
+                'instructions' => null,
                 'tools' => ['work-order-info', 'create-note'],
             ],
             [
@@ -39,6 +42,7 @@ class AIAgentSeeder extends Seeder
                 'name' => 'QA Specialist',
                 'type' => 'quality-assurance',
                 'description' => 'Reviews work outputs for quality, completeness, and adherence to standards',
+                'instructions' => null,
                 'tools' => ['task-list', 'work-order-info', 'create-note'],
             ],
             [
@@ -46,6 +50,7 @@ class AIAgentSeeder extends Seeder
                 'name' => 'Data Analyst',
                 'type' => 'data-analysis',
                 'description' => 'Analyzes project metrics, generates insights, and creates performance reports',
+                'instructions' => null,
                 'tools' => ['task-list', 'work-order-info', 'create-note'],
             ],
         ];

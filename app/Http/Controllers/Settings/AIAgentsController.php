@@ -117,6 +117,7 @@ class AIAgentsController extends Controller
             'name' => $name,
             'type' => $template?->type ?? AgentType::tryFrom($validated['type'] ?? 'project-management') ?? AgentType::ProjectManagement,
             'description' => $validated['description'] ?? $template?->description,
+            'instructions' => $template?->default_instructions,
             'tools' => $template?->default_tools ?? [],
             'template_id' => $template?->id,
             'is_custom' => $template === null,
@@ -154,7 +155,20 @@ class AIAgentsController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
+            'instructions' => 'nullable|string|max:10000',
         ]);
+
+        // Detach from template if name or instructions were changed
+        if ($agent->template_id !== null) {
+            $nameChanged = $validated['name'] !== $agent->name;
+            $instructionsChanged = array_key_exists('instructions', $validated)
+                && $validated['instructions'] !== $agent->instructions;
+
+            if ($nameChanged || $instructionsChanged) {
+                $validated['template_id'] = null;
+                $validated['is_custom'] = true;
+            }
+        }
 
         $agent->update($validated);
 

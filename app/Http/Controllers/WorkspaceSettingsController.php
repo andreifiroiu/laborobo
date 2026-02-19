@@ -86,7 +86,10 @@ class WorkspaceSettingsController extends Controller
                 'name' => $agent->name,
                 'type' => $agent->type,
                 'description' => $agent->description,
+                'instructions' => $agent->instructions,
                 'tools' => $agent->tools,
+                'templateId' => $agent->template_id,
+                'isCustom' => $agent->is_custom,
                 'status' => $config?->enabled ? 'enabled' : 'disabled',
                 'configuration' => $config ? [
                     'enabled' => $config->enabled,
