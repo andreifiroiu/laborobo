@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Work;
 
+use App\Enums\DocumentType;
 use App\Enums\Priority;
 use App\Enums\WorkOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
+use App\Models\Folder;
 use App\Models\Message;
 use App\Models\Project;
 use App\Models\Task;
@@ -13,6 +15,7 @@ use App\Models\WorkOrder;
 use App\Services\WorkflowTransitionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -170,7 +173,11 @@ class WorkOrderController extends Controller
                 'type' => $doc->type->value,
                 'fileUrl' => $doc->file_url,
                 'fileSize' => $doc->file_size,
+                'mimeType' => $this->guessMimeType($doc->name),
+                'folderId' => $doc->folder_id ? (string) $doc->folder_id : null,
+                'uploadedDate' => $doc->created_at->format('Y-m-d'),
             ]),
+            'folders' => $this->getWorkOrderFolders($workOrder),
             'communicationThread' => $thread ? [
                 'id' => (string) $thread->id,
                 'messageCount' => $thread->message_count,
@@ -316,6 +323,122 @@ class WorkOrderController extends Controller
             'topCandidateId' => $recommendations['top_candidate_id'] ?? null,
             'confidence' => $recommendations['confidence'] ?? 'low',
         ];
+    }
+
+    public function uploadFile(Request $request, WorkOrder $workOrder): RedirectResponse
+    {
+        $this->authorize('update', $workOrder);
+
+        $validated = $request->validate([
+            'file' => 'required|file|max:10240', // 10MB max
+            'folder_id' => 'nullable|exists:folders,id',
+        ]);
+
+        $user = $request->user();
+        $file = $validated['file'];
+        $fileName = $file->getClientOriginalName();
+        $fileSize = $file->getSize();
+
+        // Store file in work-orders directory
+        $path = $file->store("work-orders/{$workOrder->id}", 'public');
+        $fileUrl = Storage::disk('public')->url($path);
+
+        // Create document record
+        Document::create([
+            'team_id' => $workOrder->team_id,
+            'uploaded_by_id' => $user->id,
+            'documentable_type' => WorkOrder::class,
+            'documentable_id' => $workOrder->id,
+            'folder_id' => $validated['folder_id'] ?? null,
+            'name' => $fileName,
+            'type' => DocumentType::Reference,
+            'file_url' => $fileUrl,
+            'file_size' => $this->formatFileSize($fileSize),
+        ]);
+
+        return back();
+    }
+
+    public function deleteFile(Request $request, WorkOrder $workOrder, Document $document): RedirectResponse
+    {
+        $this->authorize('update', $workOrder);
+
+        // Verify document belongs to this work order
+        if ($document->documentable_type !== WorkOrder::class || $document->documentable_id !== $workOrder->id) {
+            abort(403);
+        }
+
+        // Delete file from storage
+        $path = str_replace(Storage::disk('public')->url(''), '', $document->file_url);
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        $document->delete();
+
+        return back();
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $unitIndex = 0;
+        $size = $bytes;
+
+        while ($size >= 1024 && $unitIndex < count($units) - 1) {
+            $size /= 1024;
+            $unitIndex++;
+        }
+
+        return round($size, 1).' '.$units[$unitIndex];
+    }
+
+    private function guessMimeType(string $filename): string
+    {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        $mimeTypes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'txt' => 'text/plain',
+            'zip' => 'application/zip',
+        ];
+
+        return $mimeTypes[$ext] ?? 'application/octet-stream';
+    }
+
+    private function getWorkOrderFolders(WorkOrder $workOrder): array
+    {
+        // Reuse folders from the parent project
+        $folders = Folder::forTeam($workOrder->team_id)
+            ->where('project_id', $workOrder->project_id)
+            ->whereNull('parent_id')
+            ->with(['children.children'])
+            ->withCount('documents')
+            ->orderBy('name')
+            ->get();
+
+        return $folders->map(fn (Folder $folder) => [
+            'id' => (string) $folder->id,
+            'name' => $folder->name,
+            'parentId' => $folder->parent_id ? (string) $folder->parent_id : null,
+            'documentCount' => $folder->documents_count,
+            'children' => $folder->children->map(fn (Folder $child) => [
+                'id' => (string) $child->id,
+                'name' => $child->name,
+                'parentId' => (string) $child->parent_id,
+                'documentCount' => $child->documents_count ?? 0,
+                'children' => [],
+            ])->toArray(),
+        ])->toArray();
     }
 
     public function archive(Request $request, WorkOrder $workOrder): RedirectResponse

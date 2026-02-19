@@ -98,6 +98,7 @@ import {
     PMCopilotSettingsToggle,
 } from '@/components/pm-copilot';
 import { DraftClientUpdateButton } from '@/components/client-comms';
+import { ProjectDocumentsSection } from '@/pages/work/projects/components/project-documents-section';
 import {
     useTriggerPMCopilot,
     usePMCopilotSuggestions,
@@ -204,9 +205,25 @@ interface WorkOrderDetailProps {
     documents: Array<{
         id: string;
         name: string;
-        type: string;
+        type: 'reference' | 'artifact' | 'evidence' | 'template';
         fileUrl: string;
         fileSize: string | null;
+        mimeType?: string;
+        folderId?: string | null;
+        uploadedDate?: string;
+    }>;
+    folders: Array<{
+        id: string;
+        name: string;
+        parentId: string | null;
+        documentCount: number;
+        children: Array<{
+            id: string;
+            name: string;
+            parentId: string;
+            documentCount: number;
+            children: never[];
+        }>;
     }>;
     communicationThread: {
         id: string;
@@ -473,6 +490,7 @@ export default function WorkOrderDetail({
     tasks,
     deliverables,
     documents,
+    folders = [],
     communicationThread,
     messages,
     teamMembers,
@@ -1748,6 +1766,15 @@ export default function WorkOrderDetail({
                         </div>
                     )}
                 </div>
+
+                {/* Documents Section */}
+                <ProjectDocumentsSection
+                    projectId={workOrder.projectId}
+                    documents={documents}
+                    folders={folders}
+                    uploadUrl={`/work/work-orders/${workOrder.id}/files`}
+                    deleteUrlPrefix={`/work/work-orders/${workOrder.id}/files`}
+                />
             </div>
 
             {/* Communications Panel */}

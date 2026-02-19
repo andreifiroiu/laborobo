@@ -61,12 +61,16 @@ interface ProjectDocumentsSectionProps {
     projectId: string;
     documents: DocumentItem[];
     folders: FolderNode[];
+    uploadUrl?: string;
+    deleteUrlPrefix?: string;
 }
 
 export function ProjectDocumentsSection({
     projectId,
     documents,
     folders,
+    uploadUrl,
+    deleteUrlPrefix,
 }: ProjectDocumentsSectionProps) {
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -100,7 +104,7 @@ export function ProjectDocumentsSection({
             formData.append('folder_id', uploadFolderId);
         }
 
-        router.post(`/work/projects/${projectId}/files`, formData, {
+        router.post(uploadUrl ?? `/work/projects/${projectId}/files`, formData, {
             forceFormData: true,
             preserveScroll: true,
             onFinish: () => {
@@ -115,7 +119,7 @@ export function ProjectDocumentsSection({
 
     const handleDeleteDocument = (doc: DocumentItem) => {
         if (confirm('Are you sure you want to delete this file?')) {
-            router.delete(`/work/projects/${projectId}/files/${doc.id}`, {
+            router.delete(`${deleteUrlPrefix ?? `/work/projects/${projectId}/files`}/${doc.id}`, {
                 preserveScroll: true,
             });
         }
