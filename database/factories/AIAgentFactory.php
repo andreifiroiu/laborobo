@@ -24,12 +24,12 @@ class AIAgentFactory extends Factory
     {
         return [
             'code' => fake()->unique()->slug(2),
-            'name' => fake()->name() . ' AI',
+            'name' => fake()->name().' AI',
             'type' => fake()->randomElement(AgentType::cases()),
             'description' => fake()->sentence(),
-            'capabilities' => [
-                'drafting',
-                'analysis',
+            'tools' => [
+                'task-list',
+                'work-order-info',
             ],
         ];
     }

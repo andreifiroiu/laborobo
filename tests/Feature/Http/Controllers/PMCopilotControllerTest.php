@@ -50,7 +50,7 @@ beforeEach(function () {
         'name' => 'PM Copilot Agent',
         'type' => AgentType::ProjectManagement,
         'description' => 'Assists with project management tasks',
-        'capabilities' => ['deliverable_generation', 'task_breakdown', 'project_insights'],
+        'tools' => ['deliverable_generation', 'task_breakdown', 'project_insights'],
     ]);
 
     $this->config = AgentConfiguration::create([

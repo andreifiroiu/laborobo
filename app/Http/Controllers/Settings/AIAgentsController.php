@@ -109,7 +109,7 @@ class AIAgentsController extends Controller
         $name = $validated['name'] ?? $template?->name ?? 'Unnamed Agent';
 
         // Generate a unique code for the agent
-        $code = Str::slug($name) . '-' . $team->id . '-' . Str::random(4);
+        $code = Str::slug($name).'-'.$team->id.'-'.Str::random(4);
 
         // Create the agent
         $agent = AIAgent::create([
@@ -117,7 +117,7 @@ class AIAgentsController extends Controller
             'name' => $name,
             'type' => $template?->type ?? AgentType::tryFrom($validated['type'] ?? 'project-management') ?? AgentType::ProjectManagement,
             'description' => $validated['description'] ?? $template?->description,
-            'capabilities' => $template?->default_tools ?? [],
+            'tools' => $template?->default_tools ?? [],
             'template_id' => $template?->id,
             'is_custom' => $template === null,
         ]);

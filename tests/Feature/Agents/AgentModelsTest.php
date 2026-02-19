@@ -79,7 +79,7 @@ test('ai agent can belong to an agent template', function () {
         'name' => 'Team PM Copilot',
         'type' => AgentType::ProjectManagement,
         'description' => 'Custom PM agent',
-        'capabilities' => ['planning', 'scheduling'],
+        'tools' => ['planning', 'scheduling'],
         'template_id' => $template->id,
         'is_custom' => false,
     ]);
@@ -95,7 +95,7 @@ test('ai agent template relationship is nullable', function () {
         'name' => 'Fully Custom Agent',
         'type' => AgentType::ContentCreation,
         'description' => 'A fully custom agent without template',
-        'capabilities' => ['writing'],
+        'tools' => ['writing'],
         'template_id' => null,
         'is_custom' => true,
     ]);

@@ -21,13 +21,13 @@ class AIAgent extends Model
         'name',
         'type',
         'description',
-        'capabilities',
+        'tools',
         'template_id',
         'is_custom',
     ];
 
     protected $casts = [
-        'capabilities' => 'array',
+        'tools' => 'array',
         'type' => AgentType::class,
         'is_custom' => 'boolean',
     ];

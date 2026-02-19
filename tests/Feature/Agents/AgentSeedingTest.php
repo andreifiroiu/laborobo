@@ -87,7 +87,7 @@ describe('Agent Template Seeding', function () {
             'name' => 'Team Test Agent',
             'type' => $template->type,
             'description' => $template->description,
-            'capabilities' => $template->default_tools,
+            'tools' => $template->default_tools,
             'template_id' => $template->id,
             'is_custom' => false,
         ]);
@@ -110,7 +110,7 @@ describe('Agent Template Seeding', function () {
         expect($agent->template_id)->toBe($template->id);
         expect($agent->template)->toBeInstanceOf(AgentTemplate::class);
         expect($agent->type)->toBe($template->type);
-        expect($agent->capabilities)->toBe($template->default_tools);
+        expect($agent->tools)->toBe($template->default_tools);
 
         // Verify configuration has template permissions
         expect($config->can_modify_tasks)->toBeTrue();

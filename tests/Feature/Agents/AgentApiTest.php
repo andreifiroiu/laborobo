@@ -38,7 +38,7 @@ beforeEach(function () {
         'name' => 'Team PM Copilot',
         'type' => AgentType::ProjectManagement,
         'description' => 'Custom PM agent',
-        'capabilities' => ['planning', 'scheduling'],
+        'tools' => ['planning', 'scheduling'],
         'template_id' => $this->template->id,
         'is_custom' => false,
     ]);
@@ -86,26 +86,48 @@ test('GET /settings/agent-templates returns template list', function () {
 });
 
 test('POST /settings/agents creates agent from template', function () {
+    // Use a fresh template so it doesn't conflict with the agent already created in beforeEach
+    $newTemplate = AgentTemplate::create([
+        'code' => 'dispatcher',
+        'name' => 'Dispatcher Agent',
+        'type' => AgentType::WorkRouting,
+        'description' => 'Routes incoming work items',
+        'default_instructions' => 'You are a dispatcher agent.',
+        'default_tools' => ['work-order-info', 'task-list', 'get-team-capacity'],
+        'default_permissions' => [
+            'can_create_work_orders' => true,
+            'can_modify_tasks' => false,
+        ],
+        'is_active' => true,
+    ]);
+
     $response = $this->actingAs($this->user)->post('/settings/agents', [
-        'template_id' => $this->template->id,
-        'name' => 'My Custom PM Agent',
-        'description' => 'A customized PM agent for my team',
+        'template_id' => $newTemplate->id,
+        'name' => 'My Custom Dispatcher',
+        'description' => 'A customized dispatcher for my team',
     ]);
 
     $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
 
     $this->assertDatabaseHas('ai_agents', [
-        'name' => 'My Custom PM Agent',
-        'template_id' => $this->template->id,
+        'name' => 'My Custom Dispatcher',
+        'template_id' => $newTemplate->id,
         'is_custom' => false,
     ]);
 
-    // Verify configuration was also created for the team
-    $agent = AIAgent::where('name', 'My Custom PM Agent')->first();
+    // Verify tools were copied from template to agent capabilities
+    $agent = AIAgent::where('name', 'My Custom Dispatcher')->first();
+    expect($agent)->not->toBeNull();
+    expect($agent->tools)->toBe(['work-order-info', 'task-list', 'get-team-capacity']);
+
+    // Verify configuration was created with template permissions
     $this->assertDatabaseHas('agent_configurations', [
         'team_id' => $this->team->id,
         'ai_agent_id' => $agent->id,
         'enabled' => true,
+        'can_create_work_orders' => true,
+        'can_modify_tasks' => false,
     ]);
 });
 

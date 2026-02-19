@@ -43,7 +43,7 @@ beforeEach(function () {
         'name' => 'Client Comms Agent',
         'type' => AgentType::ClientCommunication,
         'description' => 'Drafts professional client-facing communications with human approval required before delivery',
-        'capabilities' => ['status_updates', 'deliverable_notifications', 'clarification_requests', 'milestone_announcements'],
+        'tools' => ['status_updates', 'deliverable_notifications', 'clarification_requests', 'milestone_announcements'],
     ]);
 
     $this->config = AgentConfiguration::create([

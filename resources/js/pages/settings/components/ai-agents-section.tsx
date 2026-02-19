@@ -112,8 +112,11 @@ export function AIAgentsSection({
     };
 
     const getAgentTools = (agentId: number): AgentTool[] => {
-        // In a real implementation, this would filter tools based on agent configuration
-        return agentTools;
+        const agent = agents.find((a) => a.id === agentId);
+        if (!agent?.tools?.length) {
+            return [];
+        }
+        return agentTools.filter((tool) => agent.tools.includes(tool.name));
     };
 
     const handlePermissionChange = (agentId: number, updates: Record<string, unknown>) => {
@@ -301,9 +304,12 @@ export function AIAgentsSection({
                     return (
                         <Card key={agent.id} className="overflow-hidden">
                             {/* Agent Header */}
-                            <button
+                            <div
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => setExpandedAgentId(isExpanded ? null : agent.id)}
-                                className="w-full flex items-center justify-between p-6 hover:bg-muted/50 transition-colors text-left"
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedAgentId(isExpanded ? null : agent.id); } }}
+                                className="w-full flex items-center justify-between p-6 hover:bg-muted/50 transition-colors text-left cursor-pointer"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="text-3xl">
@@ -344,7 +350,7 @@ export function AIAgentsSection({
                                         }`}
                                     />
                                 </div>
-                            </button>
+                            </div>
 
                             {/* Expanded Content */}
                             {isExpanded && config && (

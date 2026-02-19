@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgentActivityLog;
 use App\Models\AgentTemplate;
 use App\Models\AIAgent;
-use App\Models\AgentActivityLog;
 use App\Models\AuditLog;
 use App\Models\AvailableIntegration;
 use App\Models\BillingInfo;
@@ -15,6 +15,7 @@ use App\Models\TeamApiKey;
 use App\Models\TeamIntegration;
 use App\Models\WorkspaceSettings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 
 class WorkspaceSettingsController extends Controller
@@ -78,13 +79,14 @@ class WorkspaceSettingsController extends Controller
 
         $aiAgents = $teamAgents->map(function ($agent) {
             $config = $agent->configurations->first();
+
             return [
                 'id' => $agent->id,
                 'code' => $agent->code,
                 'name' => $agent->name,
                 'type' => $agent->type,
                 'description' => $agent->description,
-                'capabilities' => $agent->capabilities,
+                'tools' => $agent->tools,
                 'status' => $config?->enabled ? 'enabled' : 'disabled',
                 'configuration' => $config ? [
                     'enabled' => $config->enabled,
@@ -145,7 +147,7 @@ class WorkspaceSettingsController extends Controller
             ->latest('timestamp')
             ->limit(100)
             ->get()
-            ->map(fn($log) => [
+            ->map(fn ($log) => [
                 'id' => $log->id,
                 'timestamp' => $log->timestamp->toISOString(),
                 'actor' => $log->actor,
@@ -212,7 +214,7 @@ class WorkspaceSettingsController extends Controller
             ->latest('invoice_date')
             ->limit(12)
             ->get()
-            ->map(fn($invoice) => [
+            ->map(fn ($invoice) => [
                 'id' => $invoice->id,
                 'invoiceNumber' => $invoice->invoice_number,
                 'invoiceDate' => $invoice->invoice_date->toISOString(),
@@ -247,6 +249,28 @@ class WorkspaceSettingsController extends Controller
             'lastUsedAt' => $k->last_used_at?->toISOString(),
             'createdAt' => $k->created_at->toISOString(),
         ]);
+
+        // Load agent tool definitions from config
+        $agentTools = collect(File::glob(config_path('agent-tools/*.json')))
+            ->filter(fn ($file) => basename($file) !== 'schema.json')
+            ->map(function ($file) {
+                $def = json_decode(File::get($file), true);
+
+                return $def && isset($def['name']) ? [
+                    'name' => $def['name'],
+                    'description' => $def['description'] ?? '',
+                    'category' => $def['category'] ?? 'general',
+                    'requiredPermissions' => $def['required_permissions'] ?? [],
+                    'enabled' => true,
+                    'parameters' => collect($def['parameters'] ?? [])->map(fn ($p) => [
+                        'type' => $p['type'] ?? 'string',
+                        'description' => $p['description'] ?? '',
+                        'required' => $p['required'] ?? false,
+                    ])->all(),
+                ] : null;
+            })
+            ->filter()
+            ->values();
 
         return Inertia::render('settings/index', [
             'workspaceSettings' => [
@@ -292,6 +316,7 @@ class WorkspaceSettingsController extends Controller
                     'taskAssignment' => $globalAISettings->approval_task_assignment,
                 ],
             ],
+            'agentTools' => $agentTools,
             'agentActivityLogs' => $agentActivityLogs,
             'notificationPreferences' => [
                 'projectUpdates' => [

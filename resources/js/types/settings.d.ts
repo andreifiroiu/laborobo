@@ -74,7 +74,7 @@ export interface AIAgent {
     name: string;
     type: 'project-management' | 'work-routing' | 'content-creation' | 'quality-assurance' | 'data-analysis';
     description: string;
-    capabilities: string[];
+    tools: string[];
     status: 'enabled' | 'disabled';
     configuration: AgentConfiguration | null;
     templateId?: number | null;

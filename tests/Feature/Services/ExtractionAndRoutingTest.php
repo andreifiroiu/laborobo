@@ -39,7 +39,7 @@ beforeEach(function () {
         'name' => 'Dispatcher Agent',
         'type' => AgentType::WorkRouting,
         'description' => 'Routes work to team members based on skills and capacity',
-        'capabilities' => ['work_routing', 'skill_matching', 'capacity_analysis'],
+        'tools' => ['work_routing', 'skill_matching', 'capacity_analysis'],
     ]);
 
     AgentConfiguration::create([

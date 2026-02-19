@@ -78,7 +78,7 @@ beforeEach(function () {
         'code' => 'test-base-agent',
         'name' => 'Test Base Agent',
         'description' => 'Test agent for abstraction layer',
-        'capabilities' => ['testing'],
+        'tools' => ['testing'],
     ]);
 
     $this->config = AgentConfiguration::create([

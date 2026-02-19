@@ -348,13 +348,13 @@ abstract class BaseAgent extends Agent
     {
         $name = $this->aiAgent->name;
         $description = $this->aiAgent->description ?? 'an AI assistant';
-        $capabilities = $this->aiAgent->capabilities ?? [];
+        $agentTools = $this->aiAgent->tools ?? [];
 
         $instructions = "You are {$name}, {$description}.";
 
-        if (! empty($capabilities)) {
-            $capabilityList = implode(', ', $capabilities);
-            $instructions .= " Your capabilities include: {$capabilityList}.";
+        if (! empty($agentTools)) {
+            $toolList = implode(', ', $agentTools);
+            $instructions .= " Your available tools include: {$toolList}.";
         }
 
         $instructions .= ' Always be helpful, accurate, and professional.';

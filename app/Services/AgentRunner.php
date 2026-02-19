@@ -291,13 +291,13 @@ class AgentRunner
     private function resolveDefaultAgentClass(AIAgent $agent): string
     {
         // Check capabilities for hints
-        $capabilities = $agent->capabilities ?? [];
+        $tools = $agent->tools ?? [];
 
-        if (in_array('routing', $capabilities, true) || in_array('dispatch', $capabilities, true)) {
+        if (in_array('routing', $tools, true) || in_array('dispatch', $tools, true)) {
             return DispatcherAgent::class;
         }
 
-        if (in_array('communication', $capabilities, true) || in_array('client-comms', $capabilities, true)) {
+        if (in_array('communication', $tools, true) || in_array('client-comms', $tools, true)) {
             return ClientCommsAgent::class;
         }
 
