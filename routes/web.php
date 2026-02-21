@@ -11,10 +11,7 @@ use App\Http\Controllers\Reports\TimeReportsController;
 use App\Http\Controllers\TodayController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
-
-// Redirect home to today
-Route::redirect('/', '/today')->name('home');
+// Root (/) is handled by Laravel Folio → resources/views/pages/index.blade.php
 
 // Public invitation acceptance (signed URLs)
 Route::get('/invitation/{invitation}/accept', [InvitationAcceptController::class, 'show'])
