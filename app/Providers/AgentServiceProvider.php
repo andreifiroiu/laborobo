@@ -8,6 +8,7 @@ use App\Agents\Tools\CreateDeliverableTool;
 use App\Agents\Tools\CreateDraftWorkOrderTool;
 use App\Agents\Tools\CreateNoteTool;
 use App\Agents\Tools\CreateTaskTool;
+use App\Agents\Tools\GetDocumentsTool;
 use App\Agents\Tools\GetPlaybooksTool;
 use App\Agents\Tools\GetProjectInsightsTool;
 use App\Agents\Tools\GetTeamCapacityTool;
@@ -105,6 +106,7 @@ class AgentServiceProvider extends ServiceProvider
             GetTeamCapacityTool::class,
             CreateDraftWorkOrderTool::class,
             GetPlaybooksTool::class,
+            GetDocumentsTool::class,
             // PM Copilot Agent tools
             CreateDeliverableTool::class,
             CreateTaskTool::class,
@@ -154,6 +156,7 @@ class AgentServiceProvider extends ServiceProvider
             GetTeamCapacityTool::class,
             CreateDraftWorkOrderTool::class,
             GetPlaybooksTool::class,
+            GetDocumentsTool::class,
             // PM Copilot Agent tools
             CreateDeliverableTool::class,
             CreateTaskTool::class,

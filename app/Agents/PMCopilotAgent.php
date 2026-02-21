@@ -50,6 +50,7 @@ class PMCopilotAgent extends BaseAgent
         $pmToolNames = [
             'work-order-info',
             'get-playbooks',
+            'get-documents',
             'task-list',
             'get-team-capacity',
         ];
@@ -172,6 +173,7 @@ You are the PM Copilot Agent, an AI assistant specialized in project management 
 
 - **work-order-info**: Retrieve work order details including tasks and deliverables
 - **get-playbooks**: Query playbooks by tags, type, and search terms for templates
+- **get-documents**: List documents attached to a project or work order (metadata and URLs)
 - **task-list**: List tasks for a work order or project
 - **get-team-capacity**: Query team member availability for resource insights
 

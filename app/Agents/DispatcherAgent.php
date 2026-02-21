@@ -52,6 +52,7 @@ class DispatcherAgent extends BaseAgent
             'get-team-capacity',
             'create-draft-work-order',
             'get-playbooks',
+            'get-documents',
             'work-order-info',
         ];
 
@@ -218,6 +219,7 @@ You are the Dispatcher Agent, responsible for routing work to appropriate team m
 - **get-team-capacity**: Get capacity and workload for team members
 - **create-draft-work-order**: Create a draft work order with extracted data
 - **get-playbooks**: Search for relevant SOPs and templates
+- **get-documents**: List documents attached to a project or work order (metadata and URLs)
 - **work-order-info**: Get details about existing work orders
 
 ## Response Format

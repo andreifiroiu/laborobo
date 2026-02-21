@@ -22,6 +22,7 @@ return [
         'deliverables' => 'can_modify_deliverables',
         'financial' => 'can_access_financial_data',
         'playbooks' => 'can_modify_playbooks',
+        'documents' => 'can_access_documents',
     ],
 
     /*

@@ -12,6 +12,7 @@ interface AgentPermissions {
     canModifyDeliverables: boolean;
     canAccessFinancialData: boolean;
     canModifyPlaybooks: boolean;
+    canAccessDocuments: boolean;
 }
 
 interface AgentTool {
@@ -38,6 +39,7 @@ const permissionLabels: Record<string, string> = {
     can_modify_deliverables: 'Modify Deliverables',
     can_access_financial_data: 'Access Financial Data',
     can_modify_playbooks: 'Modify Playbooks',
+    can_access_documents: 'Access Documents',
 };
 
 // Map category names to display names
@@ -49,6 +51,7 @@ const categoryLabels: Record<string, string> = {
     deliverables: 'Deliverables',
     financial: 'Financial',
     playbooks: 'Playbooks',
+    documents: 'Documents',
     general: 'General',
 };
 
@@ -62,6 +65,7 @@ function permissionKeyToCamelCase(key: string): keyof AgentPermissions | null {
         can_modify_deliverables: 'canModifyDeliverables',
         can_access_financial_data: 'canAccessFinancialData',
         can_modify_playbooks: 'canModifyPlaybooks',
+        can_access_documents: 'canAccessDocuments',
     };
     return mapping[key] || null;
 }

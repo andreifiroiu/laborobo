@@ -30,6 +30,7 @@ class ClientCommsAgent extends BaseAgent
         'work-order-info',
         'project-info',
         'get-playbooks',
+        'get-documents',
         'party-info',
         'draft-communication',
         'get-thread-history',
@@ -277,6 +278,7 @@ You are the Client Communication Agent, an AI assistant specialized in drafting 
 - **work-order-info**: Retrieve work order details including tasks, deliverables, and status
 - **project-info**: Get project-level information and context
 - **get-playbooks**: Query templates and standard communication formats
+- **get-documents**: List documents attached to a project or work order (metadata and URLs)
 - **party-info**: Get client contact information and preferences
 - **draft-communication**: Store drafted communications for approval
 - **get-thread-history**: Retrieve previous communication history for context

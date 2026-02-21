@@ -7,12 +7,14 @@ use App\Enums\SourceType;
 use App\Enums\TaskStatus;
 use App\Enums\WorkOrderStatus;
 use App\Exceptions\InvalidTransitionException;
+use App\Models\AgentWorkflowState;
 use App\Models\InboxItem;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Notifications\RejectionFeedbackNotification;
+use App\Services\AgentOrchestrator;
 use App\Services\WorkflowTransitionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,6 +24,7 @@ class InboxController extends Controller
 {
     public function __construct(
         private readonly WorkflowTransitionService $workflowService,
+        private readonly AgentOrchestrator $orchestrator,
     ) {}
 
     public function index(Request $request): Response
@@ -109,6 +112,24 @@ class InboxController extends Controller
             return back()->with('success', 'Item archived.');
         }
 
+        // Handle AgentWorkflowState approvals via the orchestrator
+        if ($approvable instanceof AgentWorkflowState) {
+            if (! $approvable->isPaused()) {
+                return back()->with('error', 'Workflow is not paused.');
+            }
+
+            $this->orchestrator->resume($approvable, [
+                'approved' => true,
+                'approver_id' => $user->id,
+                'approver_name' => $user->name,
+                'approved_at' => now()->toIso8601String(),
+            ]);
+
+            $inboxItem->delete();
+
+            return back()->with('success', 'Workflow approved and resumed.');
+        }
+
         // Determine the target status based on model type
         $targetStatus = $approvable instanceof Task
             ? TaskStatus::Approved
@@ -141,6 +162,26 @@ class InboxController extends Controller
             $inboxItem->delete();
 
             return back()->with('success', 'Item rejected and archived.');
+        }
+
+        // Handle AgentWorkflowState rejections via the orchestrator
+        if ($approvable instanceof AgentWorkflowState) {
+            if (! $approvable->isPaused()) {
+                return back()->with('error', 'Workflow is not paused.');
+            }
+
+            $this->orchestrator->resume($approvable, [
+                'approved' => false,
+                'rejected' => true,
+                'rejection_reason' => $feedback,
+                'approver_id' => $user->id,
+                'approver_name' => $user->name,
+                'rejected_at' => now()->toIso8601String(),
+            ]);
+
+            $inboxItem->delete();
+
+            return back()->with('success', 'Workflow rejected with feedback.');
         }
 
         // Determine the target status based on model type
@@ -239,6 +280,24 @@ class InboxController extends Controller
 
         // If no approvable model, just archive
         if ($approvable === null) {
+            $inboxItem->delete();
+
+            return true;
+        }
+
+        // Handle AgentWorkflowState approvals via the orchestrator
+        if ($approvable instanceof AgentWorkflowState) {
+            if (! $approvable->isPaused()) {
+                return 'Workflow is not paused.';
+            }
+
+            $this->orchestrator->resume($approvable, [
+                'approved' => true,
+                'approver_id' => $user->id,
+                'approver_name' => $user->name,
+                'approved_at' => now()->toIso8601String(),
+            ]);
+
             $inboxItem->delete();
 
             return true;
