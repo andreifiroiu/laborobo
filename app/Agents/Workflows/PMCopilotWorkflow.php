@@ -118,16 +118,12 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
             }
         }
 
-        // Query relevant playbooks
+        // Query relevant playbooks using multi-strategy search
         if ($teamId !== null) {
-            $playbooksTool = new GetPlaybooksTool;
-            $workOrderTitle = $contextData['work_order']['title'] ?? '';
-            $playbooks = $playbooksTool->execute([
-                'team_id' => $teamId,
-                'search' => $workOrderTitle,
-                'limit' => 5,
-            ]);
-            $contextData['playbooks'] = $playbooks['playbooks'] ?? [];
+            $contextData['playbooks'] = $this->findRelevantPlaybooks(
+                $teamId,
+                $contextData['work_order'] ?? [],
+            );
         }
 
         $this->mergeStateData($state, [
@@ -900,6 +896,127 @@ PROMPT;
         }
 
         return ['Follow playbook guidelines', 'Complete all requirements', 'Verify against criteria'];
+    }
+
+    /**
+     * Find relevant playbooks using a multi-strategy search.
+     *
+     * Runs multiple targeted queries to maximize recall:
+     * 1. Primary search using title + description keywords
+     * 2. Secondary search using keywords from acceptance criteria
+     * 3. Fallback to most-used playbooks if few results found
+     *
+     * @param  array<string, mixed>  $workOrder
+     * @return array<int, array<string, mixed>>
+     */
+    private function findRelevantPlaybooks(int $teamId, array $workOrder): array
+    {
+        $playbooksTool = new GetPlaybooksTool;
+        $collected = [];
+
+        $title = $workOrder['title'] ?? '';
+        $description = $workOrder['description'] ?? '';
+        $keywords = $this->extractSearchKeywords($workOrder);
+
+        // Strategy 1: Search using title + truncated description
+        $primarySearch = trim($title.' '.mb_substr($description, 0, 100));
+        if ($primarySearch !== '') {
+            $result = $playbooksTool->execute([
+                'team_id' => $teamId,
+                'search' => $primarySearch,
+                'limit' => 5,
+            ]);
+            foreach ($result['playbooks'] ?? [] as $playbook) {
+                $collected[$playbook['id']] = $playbook;
+            }
+        }
+
+        // Strategy 2: Search using extracted keywords (if we have them and need more results)
+        if (count($collected) < 5 && ! empty($keywords)) {
+            $keywordSearch = implode(' ', array_slice($keywords, 0, 5));
+            $result = $playbooksTool->execute([
+                'team_id' => $teamId,
+                'search' => $keywordSearch,
+                'limit' => 5,
+            ]);
+            foreach ($result['playbooks'] ?? [] as $playbook) {
+                $collected[$playbook['id']] = $playbook;
+            }
+        }
+
+        // Strategy 3: Fallback to most-used playbooks if still few results
+        if (count($collected) < 3) {
+            $result = $playbooksTool->execute([
+                'team_id' => $teamId,
+                'limit' => 5,
+            ]);
+            foreach ($result['playbooks'] ?? [] as $playbook) {
+                $collected[$playbook['id']] = $playbook;
+            }
+        }
+
+        return array_values(array_slice($collected, 0, 5));
+    }
+
+    /**
+     * Extract meaningful search keywords from a work order.
+     *
+     * Combines title, description, and acceptance criteria, then filters
+     * out common stopwords and short words to produce targeted search terms.
+     *
+     * @param  array<string, mixed>  $workOrder
+     * @return array<int, string>
+     */
+    private function extractSearchKeywords(array $workOrder): array
+    {
+        $text = implode(' ', array_filter([
+            $workOrder['title'] ?? '',
+            $workOrder['description'] ?? '',
+            is_array($workOrder['acceptance_criteria'] ?? null)
+                ? implode(' ', $workOrder['acceptance_criteria'])
+                : '',
+        ]));
+
+        // Normalize: lowercase, strip non-alphanumeric (keep spaces)
+        $text = mb_strtolower($text);
+        $text = (string) preg_replace('/[^a-z0-9\s]/', ' ', $text);
+
+        $words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+        if (! is_array($words)) {
+            return [];
+        }
+
+        $stopwords = [
+            'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were',
+            'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
+            'will', 'would', 'could', 'should', 'may', 'might', 'shall', 'can',
+            'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as',
+            'into', 'through', 'during', 'before', 'after', 'above', 'below',
+            'between', 'out', 'off', 'over', 'under', 'again', 'further', 'then',
+            'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each',
+            'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no',
+            'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
+            'just', 'because', 'about', 'up', 'that', 'this', 'it', 'its', 'must',
+            'also', 'which', 'what', 'their', 'them', 'they', 'we', 'our', 'your',
+        ];
+
+        $filtered = [];
+        $seen = [];
+        foreach ($words as $word) {
+            if (mb_strlen($word) < 3) {
+                continue;
+            }
+            if (in_array($word, $stopwords, true)) {
+                continue;
+            }
+            if (isset($seen[$word])) {
+                continue;
+            }
+            $seen[$word] = true;
+            $filtered[] = $word;
+        }
+
+        return array_slice($filtered, 0, 10);
     }
 
     /**
