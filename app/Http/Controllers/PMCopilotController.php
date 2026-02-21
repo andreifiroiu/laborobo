@@ -16,6 +16,7 @@ use App\Models\Task;
 use App\Models\WorkOrder;
 use App\Services\AgentApprovalService;
 use App\Services\AgentOrchestrator;
+use App\Services\AgentRunner;
 use App\Services\ProjectInsightsService;
 use App\Services\TaskDelegationService;
 use App\ValueObjects\DeliverableSuggestion;
@@ -35,6 +36,7 @@ class PMCopilotController extends Controller
     public function __construct(
         private readonly AgentOrchestrator $orchestrator,
         private readonly AgentApprovalService $approvalService,
+        private readonly AgentRunner $agentRunner,
     ) {}
 
     /**
@@ -60,7 +62,7 @@ class PMCopilotController extends Controller
             // Try to run the workflow, but don't fail if it encounters issues
             $status = 'started';
             try {
-                $workflow = new PMCopilotWorkflow($this->orchestrator, $this->approvalService);
+                $workflow = new PMCopilotWorkflow($this->orchestrator, $this->approvalService, $this->agentRunner);
                 $workflow->setCurrentState($workflowState);
                 $workflow->run();
 
@@ -75,7 +77,7 @@ class PMCopilotController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'PM Copilot workflow failed: ' . $workflowError->getMessage(),
+                    'message' => 'PM Copilot workflow failed: '.$workflowError->getMessage(),
                     'error' => $workflowError->getMessage(),
                     'workflow_state_id' => $workflowState->id,
                     'status' => 'error',

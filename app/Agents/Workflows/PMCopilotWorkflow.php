@@ -10,11 +10,16 @@ use App\Enums\AIConfidence;
 use App\Enums\InboxItemType;
 use App\Enums\SourceType;
 use App\Enums\Urgency;
+use App\Models\AgentConfiguration;
 use App\Models\AgentWorkflowState;
 use App\Models\InboxItem;
 use App\Models\WorkOrder;
+use App\Services\AgentApprovalService;
+use App\Services\AgentOrchestrator;
+use App\Services\AgentRunner;
 use App\Services\ContextBuilder;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Workflow for the PM Copilot Agent.
@@ -26,6 +31,17 @@ use Illuminate\Support\Facades\App;
  */
 class PMCopilotWorkflow extends BaseAgentWorkflow
 {
+    private readonly ?AgentRunner $agentRunner;
+
+    public function __construct(
+        AgentOrchestrator $orchestrator,
+        AgentApprovalService $approvalService,
+        ?AgentRunner $agentRunner = null,
+    ) {
+        parent::__construct($orchestrator, $approvalService);
+        $this->agentRunner = $agentRunner;
+    }
+
     /**
      * Get the workflow identifier.
      */
@@ -79,7 +95,7 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
 
         // Retrieve work order information
         if ($workOrderId !== null) {
-            $workOrderInfoTool = new WorkOrderInfoTool();
+            $workOrderInfoTool = new WorkOrderInfoTool;
             $workOrderInfo = $workOrderInfoTool->execute([
                 'work_order_id' => $workOrderId,
                 'include_task_summary' => true,
@@ -104,7 +120,7 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
 
         // Query relevant playbooks
         if ($teamId !== null) {
-            $playbooksTool = new GetPlaybooksTool();
+            $playbooksTool = new GetPlaybooksTool;
             $workOrderTitle = $contextData['work_order']['title'] ?? '';
             $playbooks = $playbooksTool->execute([
                 'team_id' => $teamId,
@@ -138,8 +154,21 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         $workOrder = $context['work_order'] ?? [];
         $playbooks = $context['playbooks'] ?? [];
 
-        // Generate deliverable alternatives based on work order context
-        $deliverableAlternatives = $this->buildDeliverableAlternatives($workOrder, $playbooks);
+        $deliverableAlternatives = null;
+
+        // Try LLM-based generation
+        $llmResponse = $this->callLLM($state, $this->buildDeliverablesPrompt($workOrder, $playbooks));
+        if ($llmResponse !== null) {
+            $parsed = $this->extractJson($llmResponse);
+            if ($parsed !== null && isset($parsed['alternatives']) && is_array($parsed['alternatives'])) {
+                $deliverableAlternatives = $parsed['alternatives'];
+            }
+        }
+
+        // Fallback to hardcoded logic
+        if ($deliverableAlternatives === null) {
+            $deliverableAlternatives = $this->buildDeliverableAlternatives($workOrder, $playbooks);
+        }
 
         $this->mergeStateData($state, [
             'deliverable_alternatives' => $deliverableAlternatives,
@@ -196,8 +225,21 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         $deliverables = $this->getApprovedDeliverables($state);
         $playbooks = $context['playbooks'] ?? [];
 
-        // Generate task breakdown for approved deliverables
-        $taskBreakdown = $this->buildTaskBreakdown($deliverables, $playbooks);
+        $taskBreakdown = null;
+
+        // Try LLM-based generation
+        $llmResponse = $this->callLLM($state, $this->buildTaskBreakdownPrompt($deliverables, $playbooks));
+        if ($llmResponse !== null) {
+            $parsed = $this->extractJson($llmResponse);
+            if ($parsed !== null && isset($parsed['task_breakdown']) && is_array($parsed['task_breakdown'])) {
+                $taskBreakdown = $parsed['task_breakdown'];
+            }
+        }
+
+        // Fallback to hardcoded logic
+        if ($taskBreakdown === null) {
+            $taskBreakdown = $this->buildTaskBreakdown($deliverables, $playbooks);
+        }
 
         $this->mergeStateData($state, [
             'task_breakdown' => $taskBreakdown,
@@ -223,8 +265,21 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         $context = $state->state_data['context'] ?? [];
         $projectContext = $context['project_context'] ?? [];
 
-        // Generate project insights
-        $insights = $this->buildProjectInsights($projectContext);
+        $insights = null;
+
+        // Try LLM-based generation
+        $llmResponse = $this->callLLM($state, $this->buildInsightsPrompt($context));
+        if ($llmResponse !== null) {
+            $parsed = $this->extractJson($llmResponse);
+            if ($parsed !== null && isset($parsed['insights']) && is_array($parsed['insights'])) {
+                $insights = $parsed['insights'];
+            }
+        }
+
+        // Fallback to hardcoded logic
+        if ($insights === null) {
+            $insights = $this->buildProjectInsights($projectContext);
+        }
 
         $this->mergeStateData($state, [
             'insights' => $insights,
@@ -323,6 +378,254 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
     }
 
     /**
+     * Call the LLM via AgentRunner and return the raw output string, or null on failure.
+     */
+    private function callLLM(AgentWorkflowState $state, string $prompt): ?string
+    {
+        if ($this->agentRunner === null) {
+            return null;
+        }
+
+        $agent = $state->agent;
+        if ($agent === null) {
+            return null;
+        }
+
+        $config = AgentConfiguration::query()
+            ->where('ai_agent_id', $agent->id)
+            ->where('team_id', $state->team_id)
+            ->where('enabled', true)
+            ->first();
+
+        if ($config === null) {
+            return null;
+        }
+
+        $workOrderId = $state->state_data['input']['work_order_id'] ?? null;
+        $contextEntity = $workOrderId !== null ? WorkOrder::find($workOrderId) : null;
+
+        try {
+            $activityLog = $this->agentRunner->runWithPrompt($agent, $config, $prompt, $contextEntity);
+
+            if ($activityLog->error !== null) {
+                Log::warning('PMCopilotWorkflow LLM call returned error', [
+                    'error' => $activityLog->error,
+                    'workflow_state_id' => $state->id,
+                ]);
+
+                return null;
+            }
+
+            return $activityLog->output;
+        } catch (\Throwable $e) {
+            Log::warning('PMCopilotWorkflow LLM call failed', [
+                'error' => $e->getMessage(),
+                'workflow_state_id' => $state->id,
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Extract a JSON object from an LLM response string.
+     *
+     * Looks for ```json fenced blocks first, then tries raw JSON parsing.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function extractJson(string $response): ?array
+    {
+        // Try to extract from ```json code fences
+        if (preg_match('/```json\s*([\s\S]*?)\s*```/', $response, $matches)) {
+            $decoded = json_decode(trim($matches[1]), true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Try raw JSON parsing
+        $decoded = json_decode(trim($response), true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        return null;
+    }
+
+    /**
+     * Build the LLM prompt for generating deliverable alternatives.
+     *
+     * @param  array<string, mixed>  $workOrder
+     * @param  array<int, array<string, mixed>>  $playbooks
+     */
+    private function buildDeliverablesPrompt(array $workOrder, array $playbooks): string
+    {
+        $title = $workOrder['title'] ?? 'Untitled Work Order';
+        $description = $workOrder['description'] ?? 'No description provided.';
+        $acceptanceCriteria = $workOrder['acceptance_criteria'] ?? [];
+        $criteriaText = ! empty($acceptanceCriteria) ? implode("\n- ", $acceptanceCriteria) : 'None specified';
+
+        $playbookText = '';
+        foreach ($playbooks as $playbook) {
+            $playbookText .= "- {$playbook['name']}: {$playbook['description']}\n";
+        }
+        if ($playbookText === '') {
+            $playbookText = 'None available.';
+        }
+
+        return <<<PROMPT
+Analyze the following work order and generate 2-3 alternative deliverable structures.
+
+## Work Order
+Title: {$title}
+Description: {$description}
+Acceptance Criteria:
+- {$criteriaText}
+
+## Available Playbooks
+{$playbookText}
+
+## Instructions
+Generate 2-3 alternative approaches for structuring deliverables. Each alternative should have a different strategy (e.g., single deliverable, multi-phase, template-based).
+
+Respond with ONLY a JSON object wrapped in ```json fences using this exact schema:
+
+```json
+{
+  "alternatives": [
+    {
+      "alternative_id": 1,
+      "name": "Name of approach",
+      "deliverables": [
+        {
+          "title": "Deliverable title",
+          "description": "Deliverable description",
+          "type": "document|deliverable|code|design",
+          "acceptance_criteria": ["criterion 1", "criterion 2"],
+          "confidence": "low|medium|high"
+        }
+      ],
+      "confidence": "low|medium|high",
+      "reasoning": "Why this approach is suitable"
+    }
+  ]
+}
+```
+PROMPT;
+    }
+
+    /**
+     * Build the LLM prompt for generating task breakdowns.
+     *
+     * @param  array<int, array<string, mixed>>  $deliverables
+     * @param  array<int, array<string, mixed>>  $playbooks
+     */
+    private function buildTaskBreakdownPrompt(array $deliverables, array $playbooks): string
+    {
+        $deliverablesText = '';
+        foreach ($deliverables as $i => $deliverable) {
+            $num = $i + 1;
+            $title = $deliverable['title'] ?? 'Untitled';
+            $desc = $deliverable['description'] ?? '';
+            $deliverablesText .= "{$num}. {$title}: {$desc}\n";
+        }
+        if ($deliverablesText === '') {
+            $deliverablesText = 'No deliverables provided.';
+        }
+
+        $playbookText = '';
+        foreach ($playbooks as $playbook) {
+            $playbookText .= "- {$playbook['name']}: {$playbook['description']}\n";
+        }
+        if ($playbookText === '') {
+            $playbookText = 'None available.';
+        }
+
+        return <<<PROMPT
+Break down the following deliverables into actionable tasks with time estimates.
+
+## Deliverables
+{$deliverablesText}
+
+## Available Playbooks
+{$playbookText}
+
+## Instructions
+For each deliverable, create a set of tasks that cover planning, execution, and review. Provide realistic hour estimates and identify dependencies between tasks.
+
+Respond with ONLY a JSON object wrapped in ```json fences using this exact schema:
+
+```json
+{
+  "task_breakdown": [
+    {
+      "deliverable_title": "Exact title of the deliverable",
+      "tasks": [
+        {
+          "title": "Task title",
+          "description": "Task description",
+          "estimated_hours": 2.0,
+          "position_in_work_order": 1,
+          "checklist_items": ["item 1", "item 2"],
+          "dependencies": [],
+          "confidence": "low|medium|high"
+        }
+      ],
+      "total_estimated_hours": 12.0,
+      "confidence": "low|medium|high"
+    }
+  ]
+}
+```
+PROMPT;
+    }
+
+    /**
+     * Build the LLM prompt for generating project insights.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    private function buildInsightsPrompt(array $context): string
+    {
+        $projectContext = $context['project_context'] ?? [];
+        $workOrder = $context['work_order'] ?? [];
+
+        $contextJson = json_encode([
+            'project' => $projectContext,
+            'work_order' => $workOrder,
+        ], JSON_PRETTY_PRINT);
+
+        return <<<PROMPT
+Analyze the following project data and identify actionable insights including overdue items, bottlenecks, scope creep risks, and resource allocation issues.
+
+## Project Data
+{$contextJson}
+
+## Instructions
+Identify specific, actionable insights. Classify each by type (overdue, bottleneck, scope_creep, resource) and severity (low, medium, high).
+
+Respond with ONLY a JSON object wrapped in ```json fences using this exact schema:
+
+```json
+{
+  "insights": [
+    {
+      "type": "overdue|bottleneck|scope_creep|resource",
+      "severity": "low|medium|high",
+      "title": "Brief title",
+      "description": "Detailed description of the insight",
+      "affected_items": [],
+      "suggestion": "Recommended action",
+      "confidence": "low|medium|high"
+    }
+  ]
+}
+```
+PROMPT;
+    }
+
+    /**
      * Build deliverable alternatives from work order context.
      *
      * @param  array<string, mixed>  $workOrder
@@ -356,7 +659,7 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         ];
 
         // Alternative 2: Multi-phase deliverable structure
-        if (!empty($description)) {
+        if (! empty($description)) {
             $alternatives[] = [
                 'alternative_id' => 2,
                 'name' => 'Multi-Phase Approach',
@@ -382,7 +685,7 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         }
 
         // Alternative 3: Playbook-based structure (if applicable)
-        if (!empty($playbooks)) {
+        if (! empty($playbooks)) {
             $playbook = $playbooks[0];
             $alternatives[] = [
                 'alternative_id' => 3,
@@ -417,14 +720,14 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         // Check for explicitly approved deliverables from resume
         $approvedDeliverables = $state->state_data['approved_deliverables'] ?? null;
 
-        if ($approvedDeliverables !== null && !empty($approvedDeliverables)) {
+        if ($approvedDeliverables !== null && ! empty($approvedDeliverables)) {
             return $approvedDeliverables;
         }
 
         // Fall back to first alternative for full mode
         $alternatives = $state->state_data['deliverable_alternatives'] ?? [];
 
-        if (!empty($alternatives) && isset($alternatives[0]['deliverables'])) {
+        if (! empty($alternatives) && isset($alternatives[0]['deliverables'])) {
             return $alternatives[0]['deliverables'];
         }
 
@@ -506,12 +809,12 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
             return $dueDate !== null && strtotime($dueDate) < strtotime('today');
         });
 
-        if (!empty($overdueTasks)) {
+        if (! empty($overdueTasks)) {
             $insights[] = [
                 'type' => 'overdue',
                 'severity' => 'high',
                 'title' => 'Overdue Tasks Detected',
-                'description' => count($overdueTasks) . ' task(s) are past their due date.',
+                'description' => count($overdueTasks).' task(s) are past their due date.',
                 'affected_items' => array_column($overdueTasks, 'id'),
                 'suggestion' => 'Review and reprioritize overdue tasks or update due dates.',
                 'confidence' => 'high',
@@ -521,12 +824,12 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
         // Check for blocked tasks
         $blockedTasks = array_filter($pendingTasks, fn (array $task) => ($task['is_blocked'] ?? false) === true);
 
-        if (!empty($blockedTasks)) {
+        if (! empty($blockedTasks)) {
             $insights[] = [
                 'type' => 'bottleneck',
                 'severity' => 'medium',
                 'title' => 'Blocked Tasks Identified',
-                'description' => count($blockedTasks) . ' task(s) are currently blocked.',
+                'description' => count($blockedTasks).' task(s) are currently blocked.',
                 'affected_items' => array_column($blockedTasks, 'id'),
                 'suggestion' => 'Review blockers and resolve dependencies to unblock work.',
                 'confidence' => 'high',
@@ -556,15 +859,14 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
     /**
      * Determine confidence level based on available context.
      *
-     * @param  string  $description
      * @param  array<int, string>  $acceptanceCriteria
      * @param  array<int, array<string, mixed>>  $playbooks
      */
     private function determineConfidence(string $description, array $acceptanceCriteria, array $playbooks): string
     {
-        $hasDescription = !empty($description);
-        $hasCriteria = !empty($acceptanceCriteria);
-        $hasPlaybooks = !empty($playbooks);
+        $hasDescription = ! empty($description);
+        $hasCriteria = ! empty($acceptanceCriteria);
+        $hasPlaybooks = ! empty($playbooks);
 
         if ($hasDescription && $hasCriteria && $hasPlaybooks) {
             return 'high';
@@ -682,7 +984,7 @@ class PMCopilotWorkflow extends BaseAgentWorkflow
             $lines[] = '';
 
             $deliverables = $alt['deliverables'] ?? [];
-            if (!empty($deliverables)) {
+            if (! empty($deliverables)) {
                 $lines[] = '### Deliverables';
                 foreach ($deliverables as $deliverable) {
                     $type = $deliverable['type'] ?? 'deliverable';
