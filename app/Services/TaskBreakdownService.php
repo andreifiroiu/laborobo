@@ -8,6 +8,7 @@ use App\Enums\AIConfidence;
 use App\Models\Playbook;
 use App\Models\WorkOrder;
 use App\Services\AI\LLMService;
+use App\Support\KeywordExtractor;
 use App\ValueObjects\TaskSuggestion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -119,62 +120,14 @@ class TaskBreakdownService
      */
     private function findRelevantPlaybooks(WorkOrder $workOrder, array $deliverables): Collection
     {
-        $keywords = $this->extractKeywords($workOrder, $deliverables);
-
-        if (empty($keywords)) {
-            return collect();
+        $texts = [$workOrder->title ?? '', $workOrder->description ?? ''];
+        foreach ($deliverables as $d) {
+            $texts[] = $d['title'] ?? '';
+            $texts[] = $d['description'] ?? '';
         }
+        $keywords = KeywordExtractor::extract(...$texts);
 
-        return Playbook::query()
-            ->forTeam($workOrder->team_id)
-            ->where(function ($query) use ($keywords) {
-                foreach ($keywords as $keyword) {
-                    $query->orWhere('name', 'like', "%{$keyword}%")
-                        ->orWhere('description', 'like', "%{$keyword}%")
-                        ->orWhereJsonContains('tags', $keyword);
-                }
-            })
-            ->orderByDesc('times_applied')
-            ->limit(5)
-            ->get();
-    }
-
-    /**
-     * Extract keywords from work order and deliverables for playbook matching.
-     *
-     * @param  array<int, array{title: string, description?: string, type?: string}>  $deliverables
-     * @return array<string>
-     */
-    private function extractKeywords(WorkOrder $workOrder, array $deliverables): array
-    {
-        $textParts = [
-            $workOrder->title,
-            $workOrder->description,
-        ];
-
-        foreach ($deliverables as $deliverable) {
-            $textParts[] = $deliverable['title'];
-            $textParts[] = $deliverable['description'] ?? '';
-        }
-
-        $text = implode(' ', array_filter($textParts));
-
-        $stopWords = [
-            'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-            'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
-            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-            'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need',
-            'this', 'that', 'these', 'those', 'it', 'its', 'we', 'our', 'you',
-            'your', 'they', 'their', 'i', 'me', 'my', 'new', 'create', 'build',
-            'implement', 'develop', 'make', 'add', 'fix', 'update', 'change',
-        ];
-
-        $words = preg_split('/[\s\-_.,;:!?\'"()\[\]{}]+/', strtolower($text));
-
-        return array_values(array_unique(array_filter(
-            $words ?? [],
-            fn ($word) => strlen($word) >= 3 && ! in_array($word, $stopWords, true)
-        )));
+        return (new PlaybookSearchService)->findRelevantPlaybooks($workOrder->team_id, $keywords);
     }
 
     /**

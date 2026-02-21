@@ -9,6 +9,7 @@ use App\Enums\DeliverableType;
 use App\Models\Playbook;
 use App\Models\WorkOrder;
 use App\Services\AI\LLMService;
+use App\Support\KeywordExtractor;
 use App\ValueObjects\DeliverableSuggestion;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -109,54 +110,12 @@ class DeliverableGeneratorService
      */
     private function findRelevantPlaybooks(WorkOrder $workOrder): Collection
     {
-        $keywords = $this->extractKeywords($workOrder);
+        $keywords = KeywordExtractor::extract(
+            $workOrder->title ?? '',
+            $workOrder->description ?? '',
+        );
 
-        if (empty($keywords)) {
-            return collect();
-        }
-
-        return Playbook::query()
-            ->forTeam($workOrder->team_id)
-            ->where(function ($query) use ($keywords) {
-                foreach ($keywords as $keyword) {
-                    $query->orWhere('name', 'like', "%{$keyword}%")
-                        ->orWhere('description', 'like', "%{$keyword}%")
-                        ->orWhereJsonContains('tags', $keyword);
-                }
-            })
-            ->orderByDesc('times_applied')
-            ->limit(5)
-            ->get();
-    }
-
-    /**
-     * Extract keywords from work order for playbook matching.
-     *
-     * @return array<string>
-     */
-    private function extractKeywords(WorkOrder $workOrder): array
-    {
-        $text = collect([
-            $workOrder->title,
-            $workOrder->description,
-        ])->filter()->implode(' ');
-
-        $stopWords = [
-            'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-            'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
-            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-            'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need',
-            'this', 'that', 'these', 'those', 'it', 'its', 'we', 'our', 'you',
-            'your', 'they', 'their', 'i', 'me', 'my', 'new', 'create', 'build',
-            'implement', 'develop', 'make', 'add', 'fix', 'update', 'change',
-        ];
-
-        $words = preg_split('/[\s\-_.,;:!?\'"()\[\]{}]+/', strtolower($text));
-
-        return array_values(array_unique(array_filter(
-            $words ?? [],
-            fn ($word) => strlen($word) >= 3 && ! in_array($word, $stopWords, true)
-        )));
+        return (new PlaybookSearchService)->findRelevantPlaybooks($workOrder->team_id, $keywords);
     }
 
     /**
