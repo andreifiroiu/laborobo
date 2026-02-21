@@ -1,0 +1,174 @@
+<?php
+
+return [
+    // Shared layout (nav + footer)
+    'nav' => [
+        'tagline' => 'Tu sistema operativo de trabajo',
+        'agencies' => 'Agencias',
+        'consultancies' => 'Consultorias',
+        'operations' => 'Operaciones',
+        'login' => 'Iniciar sesion',
+        'get_started' => 'Comenzar',
+        'go_to_app' => 'Ir a la App',
+        'copyright' => '© :year :name. Todos los derechos reservados.',
+        'language' => 'Idioma',
+    ],
+
+    // Landing page
+    'home' => [
+        'title' => 'Laborobo &ndash; Gestion de Trabajo con IA para Equipos Pequenos',
+        'description' => 'Gestion de trabajo con IA para equipos pequenos. Convierte el caos en operaciones estructuradas y rentables.',
+        'badge' => 'Gestion de trabajo que realmente funciona para equipos pequenos',
+        'headline' => 'Deja de hacer malabares. Empieza a',
+        'headline_accent' => 'entregar.',
+        'subheadline' => 'Laborobo le da a los equipos pequenos la estructura de una gran operacion sin la carga administrativa. Los agentes de IA se encargan del trabajo pesado para que puedas enfocarte en lo que importa.',
+        'cta_primary' => 'Comienza Gratis',
+        'cta_secondary' => 'Mira Como Funciona',
+
+        'problem_title' => 'Te suena familiar?',
+        'problem_subtitle' => 'Los equipos pequenos enfrentan problemas de grandes empresas sin los recursos de una gran empresa.',
+        'problem_label' => 'El Problema',
+        'solution_label' => 'La Solucion',
+
+        'problem_1_title' => 'Trabajo disperso por todas partes',
+        'problem_1_text' => 'Tareas en Slack, especificaciones en Docs, presupuestos en hojas de calculo, aprobaciones por correo. Nada esta conectado y las cosas se pierden.',
+        'solution_1_title' => 'Un espacio de trabajo estructurado',
+        'solution_1_text' => 'Proyectos, ordenes de trabajo, tareas, presupuestos y comunicaciones en un solo lugar. Cada elemento de trabajo tiene un responsable, un estado y una definicion de terminado claros.',
+
+        'problem_2_title' => 'Nadie sabe que es rentable',
+        'problem_2_text' => 'Terminas un proyecto y esperas que haya valido la pena. No hay una vista en tiempo real del tiempo invertido vs. presupuestado, y los margenes son una suposicion.',
+        'solution_2_title' => 'Seguimiento de rentabilidad en tiempo real',
+        'solution_2_text' => 'Ve las tasas de consumo del presupuesto a medida que avanza el trabajo. Sabe que proyectos, clientes y miembros del equipo son rentables antes de que sea demasiado tarde para corregir el rumbo.',
+
+        'problem_3_title' => 'Conocimiento tribal en la cabeza de las personas',
+        'problem_3_text' => 'Cuando alguien se va o esta ocupado, su proceso se va con ellos. No hay SOPs, no hay listas de verificacion y no hay consistencia.',
+        'solution_3_title' => 'Playbooks que capturan como trabajas',
+        'solution_3_text' => 'Crea SOPs reutilizables con listas de verificacion y pasos de validacion. Los agentes de IA los siguen, asegurando consistencia ya sea tu primer proyecto o el centesimo.',
+
+        'features_title' => 'Todo lo que tu equipo pequeno necesita',
+        'features_subtitle' => 'Disenado especificamente para equipos de 2&ndash;20 que necesitan estructura sin burocracia.',
+
+        'feature_1_title' => 'Ordenes de Trabajo Estructuradas',
+        'feature_1_text' => 'Cada compromiso obtiene una orden de trabajo con alcance, presupuesto, entregables y un flujo de aprobacion claro: Borrador, Revision, Aprobacion, Entrega.',
+        'feature_2_title' => 'Agentes de IA',
+        'feature_2_text' => 'Los agentes de IA actuan como miembros de equipo a tiempo parcial: redactan comunicaciones, clasifican solicitudes y siguen tus playbooks para que nada se escape.',
+        'feature_3_title' => 'Informes de Rentabilidad',
+        'feature_3_text' => 'Informes en tiempo real por proyecto, orden de trabajo, cliente y miembro del equipo. Conoce tus margenes antes de que salga la factura.',
+        'feature_4_title' => 'Playbooks y SOPs',
+        'feature_4_text' => 'Captura tus mejores procesos como playbooks reutilizables con listas de verificacion y pasos de validacion. Incorpora nuevos miembros del equipo en horas, no en semanas.',
+        'feature_5_title' => 'Comunicaciones Contextuales',
+        'feature_5_text' => 'Cada conversacion esta vinculada a un proyecto, orden de trabajo o tarea. No mas buscar en hilos de correo para encontrar lo que se acordo.',
+        'feature_6_title' => 'Puntos de Control Humanos',
+        'feature_6_text' => 'La IA prepara, los humanos aprueban. Cada entregable pasa por las etapas de Borrador, Revision, Aprobacion y Entrega con responsabilidad clara.',
+
+        'social_proof' => 'Equipos pequenos que rinden por encima de su peso confian en nosotros',
+
+        'cta_title' => 'Listo para poner orden en el caos?',
+        'cta_text' => 'Comienza gratis. No se requiere tarjeta de credito. Configura tu primer proyecto en minutos.',
+    ],
+
+    // Agencies use case
+    'agencies' => [
+        'title' => 'Laborobo para Agencias &ndash; Gestion de Trabajo con IA para Equipos Creativos y de Marketing',
+        'badge' => 'Para Agencias Creativas y de Marketing',
+        'headline' => 'Tu equipo de 5 personas puede entregar como una agencia de 20',
+        'subheadline' => 'Las agencias pequenas pierden dinero por el aumento de alcance, incumplen plazos por falta de habilidades y se agotan porque no hay procesos repetibles. Laborobo soluciona los tres problemas.',
+        'cta' => 'Iniciar Prueba Gratuita',
+
+        'pain_title' => 'La lucha de las agencias es real',
+        'pain_1_title' => 'Las brechas de habilidades hunden proyectos',
+        'pain_1_text' => 'Ganas un proyecto que necesita redaccion, diseno y desarrollo, pero solo tienes dos de los tres. La carrera para cubrir la brecha se come tu margen.',
+        'pain_2_title' => 'El aumento de alcance mata los margenes',
+        'pain_2_text' => 'Los clientes piden "una cosa mas" y nadie rastrea el costo. Para cuando facturas, has hecho un 40% mas de trabajo del que cotizaste.',
+        'pain_3_title' => 'Sin SOPs, sin consistencia',
+        'pain_3_text' => 'Cada proyecto empieza desde cero. La incorporacion es conocimiento tribal. La calidad depende de quien trabaja ese dia, no de un proceso repetible.',
+
+        'solutions_title' => 'Como Laborobo ayuda a las agencias a ganar',
+        'sol_1_label' => 'Miembros de Equipo IA',
+        'sol_1_title' => 'Cubre las brechas de habilidades con agentes de IA',
+        'sol_1_text' => 'Los agentes de IA actuan como miembros de equipo a tiempo parcial: redactan textos, clasifican solicitudes de clientes y preparan informes de estado. Siguen tus playbooks y escalan a humanos cuando se necesita criterio.',
+        'sol_1_placeholder' => 'Ilustracion del flujo de trabajo del agente',
+        'sol_2_label' => 'Proteccion de Margenes',
+        'sol_2_title' => 'Detecta el aumento de alcance antes de que se coma tu ganancia',
+        'sol_2_text' => 'Cada orden de trabajo tiene un presupuesto. Cada tarea registra tiempo contra el. Los graficos de tasa de consumo en tiempo real te muestran cuando un proyecto se esta desviando para que puedas tener la conversacion a tiempo.',
+        'sol_2_placeholder' => 'Panel de seguimiento de presupuesto',
+        'sol_3_label' => 'Procesos Repetibles',
+        'sol_3_title' => 'Construye una vez, entrega consistentemente',
+        'sol_3_text' => 'Crea playbooks para tus compromisos mas comunes. Cuando llega un nuevo proyecto, aplica el playbook y deja que los agentes de IA se encarguen de la configuracion, las listas de verificacion y los controles de calidad.',
+        'sol_3_placeholder' => 'Vista de plantilla de playbook',
+
+        'cta_title' => 'Deja de perder dinero',
+        'cta_text' => 'Unete a las agencias que usan Laborobo para entregar mejor trabajo, proteger sus margenes y crecer sin contratar.',
+        'cta_button' => 'Comienza Gratis',
+    ],
+
+    // Consultancies use case
+    'consultancies' => [
+        'title' => 'Laborobo para Consultorias &ndash; Gestion de Trabajo con IA para Equipos de TI y MSP',
+        'badge' => 'Para Consultorias de TI y MSPs',
+        'headline' => 'Deja de perder contexto entre compromisos',
+        'subheadline' => 'Las consultorias funcionan con conocimiento. Cuando ese conocimiento vive en la cabeza de las personas, hilos de correo y documentos dispersos, la rentabilidad sufre. Laborobo lo captura todo en un solo lugar.',
+        'cta' => 'Iniciar Prueba Gratuita',
+
+        'pain_title' => 'Lo que te esta costando dinero',
+        'pain_1_title' => 'El conocimiento tribal se va por la puerta',
+        'pain_1_text' => 'Tu consultor senior se va y se lleva 3 anos de historial de clientes, notas de configuracion y conocimiento de resolucion de problemas.',
+        'pain_2_title' => 'Contexto disperso entre herramientas',
+        'pain_2_text' => 'Los requisitos del cliente estan en correos, las hojas de tiempo en un sistema, el estado del proyecto en otro. Armar una imagen clara de cualquier compromiso toma horas.',
+        'pain_3_title' => 'Ceguera de rentabilidad',
+        'pain_3_text' => 'Cotizas compromisos a precio fijo pero registras el tiempo de forma laxa. Al final, no estas seguro de si ganaste dinero; solo esperas que si.',
+
+        'solutions_title' => 'Como Laborobo ayuda a las consultorias a prosperar',
+        'sol_1_label' => 'Motor de SOPs',
+        'sol_1_title' => 'Convierte el conocimiento tribal en conocimiento institucional',
+        'sol_1_text' => 'Crea playbooks que capturen los procesos de tus mejores consultores. Listas de verificacion, pasos de validacion y controles de calidad aseguran consistencia en cada compromiso, sin importar quien este asignado.',
+        'sol_1_placeholder' => 'Vista de playbook de SOPs',
+        'sol_2_label' => 'Comunicaciones Contextuales',
+        'sol_2_title' => 'Cada conversacion vinculada al trabajo',
+        'sol_2_text' => 'Los hilos de comunicacion estan adjuntos a proyectos, ordenes de trabajo y tareas. Cuando necesitas saber que se discutio sobre un compromiso especifico, esta a un clic de distancia.',
+        'sol_2_placeholder' => 'Vista de hilo de comunicacion',
+        'sol_3_label' => 'Presupuestos en Tiempo Real',
+        'sol_3_title' => 'Conoce tus margenes antes de la factura',
+        'sol_3_text' => 'Ve el tiempo registrado contra el presupuesto para cada orden de trabajo. Los informes de rentabilidad desglosan por proyecto, cliente y miembro del equipo para que puedas corregir el rumbo a tiempo y cotizar trabajo futuro con precision.',
+        'sol_3_placeholder' => 'Panel de rentabilidad',
+
+        'cta_title' => 'Construye una consultoria que escale sin perder calidad',
+        'cta_text' => 'Captura conocimiento, rastrea rentabilidad y entrega consistentemente. Inicia tu prueba gratuita hoy.',
+        'cta_button' => 'Comienza Gratis',
+    ],
+
+    // Operations use case
+    'operations' => [
+        'title' => 'Laborobo para Operaciones &ndash; Gestion de Trabajo con IA para Equipos de Operaciones Internas',
+        'badge' => 'Para Equipos de Operaciones Internas y de Campo',
+        'headline' => 'Convierte solicitudes desordenadas en trabajo estructurado y rastreable',
+        'subheadline' => 'Los equipos de operaciones internas se ahogan en solicitudes ad-hoc, traspasos poco claros y cero responsabilidad. Laborobo te da una recepcion estructurada, propiedad clara y una definicion de terminado para cada pieza de trabajo.',
+        'cta' => 'Iniciar Prueba Gratuita',
+
+        'pain_title' => 'El dolor del equipo de operaciones que conoces muy bien',
+        'pain_1_title' => 'Recepcion de solicitudes desordenada',
+        'pain_1_text' => 'Las solicitudes llegan por Slack, correo, conversaciones de pasillo y notas adhesivas. La mitad no tienen alcance, fecha limite ni responsable claro.',
+        'pain_2_title' => 'Sin responsabilidad',
+        'pain_2_text' => 'El trabajo se asigna pero no hay seguimiento, no hay actualizaciones de estado y no hay definicion de terminado. Las cosas se pierden hasta que alguien escala.',
+        'pain_3_title' => 'Sin definicion de terminado',
+        'pain_3_text' => 'El trabajo queda "casi terminado" pero nunca se completa formalmente. No hay proceso de aprobacion, no hay entrega de entregables y no hay registro de auditoria.',
+
+        'solutions_title' => 'Como Laborobo pone orden en las operaciones',
+        'sol_1_label' => 'Agente Despachador',
+        'sol_1_title' => 'La IA clasifica y enruta las solicitudes entrantes',
+        'sol_1_text' => 'El agente Despachador recibe solicitudes de cualquier canal, extrae alcance y urgencia, crea ordenes de trabajo estructuradas y las enruta al miembro del equipo correcto. Se acabaron las notas adhesivas.',
+        'sol_1_placeholder' => 'Flujo de trabajo del despachador',
+        'sol_2_label' => 'Puntos de Control Humanos',
+        'sol_2_title' => 'Borrador, Revision, Aprobacion, Entrega',
+        'sol_2_text' => 'Cada elemento de trabajo pasa por etapas claras con aprobacion humana en cada puerta. La IA prepara el trabajo, pero los humanos aprueban. Obtienes velocidad sin perder control.',
+        'sol_2_placeholder' => 'Etapas del flujo de aprobacion',
+        'sol_3_label' => 'CRM Opcional',
+        'sol_3_title' => 'Funciona con o sin tus herramientas existentes',
+        'sol_3_text' => 'Laborobo no reemplaza tu CRM o sistema de tickets; se coloca junto a ellos. Usalo como tu columna vertebral de operaciones internas manteniendo las herramientas orientadas al cliente. O usalo como tu solucion todo en uno.',
+        'sol_3_placeholder' => 'Diagrama de integracion',
+
+        'cta_title' => 'Dale a tu equipo de operaciones la estructura que merece',
+        'cta_text' => 'Recepcion estructurada, propiedad clara y una definicion de terminado para cada pieza de trabajo. Comienza gratis.',
+        'cta_button' => 'Comienza Gratis',
+    ],
+];

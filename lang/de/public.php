@@ -1,0 +1,174 @@
+<?php
+
+return [
+    // Shared layout (nav + footer)
+    'nav' => [
+        'tagline' => 'Dein Arbeits-OS',
+        'agencies' => 'Agenturen',
+        'consultancies' => 'Beratungen',
+        'operations' => 'Betrieb',
+        'login' => 'Anmelden',
+        'get_started' => 'Jetzt starten',
+        'go_to_app' => 'Zur App',
+        'copyright' => '© :year :name. Alle Rechte vorbehalten.',
+        'language' => 'Sprache',
+    ],
+
+    // Landing page
+    'home' => [
+        'title' => 'Laborobo &ndash; KI-gestütztes Arbeitsmanagement für kleine Teams',
+        'description' => 'KI-gestütztes Arbeitsmanagement für kleine Teams. Verwandle Chaos in strukturierte, profitable Abläufe.',
+        'badge' => 'Arbeitsmanagement, das wirklich für kleine Teams funktioniert',
+        'headline' => 'Schluss mit Jonglieren. Anfangen',
+        'headline_accent' => 'zu liefern.',
+        'subheadline' => 'Laborobo gibt kleinen Teams die Struktur eines Großunternehmens &ndash; ohne den Overhead. KI-Agenten übernehmen die Routinearbeit, damit du dich auf das Wesentliche konzentrieren kannst.',
+        'cta_primary' => 'Kostenlos starten',
+        'cta_secondary' => 'So funktioniert es',
+
+        'problem_title' => 'Kommt dir das bekannt vor?',
+        'problem_subtitle' => 'Kleine Teams stehen vor großen Herausforderungen &ndash; ohne die Ressourcen großer Unternehmen.',
+        'problem_label' => 'Das Problem',
+        'solution_label' => 'Die Lösung',
+
+        'problem_1_title' => 'Arbeit überall verstreut',
+        'problem_1_text' => 'Aufgaben in Slack, Spezifikationen in Docs, Budgets in Tabellen, Freigaben per E-Mail. Nichts ist verbunden und Dinge gehen verloren.',
+        'solution_1_title' => 'Ein strukturierter Arbeitsbereich',
+        'solution_1_text' => 'Projekte, Arbeitsaufträge, Aufgaben, Budgets und Kommunikation an einem Ort. Jedes Arbeitselement hat einen klaren Verantwortlichen, Status und eine Definition of Done.',
+
+        'problem_2_title' => 'Niemand weiß, was profitabel ist',
+        'problem_2_text' => 'Du beendest ein Projekt und hoffst, dass es sich gelohnt hat. Es gibt keinen Echtzeitblick auf aufgewendete vs. geplante Zeit, und Margen sind nur geschätzt.',
+        'solution_2_title' => 'Profitabilitätsverfolgung in Echtzeit',
+        'solution_2_text' => 'Sieh Budget-Verbrauchsraten, während die Arbeit läuft. Erkenne, welche Projekte, Kunden und Teammitglieder profitabel sind, bevor es zu spät ist, gegenzusteuern.',
+
+        'problem_3_title' => 'Wissen nur in den Köpfen der Leute',
+        'problem_3_text' => 'Wenn jemand geht oder beschäftigt ist, nimmt er seinen Prozess mit. Es gibt keine SOPs, keine Checklisten und keine Konsistenz.',
+        'solution_3_title' => 'Playbooks, die eure Arbeitsweise festhalten',
+        'solution_3_text' => 'Erstelle wiederverwendbare SOPs mit Checklisten und Validierungsschritten. KI-Agenten befolgen sie und sorgen für Konsistenz &ndash; egal ob es dein erstes oder hundertstes Projekt ist.',
+
+        'features_title' => 'Alles, was dein kleines Team braucht',
+        'features_subtitle' => 'Speziell entwickelt für Teams von 2&ndash;20 Personen, die Struktur ohne Bürokratie brauchen.',
+
+        'feature_1_title' => 'Strukturierte Arbeitsaufträge',
+        'feature_1_text' => 'Jeder Auftrag erhält einen Arbeitsauftrag mit Umfang, Budget, Liefergegenständen und einem klaren Freigabeworkflow: Entwurf, Prüfung, Freigabe, Lieferung.',
+        'feature_2_title' => 'KI-Agenten',
+        'feature_2_text' => 'KI-Agenten agieren als teilzeitliche Teammitglieder &ndash; sie entwerfen Kommunikation, triagieren Anfragen und befolgen eure Playbooks, damit nichts durchrutscht.',
+        'feature_3_title' => 'Profitabilitätsberichte',
+        'feature_3_text' => 'Echtzeitberichte nach Projekt, Arbeitsauftrag, Kunde und Teammitglied. Kenne deine Margen, bevor die Rechnung rausgeht.',
+        'feature_4_title' => 'Playbooks & SOPs',
+        'feature_4_text' => 'Halte deine besten Prozesse als wiederverwendbare Playbooks mit Checklisten und Validierungsschritten fest. Neue Teammitglieder einarbeiten in Stunden statt Wochen.',
+        'feature_5_title' => 'Kontextbezogene Kommunikation',
+        'feature_5_text' => 'Jedes Gespräch ist an ein Projekt, einen Arbeitsauftrag oder eine Aufgabe gebunden. Kein Durchsuchen von E-Mail-Verläufen mehr, um Vereinbartes zu finden.',
+        'feature_6_title' => 'Menschliche Kontrollpunkte',
+        'feature_6_text' => 'KI bereitet vor, Menschen genehmigen. Jedes Lieferergebnis durchläuft die Stufen Entwurf, Prüfung, Freigabe und Lieferung mit klarer Verantwortlichkeit.',
+
+        'social_proof' => 'Vertraut von kleinen Teams, die über ihrer Gewichtsklasse kämpfen',
+
+        'cta_title' => 'Bereit, Ordnung ins Chaos zu bringen?',
+        'cta_text' => 'Starte kostenlos. Keine Kreditkarte erforderlich. Richte dein erstes Projekt in Minuten ein.',
+    ],
+
+    // Agencies use case
+    'agencies' => [
+        'title' => 'Laborobo für Agenturen &ndash; KI-Arbeitsmanagement für Kreativ- & Marketing-Teams',
+        'badge' => 'Für Kreativ- & Marketing-Agenturen',
+        'headline' => 'Dein 5-Personen-Team kann liefern wie eine 20-Personen-Agentur',
+        'subheadline' => 'Kleine Agenturen verlieren Geld durch Scope Creep, verpassen Deadlines wegen Kompetenzlücken und brennen aus, weil es keine wiederholbaren Prozesse gibt. Laborobo löst alle drei Probleme.',
+        'cta' => 'Kostenlose Testversion starten',
+
+        'pain_title' => 'Der Agenturkampf ist real',
+        'pain_1_title' => 'Kompetenzlücken versenken Projekte',
+        'pain_1_text' => 'Du gewinnst ein Projekt, das Texterstellung, Design und Entwicklung braucht &ndash; aber du hast nur zwei von drei. Das Scramble, die Lücke zu füllen, frisst deine Marge.',
+        'pain_2_title' => 'Scope Creep killt Margen',
+        'pain_2_text' => 'Kunden bitten um „noch eine Kleinigkeit" und niemand erfasst die Kosten. Bis zur Rechnungsstellung hast du 40 % mehr Arbeit geleistet als angeboten.',
+        'pain_3_title' => 'Keine SOPs, keine Konsistenz',
+        'pain_3_text' => 'Jedes Projekt startet bei null. Einarbeitung ist Stammwissen. Qualität hängt davon ab, wer gerade arbeitet, nicht von einem wiederholbaren Prozess.',
+
+        'solutions_title' => 'Wie Laborobo Agenturen zum Erfolg verhilft',
+        'sol_1_label' => 'KI-Teammitglieder',
+        'sol_1_title' => 'Kompetenzlücken mit KI-Agenten füllen',
+        'sol_1_text' => 'KI-Agenten agieren als teilzeitliche Teammitglieder &ndash; sie entwerfen Texte, triagieren Kundenanfragen und bereiten Statusupdates vor. Sie befolgen eure Playbooks und eskalieren an Menschen, wenn Urteilsvermögen gefragt ist.',
+        'sol_1_placeholder' => 'Agent-Workflow-Illustration',
+        'sol_2_label' => 'Margenschutz',
+        'sol_2_title' => 'Scope Creep erkennen, bevor er den Gewinn auffrisst',
+        'sol_2_text' => 'Jeder Arbeitsauftrag hat ein Budget. Jede Aufgabe erfasst die Zeit dagegen. Echtzeit-Burn-Rate-Diagramme zeigen dir, wenn ein Projekt vom Kurs abkommt, damit du frühzeitig das Gespräch führen kannst.',
+        'sol_2_placeholder' => 'Budget-Tracking-Dashboard',
+        'sol_3_label' => 'Wiederholbare Prozesse',
+        'sol_3_title' => 'Einmal erstellen, konsistent liefern',
+        'sol_3_text' => 'Erstelle Playbooks für deine häufigsten Aufträge. Wenn ein neues Projekt reinkommt, wende das Playbook an und lass KI-Agenten das Setup, die Checklisten und Qualitäts-Gates übernehmen.',
+        'sol_3_placeholder' => 'Playbook-Vorlagenansicht',
+
+        'cta_title' => 'Hör auf, Geld liegen zu lassen',
+        'cta_text' => 'Schließ dich Agenturen an, die Laborobo nutzen, um bessere Arbeit zu liefern, ihre Margen zu schützen und ohne Neueinstellungen zu wachsen.',
+        'cta_button' => 'Kostenlos starten',
+    ],
+
+    // Consultancies use case
+    'consultancies' => [
+        'title' => 'Laborobo für Beratungen &ndash; KI-Arbeitsmanagement für IT- & MSP-Teams',
+        'badge' => 'Für IT-Beratungen & MSPs',
+        'headline' => 'Hör auf, Kontext zwischen Aufträgen zu verlieren',
+        'subheadline' => 'Beratungen leben von Wissen. Wenn dieses Wissen nur in den Köpfen der Leute, in E-Mail-Verläufen und verstreuten Dokumenten existiert, leidet die Profitabilität. Laborobo erfasst alles an einem Ort.',
+        'cta' => 'Kostenlose Testversion starten',
+
+        'pain_title' => 'Was dich Geld kostet',
+        'pain_1_title' => 'Stammwissen verlässt das Unternehmen',
+        'pain_1_text' => 'Dein Senior-Berater geht und nimmt 3 Jahre Kundenhistorie, Konfigurationsnotizen und Troubleshooting-Wissen mit.',
+        'pain_2_title' => 'Kontext über Tools verstreut',
+        'pain_2_text' => 'Kundenanforderungen sind in E-Mails, Zeiterfassung in einem System, Projektstatus in einem anderen. Ein klares Bild eines Auftrags zusammenzustellen dauert Stunden.',
+        'pain_3_title' => 'Profitabilitätsblindheit',
+        'pain_3_text' => 'Du bietest Festpreisaufträge an, aber erfasst die Zeit nur grob. Am Ende weißt du nicht, ob du Geld verdient hast &ndash; du hoffst es nur.',
+
+        'solutions_title' => 'Wie Laborobo Beratungen zum Erfolg führt',
+        'sol_1_label' => 'SOP-Engine',
+        'sol_1_title' => 'Stammwissen in Unternehmenswissen verwandeln',
+        'sol_1_text' => 'Erstelle Playbooks, die die Prozesse deiner besten Berater festhalten. Checklisten, Validierungsschritte und Qualitäts-Gates sorgen für Konsistenz bei jedem Auftrag &ndash; unabhängig davon, wer eingesetzt ist.',
+        'sol_1_placeholder' => 'SOP-Playbook-Ansicht',
+        'sol_2_label' => 'Kontextbezogene Kommunikation',
+        'sol_2_title' => 'Jedes Gespräch an die Arbeit gebunden',
+        'sol_2_text' => 'Kommunikationsverläufe sind an Projekte, Arbeitsaufträge und Aufgaben angehängt. Wenn du wissen musst, was zu einem bestimmten Auftrag besprochen wurde, ist es nur einen Klick entfernt.',
+        'sol_2_placeholder' => 'Kommunikationsverlauf-Ansicht',
+        'sol_3_label' => 'Echtzeit-Budgets',
+        'sol_3_title' => 'Kenne deine Margen vor der Rechnung',
+        'sol_3_text' => 'Sieh erfasste Zeit gegen das Budget für jeden Arbeitsauftrag. Profitabilitätsberichte aufgeschlüsselt nach Projekt, Kunde und Teammitglied &ndash; damit du frühzeitig gegensteuern und zukünftige Aufträge korrekt bepreisen kannst.',
+        'sol_3_placeholder' => 'Profitabilitäts-Dashboard',
+
+        'cta_title' => 'Baue eine Beratung, die skaliert, ohne Qualität zu verlieren',
+        'cta_text' => 'Wissen festhalten, Profitabilität verfolgen und konsistent liefern. Starte heute deine kostenlose Testversion.',
+        'cta_button' => 'Kostenlos starten',
+    ],
+
+    // Operations use case
+    'operations' => [
+        'title' => 'Laborobo für den Betrieb &ndash; KI-Arbeitsmanagement für interne Ops-Teams',
+        'badge' => 'Für interne Ops- & Außendienst-Teams',
+        'headline' => 'Verwandle chaotische Anfragen in strukturierte, nachverfolgbare Arbeit',
+        'subheadline' => 'Interne Ops-Teams ertrinken in Ad-hoc-Anfragen, unklaren Übergaben und null Verantwortlichkeit. Laborobo gibt dir eine strukturierte Aufnahme, klare Zuständigkeiten und eine Definition of Done für jedes Arbeitsstück.',
+        'cta' => 'Kostenlose Testversion starten',
+
+        'pain_title' => 'Der Ops-Team-Schmerz, den du nur zu gut kennst',
+        'pain_1_title' => 'Chaotische Anfragenaufnahme',
+        'pain_1_text' => 'Anfragen kommen per Slack, E-Mail, Flurgespräche und Klebezettel. Die Hälfte davon hat keinen klaren Umfang, keine Frist und keinen Verantwortlichen.',
+        'pain_2_title' => 'Keine Verantwortlichkeit',
+        'pain_2_text' => 'Arbeit wird zugewiesen, aber es gibt kein Tracking, keine Statusupdates und keine Definition of Done. Dinge gehen unter, bis jemand eskaliert.',
+        'pain_3_title' => 'Keine Definition of Done',
+        'pain_3_text' => 'Arbeit wird „größtenteils fertig", aber nie formell abgeschlossen. Es gibt keinen Abnahmeprozess, keine Lieferübergabe und keinen Audit-Trail.',
+
+        'solutions_title' => 'Wie Laborobo Ordnung in den Betrieb bringt',
+        'sol_1_label' => 'Dispatcher-Agent',
+        'sol_1_title' => 'KI triagiert und leitet eingehende Anfragen weiter',
+        'sol_1_text' => 'Der Dispatcher-Agent empfängt Anfragen aus jedem Kanal, extrahiert Umfang und Dringlichkeit, erstellt strukturierte Arbeitsaufträge und leitet sie an das richtige Teammitglied weiter. Schluss mit Klebezettel-Management.',
+        'sol_1_placeholder' => 'Dispatcher-Workflow',
+        'sol_2_label' => 'Menschliche Kontrollpunkte',
+        'sol_2_title' => 'Entwurf, Prüfung, Freigabe, Lieferung',
+        'sol_2_text' => 'Jedes Arbeitselement durchläuft klare Stufen mit menschlicher Genehmigung an jedem Gate. KI bereitet die Arbeit vor, aber Menschen zeichnen ab. Du bekommst Geschwindigkeit, ohne die Kontrolle zu verlieren.',
+        'sol_2_placeholder' => 'Freigabe-Workflow-Stufen',
+        'sol_3_label' => 'CRM-Optional',
+        'sol_3_title' => 'Funktioniert mit oder ohne deine bestehenden Tools',
+        'sol_3_text' => 'Laborobo ersetzt nicht dein CRM oder Ticketing-System &ndash; es arbeitet daneben. Nutze es als internes Ops-Rückgrat und behalte kundenorientierte Tools bei. Oder nutze es als All-in-One-Lösung.',
+        'sol_3_placeholder' => 'Integrationsdiagramm',
+
+        'cta_title' => 'Gib deinem Ops-Team die Struktur, die es verdient',
+        'cta_text' => 'Strukturierte Aufnahme, klare Zuständigkeiten und eine Definition of Done für jedes Arbeitsstück. Starte kostenlos.',
+        'cta_button' => 'Kostenlos starten',
+    ],
+];

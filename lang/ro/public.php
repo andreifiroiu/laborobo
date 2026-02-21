@@ -1,0 +1,174 @@
+<?php
+
+return [
+    // Layout partajat (navigare + footer)
+    'nav' => [
+        'tagline' => 'Sistemul tău de lucru',
+        'agencies' => 'Agenții',
+        'consultancies' => 'Consultanță',
+        'operations' => 'Operațiuni',
+        'login' => 'Autentificare',
+        'get_started' => 'Începe acum',
+        'go_to_app' => 'Mergi la aplicație',
+        'copyright' => '© :year :name. Toate drepturile rezervate.',
+        'language' => 'Limbă',
+    ],
+
+    // Pagina principală
+    'home' => [
+        'title' => 'Laborobo &ndash; Management al muncii cu AI pentru echipe mici',
+        'description' => 'Management al muncii cu AI pentru echipe mici. Transformă haosul în operațiuni structurate și profitabile.',
+        'badge' => 'Management al muncii care funcționează cu adevărat pentru echipe mici',
+        'headline' => 'Nu mai jongla. Începe să',
+        'headline_accent' => 'livrezi.',
+        'subheadline' => 'Laborobo oferă echipelor mici structura unei operațiuni mari fără costurile asociate. Agenții AI se ocupă de munca repetitivă ca tu să te poți concentra pe ce contează.',
+        'cta_primary' => 'Începe gratuit',
+        'cta_secondary' => 'Vezi cum funcționează',
+
+        'problem_title' => 'Ți se pare cunoscut?',
+        'problem_subtitle' => 'Echipele mici se confruntă cu probleme de companie mare fără resursele unei companii mari.',
+        'problem_label' => 'Problema',
+        'solution_label' => 'Soluția',
+
+        'problem_1_title' => 'Munca împrăștiată peste tot',
+        'problem_1_text' => 'Sarcini în Slack, specificații în Docs, bugete în spreadsheet-uri, aprobări pe email. Nimic nu se conectează și lucrurile se pierd.',
+        'solution_1_title' => 'Un singur spațiu de lucru structurat',
+        'solution_1_text' => 'Proiecte, comenzi de lucru, sarcini, bugete și comunicări într-un singur loc. Fiecare element de lucru are un responsabil clar, un status și o definiție a finalizării.',
+
+        'problem_2_title' => 'Nimeni nu știe ce e profitabil',
+        'problem_2_text' => 'Termini un proiect și speri că a meritat. Nu ai o vizualizare în timp real a timpului petrecut vs. bugetat, iar marjele sunt doar o presupunere.',
+        'solution_2_title' => 'Urmărirea profitabilității în timp real',
+        'solution_2_text' => 'Vezi ratele de consum al bugetului pe măsură ce munca se desfășoară. Află care proiecte, clienți și membri ai echipei sunt profitabili înainte să fie prea târziu pentru corecții.',
+
+        'problem_3_title' => 'Cunoștințe neformalizate în mintea oamenilor',
+        'problem_3_text' => 'Când cineva pleacă sau e ocupat, procesele lor dispar odată cu ei. Nu există proceduri standard, nici liste de verificare, nici consistență.',
+        'solution_3_title' => 'Playbook-uri care surprind modul tău de lucru',
+        'solution_3_text' => 'Construiește proceduri standard reutilizabile cu liste de verificare și pași de validare. Agenții AI le urmează, asigurând consistența fie că e primul sau al sutălea proiect.',
+
+        'features_title' => 'Tot ce are nevoie echipa ta mică',
+        'features_subtitle' => 'Conceput special pentru echipe de 2–20 de persoane care au nevoie de structură fără birocrație.',
+
+        'feature_1_title' => 'Comenzi de lucru structurate',
+        'feature_1_text' => 'Fiecare angajament primește o comandă de lucru cu domeniu, buget, livrabile și un flux clar de aprobare: Ciornă, Revizuire, Aprobare, Livrare.',
+        'feature_2_title' => 'Agenți AI',
+        'feature_2_text' => 'Agenții AI acționează ca membri fracționari ai echipei — redactează comunicări, triază cereri și urmează playbook-urile tale ca nimic să nu scape.',
+        'feature_3_title' => 'Rapoarte de profitabilitate',
+        'feature_3_text' => 'Rapoarte în timp real pe proiect, comandă de lucru, client și membru al echipei. Cunoaște-ți marjele înainte ca factura să fie emisă.',
+        'feature_4_title' => 'Playbook-uri și proceduri standard',
+        'feature_4_text' => 'Surprinde cele mai bune procese ale tale în playbook-uri reutilizabile cu liste de verificare și pași de validare. Integrează noi membri în echipă în ore, nu în săptămâni.',
+        'feature_5_title' => 'Comunicări contextuale',
+        'feature_5_text' => 'Fiecare conversație este legată de un proiect, o comandă de lucru sau o sarcină. Nu mai căuta prin fire de email pentru a găsi ce s-a convenit.',
+        'feature_6_title' => 'Puncte de control umane',
+        'feature_6_text' => 'AI pregătește, oamenii aprobă. Fiecare livrabil trece prin etapele Ciornă, Revizuire, Aprobare și Livrare cu responsabilitate clară.',
+
+        'social_proof' => 'Ales de echipe mici care livrează peste așteptări',
+
+        'cta_title' => 'Pregătit să aduci ordine în haos?',
+        'cta_text' => 'Începe gratuit. Fără card de credit. Configurează primul tău proiect în câteva minute.',
+    ],
+
+    // Cazul de utilizare pentru agenții
+    'agencies' => [
+        'title' => 'Laborobo pentru agenții &ndash; Management al muncii cu AI pentru echipe creative și de marketing',
+        'badge' => 'Pentru agenții creative și de marketing',
+        'headline' => 'Echipa ta de 5 persoane poate livra ca o agenție de 20',
+        'subheadline' => 'Agențiile mici pierd bani din cauza extinderii domeniului, ratează termene din cauza lacunelor de competențe și se epuizează pentru că nu au procese repetabile. Laborobo rezolvă toate trei.',
+        'cta' => 'Începe perioada de probă gratuită',
+
+        'pain_title' => 'Provocările agențiilor sunt reale',
+        'pain_1_title' => 'Lacunele de competențe afundă proiectele',
+        'pain_1_text' => 'Câștigi un proiect care necesită copywriting, design și dezvoltare — dar ai doar două din trei. Graba de a acoperi golul îți mănâncă marja.',
+        'pain_2_title' => 'Extinderea domeniului ucide marjele',
+        'pain_2_text' => 'Clienții cer „încă un lucru" și nimeni nu urmărește costul. Până la facturare, ai făcut cu 40% mai multă muncă decât ai cotat.',
+        'pain_3_title' => 'Fără proceduri standard, fără consistență',
+        'pain_3_text' => 'Fiecare proiect pornește de la zero. Integrarea noilor colegi se bazează pe cunoștințe neformalizate. Calitatea depinde de cine lucrează în ziua respectivă, nu de un proces repetabil.',
+
+        'solutions_title' => 'Cum ajută Laborobo agențiile să câștige',
+        'sol_1_label' => 'Membri AI în echipă',
+        'sol_1_title' => 'Acoperă lacunele de competențe cu agenți AI',
+        'sol_1_text' => 'Agenții AI acționează ca membri fracționari ai echipei — redactează texte, triază cererile clienților, pregătesc rapoarte de status. Urmează playbook-urile tale și escaladează către oameni când e nevoie de judecată.',
+        'sol_1_placeholder' => 'Ilustrare flux de lucru agent',
+        'sol_2_label' => 'Protecția marjei',
+        'sol_2_title' => 'Vezi extinderea domeniului înainte să-ți mănânce profitul',
+        'sol_2_text' => 'Fiecare comandă de lucru are un buget. Fiecare sarcină urmărește timpul raportat la acesta. Graficele de rată de consum în timp real îți arată când un proiect deviază, ca să poți avea conversația devreme.',
+        'sol_2_placeholder' => 'Panou de urmărire a bugetului',
+        'sol_3_label' => 'Procese repetabile',
+        'sol_3_title' => 'Construiește o dată, livrează consistent',
+        'sol_3_text' => 'Creează playbook-uri pentru cele mai comune angajamente. Când vine un proiect nou, aplică playbook-ul și lasă agenții AI să se ocupe de configurare, liste de verificare și porți de calitate.',
+        'sol_3_placeholder' => 'Vizualizare șablon playbook',
+
+        'cta_title' => 'Nu mai lăsa bani pe masă',
+        'cta_text' => 'Alătură-te agențiilor care folosesc Laborobo pentru a livra muncă mai bună, a-și proteja marjele și a crește fără să angajeze.',
+        'cta_button' => 'Începe gratuit',
+    ],
+
+    // Cazul de utilizare pentru consultanță
+    'consultancies' => [
+        'title' => 'Laborobo pentru consultanță &ndash; Management al muncii cu AI pentru echipe IT și MSP',
+        'badge' => 'Pentru consultanțe IT și MSP-uri',
+        'headline' => 'Nu mai pierde contextul între angajamente',
+        'subheadline' => 'Consultanțele funcționează pe bază de cunoștințe. Când acele cunoștințe rămân în mintea oamenilor, în fire de email și în documente împrăștiate, profitabilitatea suferă. Laborobo le centralizează pe toate într-un singur loc.',
+        'cta' => 'Începe perioada de probă gratuită',
+
+        'pain_title' => 'Ce te costă bani',
+        'pain_1_title' => 'Cunoștințele neformalizate pleacă pe ușă',
+        'pain_1_text' => 'Consultantul tău senior pleacă și ia cu el 3 ani de istoric cu clientul, note de configurare și cunoștințe de depanare.',
+        'pain_2_title' => 'Context împrăștiat în mai multe unelte',
+        'pain_2_text' => 'Cerințele clienților sunt în email-uri, pontajele într-un sistem, statusul proiectului în altul. Asamblarea unei imagini clare a oricărui angajament durează ore.',
+        'pain_3_title' => 'Orbire față de profitabilitate',
+        'pain_3_text' => 'Cotezi angajamente cu preț fix dar urmărești timpul aproximativ. La final, nu ești sigur dacă ai câștigat bani — doar speri că da.',
+
+        'solutions_title' => 'Cum ajută Laborobo consultanțele să prospere',
+        'sol_1_label' => 'Motor de proceduri',
+        'sol_1_title' => 'Transformă cunoștințele neformalizate în cunoștințe instituționale',
+        'sol_1_text' => 'Construiește playbook-uri care surprind procesele celor mai buni consultanți. Liste de verificare, pași de validare și porți de calitate asigură consistența în fiecare angajament, indiferent cine este alocat.',
+        'sol_1_placeholder' => 'Vizualizare playbook proceduri',
+        'sol_2_label' => 'Comunicări contextuale',
+        'sol_2_title' => 'Fiecare conversație legată de muncă',
+        'sol_2_text' => 'Firele de comunicare sunt atașate proiectelor, comenzilor de lucru și sarcinilor. Când trebuie să știi ce s-a discutat despre un angajament specific, e la un click distanță.',
+        'sol_2_placeholder' => 'Vizualizare fir de comunicare',
+        'sol_3_label' => 'Bugete în timp real',
+        'sol_3_title' => 'Cunoaște-ți marjele înainte de factură',
+        'sol_3_text' => 'Vezi timpul urmărit raportat la buget pentru fiecare comandă de lucru. Rapoartele de profitabilitate detaliază pe proiect, client și membru al echipei, pentru a corecta din timp și a prețui corect lucrările viitoare.',
+        'sol_3_placeholder' => 'Panou de profitabilitate',
+
+        'cta_title' => 'Construiește o consultanță care crește fără a pierde din calitate',
+        'cta_text' => 'Captează cunoștințe, urmărește profitabilitatea și livrează constant. Începe perioada de probă gratuită astăzi.',
+        'cta_button' => 'Începe gratuit',
+    ],
+
+    // Cazul de utilizare pentru operațiuni
+    'operations' => [
+        'title' => 'Laborobo pentru operațiuni &ndash; Management al muncii cu AI pentru echipe interne de operațiuni',
+        'badge' => 'Pentru echipe interne de operațiuni și teren',
+        'headline' => 'Transformă cererile dezordonate în muncă structurată și urmăribilă',
+        'subheadline' => 'Echipele interne de operațiuni se îneacă în cereri ad-hoc, predări neclare și zero responsabilitate. Laborobo îți oferă un flux structurat de primire, proprietate clară și o definiție a finalizării pentru fiecare element de lucru.',
+        'cta' => 'Începe perioada de probă gratuită',
+
+        'pain_title' => 'Durerea echipei de operațiuni pe care o cunoști prea bine',
+        'pain_1_title' => 'Primire dezordonată a cererilor',
+        'pain_1_text' => 'Cererile vin prin Slack, email, conversații pe hol și bilețele. Jumătate din ele nu au un domeniu clar, termen limită sau responsabil.',
+        'pain_2_title' => 'Fără responsabilitate',
+        'pain_2_text' => 'Munca e atribuită dar nu există urmărire, actualizări de status sau definiție a finalizării. Lucrurile se pierd până când cineva escaladează.',
+        'pain_3_title' => 'Fără definiție a finalizării',
+        'pain_3_text' => 'Munca e „aproape gata" dar niciodată finalizată formal. Nu există proces de semnare, predare a livrabilelor sau pistă de audit.',
+
+        'solutions_title' => 'Cum aduce Laborobo ordine în operațiuni',
+        'sol_1_label' => 'Agent dispecer',
+        'sol_1_title' => 'AI triază și direcționează cererile primite',
+        'sol_1_text' => 'Agentul dispecer primește cereri din orice canal, extrage domeniul și urgența, creează comenzi de lucru structurate și le direcționează către membrul potrivit al echipei. Fără management pe bilețele.',
+        'sol_1_placeholder' => 'Flux de lucru dispecer',
+        'sol_2_label' => 'Puncte de control umane',
+        'sol_2_title' => 'Ciornă, Revizuire, Aprobare, Livrare',
+        'sol_2_text' => 'Fiecare element de lucru trece prin etape clare cu aprobare umană la fiecare poartă. AI pregătește munca, dar oamenii semnează. Obții viteză fără a pierde controlul.',
+        'sol_2_placeholder' => 'Etapele fluxului de aprobare',
+        'sol_3_label' => 'CRM opțional',
+        'sol_3_title' => 'Funcționează cu sau fără uneltele tale existente',
+        'sol_3_text' => 'Laborobo nu înlocuiește CRM-ul sau sistemul tău de tichete — stă alături de ele. Folosește-l ca coloană vertebrală a operațiunilor interne, păstrând uneltele orientate către client. Sau folosește-l ca soluție completă.',
+        'sol_3_placeholder' => 'Diagramă de integrări',
+
+        'cta_title' => 'Oferă echipei tale de operațiuni structura pe care o merită',
+        'cta_text' => 'Flux structurat de primire, proprietate clară și o definiție a finalizării pentru fiecare element de lucru. Începe gratuit.',
+        'cta_button' => 'Începe gratuit',
+    ],
+];

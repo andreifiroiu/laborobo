@@ -13,6 +13,21 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 // Root (/) is handled by Laravel Folio → resources/views/pages/index.blade.php
 
+// Language switcher (sets cookie + updates user record if authenticated)
+Route::get('/language/{locale}', function (string $locale) {
+    if (! in_array($locale, config('app.available_locales', ['en']))) {
+        $locale = config('app.fallback_locale', 'en');
+    }
+
+    if ($user = request()->user()) {
+        $user->update(['language' => $locale]);
+    }
+
+    return redirect()->back()->withCookie(
+        cookie('language', $locale, 60 * 24 * 365, '/')
+    );
+})->name('language.switch');
+
 // Public invitation acceptance (signed URLs)
 Route::get('/invitation/{invitation}/accept', [InvitationAcceptController::class, 'show'])
     ->name('teams.invitations.accept')

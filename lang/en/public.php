@@ -1,0 +1,174 @@
+<?php
+
+return [
+    // Shared layout (nav + footer)
+    'nav' => [
+        'tagline' => 'Your work OS',
+        'agencies' => 'Agencies',
+        'consultancies' => 'Consultancies',
+        'operations' => 'Operations',
+        'login' => 'Log in',
+        'get_started' => 'Get Started',
+        'go_to_app' => 'Go to App',
+        'copyright' => '© :year :name. All rights reserved.',
+        'language' => 'Language',
+    ],
+
+    // Landing page
+    'home' => [
+        'title' => 'Laborobo — AI-Powered Work Management for Small Teams',
+        'description' => 'AI-powered work management for small teams. Turn chaos into structured, profitable operations.',
+        'badge' => 'Work management that actually works for small teams',
+        'headline' => 'Stop juggling. Start',
+        'headline_accent' => 'delivering.',
+        'subheadline' => 'Laborobo gives small teams the structure of a large operation without the overhead. AI agents handle the grunt work so you can focus on what matters.',
+        'cta_primary' => 'Get Started Free',
+        'cta_secondary' => 'See How It Works',
+
+        'problem_title' => 'Sound familiar?',
+        'problem_subtitle' => 'Small teams face big-company problems without the big-company resources.',
+        'problem_label' => 'The Problem',
+        'solution_label' => 'The Solution',
+
+        'problem_1_title' => 'Work scattered everywhere',
+        'problem_1_text' => 'Tasks in Slack, specs in Docs, budgets in spreadsheets, approvals over email. Nothing connects and things fall through the cracks.',
+        'solution_1_title' => 'One structured workspace',
+        'solution_1_text' => 'Projects, work orders, tasks, budgets, and communications in one place. Every work item has a clear owner, status, and definition of done.',
+
+        'problem_2_title' => 'No one knows what\'s profitable',
+        'problem_2_text' => 'You finish a project and hope it was worth it. There\'s no real-time view of time spent vs. budgeted, and margins are a guess.',
+        'solution_2_title' => 'Real-time profitability tracking',
+        'solution_2_text' => 'See budget burn rates as work happens. Know which projects, clients, and team members are profitable before it\'s too late to course-correct.',
+
+        'problem_3_title' => 'Tribal knowledge in people\'s heads',
+        'problem_3_text' => 'When someone leaves or gets busy, their process walks out with them. There are no SOPs, no checklists, and no consistency.',
+        'solution_3_title' => 'Playbooks that capture how you work',
+        'solution_3_text' => 'Build reusable SOPs with checklists and validation steps. AI agents follow them, ensuring consistency whether it\'s your first project or your hundredth.',
+
+        'features_title' => 'Everything your small team needs',
+        'features_subtitle' => 'Purpose-built for teams of 2–20 who need structure without bureaucracy.',
+
+        'feature_1_title' => 'Structured Work Orders',
+        'feature_1_text' => 'Every engagement gets a work order with scope, budget, deliverables, and a clear approval workflow: Draft, Review, Approve, Deliver.',
+        'feature_2_title' => 'AI Agents',
+        'feature_2_text' => 'AI agents act as fractional team members—drafting comms, triaging requests, and following your playbooks so nothing slips.',
+        'feature_3_title' => 'Profitability Reports',
+        'feature_3_text' => 'Real-time reports by project, work order, client, and team member. Know your margins before the invoice goes out.',
+        'feature_4_title' => 'Playbooks & SOPs',
+        'feature_4_text' => 'Capture your best processes as reusable playbooks with checklists and validation steps. Onboard new team members in hours, not weeks.',
+        'feature_5_title' => 'Contextual Communications',
+        'feature_5_text' => 'Every conversation is tied to a project, work order, or task. No more hunting through email threads to find what was agreed upon.',
+        'feature_6_title' => 'Human Checkpoints',
+        'feature_6_text' => 'AI prepares, humans approve. Every deliverable flows through Draft, Review, Approve, and Deliver stages with clear accountability.',
+
+        'social_proof' => 'Trusted by small teams who punch above their weight',
+
+        'cta_title' => 'Ready to bring order to the chaos?',
+        'cta_text' => 'Start for free. No credit card required. Set up your first project in minutes.',
+    ],
+
+    // Agencies use case
+    'agencies' => [
+        'title' => 'Laborobo for Agencies — AI Work Management for Creative & Marketing Teams',
+        'badge' => 'For Creative & Marketing Agencies',
+        'headline' => 'Your 5-person team can deliver like a 20-person agency',
+        'subheadline' => 'Small agencies lose money to scope creep, miss deadlines from skill gaps, and burn out because there are no repeatable processes. Laborobo fixes all three.',
+        'cta' => 'Start Free Trial',
+
+        'pain_title' => 'The agency struggle is real',
+        'pain_1_title' => 'Skill gaps sink projects',
+        'pain_1_text' => 'You win a project that needs copywriting, design, and dev—but you only have two of the three. The scramble to fill the gap eats your margin.',
+        'pain_2_title' => 'Scope creep kills margins',
+        'pain_2_text' => 'Clients ask for "one more thing" and no one tracks the cost. By the time you invoice, you\'ve done 40% more work than you quoted.',
+        'pain_3_title' => 'No SOPs, no consistency',
+        'pain_3_text' => 'Every project starts from scratch. Onboarding is tribal knowledge. Quality depends on who\'s working that day, not on a repeatable process.',
+
+        'solutions_title' => 'How Laborobo helps agencies win',
+        'sol_1_label' => 'AI Team Members',
+        'sol_1_title' => 'Fill skill gaps with AI agents',
+        'sol_1_text' => 'AI agents act as fractional team members—drafting copy, triaging client requests, preparing status updates. They follow your playbooks and escalate to humans when judgment is needed.',
+        'sol_1_placeholder' => 'Agent workflow illustration',
+        'sol_2_label' => 'Margin Protection',
+        'sol_2_title' => 'See scope creep before it eats your profit',
+        'sol_2_text' => 'Every work order has a budget. Every task tracks time against it. Real-time burn rate charts show you when a project is going off-track so you can have the conversation early.',
+        'sol_2_placeholder' => 'Budget tracking dashboard',
+        'sol_3_label' => 'Repeatable Processes',
+        'sol_3_title' => 'Build once, deliver consistently',
+        'sol_3_text' => 'Create playbooks for your most common engagements. When a new project comes in, apply the playbook and let AI agents handle the setup, checklists, and quality gates.',
+        'sol_3_placeholder' => 'Playbook template view',
+
+        'cta_title' => 'Stop leaving money on the table',
+        'cta_text' => 'Join agencies that use Laborobo to deliver better work, protect their margins, and grow without hiring.',
+        'cta_button' => 'Get Started Free',
+    ],
+
+    // Consultancies use case
+    'consultancies' => [
+        'title' => 'Laborobo for Consultancies — AI Work Management for IT & MSP Teams',
+        'badge' => 'For IT Consultancies & MSPs',
+        'headline' => 'Stop losing context between engagements',
+        'subheadline' => 'Consultancies run on knowledge. When that knowledge lives in people\'s heads, email threads, and scattered docs, profitability suffers. Laborobo captures it all in one place.',
+        'cta' => 'Start Free Trial',
+
+        'pain_title' => 'What\'s costing you money',
+        'pain_1_title' => 'Tribal knowledge walks out the door',
+        'pain_1_text' => 'Your senior consultant leaves and takes 3 years of client history, configuration notes, and troubleshooting knowledge with them.',
+        'pain_2_title' => 'Context scattered across tools',
+        'pain_2_text' => 'Client requirements are in emails, timesheets in one system, project status in another. Assembling a clear picture of any engagement takes hours.',
+        'pain_3_title' => 'Profitability blindness',
+        'pain_3_text' => 'You quote fixed-fee engagements but track time loosely. By the end, you\'re not sure if you made money—you just hope you did.',
+
+        'solutions_title' => 'How Laborobo helps consultancies thrive',
+        'sol_1_label' => 'SOP Engine',
+        'sol_1_title' => 'Turn tribal knowledge into institutional knowledge',
+        'sol_1_text' => 'Build playbooks that capture your best consultants\' processes. Checklists, validation steps, and quality gates ensure consistency across every engagement, regardless of who\'s staffed.',
+        'sol_1_placeholder' => 'SOP playbook view',
+        'sol_2_label' => 'Contextual Comms',
+        'sol_2_title' => 'Every conversation tied to the work',
+        'sol_2_text' => 'Communication threads are attached to projects, work orders, and tasks. When you need to know what was discussed about a specific engagement, it\'s one click away.',
+        'sol_2_placeholder' => 'Communication thread view',
+        'sol_3_label' => 'Real-Time Budgets',
+        'sol_3_title' => 'Know your margins before the invoice',
+        'sol_3_text' => 'See time tracked against budget for every work order. Profitability reports break down by project, client, and team member so you can course-correct early and price future work accurately.',
+        'sol_3_placeholder' => 'Profitability dashboard',
+
+        'cta_title' => 'Build a consultancy that scales without losing quality',
+        'cta_text' => 'Capture knowledge, track profitability, and deliver consistently. Start your free trial today.',
+        'cta_button' => 'Get Started Free',
+    ],
+
+    // Operations use case
+    'operations' => [
+        'title' => 'Laborobo for Operations — AI Work Management for Internal Ops Teams',
+        'badge' => 'For Internal Ops & Field Teams',
+        'headline' => 'Turn messy requests into structured, trackable work',
+        'subheadline' => 'Internal ops teams drown in ad-hoc requests, unclear handoffs, and zero accountability. Laborobo gives you a structured intake, clear ownership, and a definition of done for every piece of work.',
+        'cta' => 'Start Free Trial',
+
+        'pain_title' => 'The ops team pain you know too well',
+        'pain_1_title' => 'Messy request intake',
+        'pain_1_text' => 'Requests come in via Slack, email, hallway conversations, and sticky notes. Half of them have no clear scope, deadline, or owner.',
+        'pain_2_title' => 'No accountability',
+        'pain_2_text' => 'Work gets assigned but there\'s no tracking, no status updates, and no definition of done. Things fall through the cracks until someone escalates.',
+        'pain_3_title' => 'No definition of done',
+        'pain_3_text' => 'Work gets "mostly finished" but never formally completed. There\'s no sign-off process, no deliverable handoff, and no audit trail.',
+
+        'solutions_title' => 'How Laborobo brings order to ops',
+        'sol_1_label' => 'Dispatcher Agent',
+        'sol_1_title' => 'AI triages and routes incoming requests',
+        'sol_1_text' => 'The Dispatcher agent receives requests from any channel, extracts scope and urgency, creates structured work orders, and routes them to the right team member. No more sticky-note management.',
+        'sol_1_placeholder' => 'Dispatcher workflow',
+        'sol_2_label' => 'Human Checkpoints',
+        'sol_2_title' => 'Draft, Review, Approve, Deliver',
+        'sol_2_text' => 'Every work item flows through clear stages with human approval at each gate. AI prepares the work, but humans sign off. You get speed without losing control.',
+        'sol_2_placeholder' => 'Approval workflow stages',
+        'sol_3_label' => 'CRM-Optional',
+        'sol_3_title' => 'Works with or without your existing tools',
+        'sol_3_text' => 'Laborobo doesn\'t replace your CRM or ticketing system—it sits alongside them. Use it as your internal ops backbone while keeping client-facing tools in place. Or use it as your all-in-one.',
+        'sol_3_placeholder' => 'Integration diagram',
+
+        'cta_title' => 'Give your ops team the structure it deserves',
+        'cta_text' => 'Structured intake, clear ownership, and a definition of done for every piece of work. Start free.',
+        'cta_button' => 'Get Started Free',
+    ],
+];
