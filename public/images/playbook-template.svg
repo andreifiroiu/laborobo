@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" fill="none">
+  <rect width="800" height="400" rx="12" fill="#fafafa"/>
+  <rect x="24" y="24" width="752" height="352" rx="8" fill="white" stroke="#e5e5e5"/>
+  <text x="44" y="56" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#171717">Playbook: Website Redesign</text>
+  <rect x="576" y="38" width="80" height="26" rx="13" fill="#65a30d" fill-opacity="0.1"/>
+  <text x="592" y="55" font-family="system-ui,sans-serif" font-size="10" font-weight="500" fill="#65a30d">12 steps</text>
+  <rect x="664" y="38" width="96" height="26" rx="13" fill="#f5f5f5"/>
+  <text x="676" y="55" font-family="system-ui,sans-serif" font-size="10" fill="#737373">Use template</text>
+  <!-- Phase 1 -->
+  <rect x="44" y="76" width="340" height="24" rx="4" fill="#65a30d" fill-opacity="0.06"/>
+  <text x="56" y="92" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#65a30d">PHASE 1 — Discovery</text>
+  <!-- Checklist items -->
+  <rect x="56" y="108" width="14" height="14" rx="3" fill="#65a30d"/>
+  <path d="M60 115 L63 118 L67 112" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="78" y="120" font-family="system-ui,sans-serif" font-size="11" fill="#171717">Stakeholder interview (30 min)</text>
+  <rect x="56" y="132" width="14" height="14" rx="3" fill="#65a30d"/>
+  <path d="M60 139 L63 142 L67 136" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="78" y="144" font-family="system-ui,sans-serif" font-size="11" fill="#171717">Competitive audit (3 competitors)</text>
+  <rect x="56" y="156" width="14" height="14" rx="3" fill="#65a30d"/>
+  <path d="M60 163 L63 166 L67 160" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="78" y="168" font-family="system-ui,sans-serif" font-size="11" fill="#171717">Content inventory spreadsheet</text>
+  <!-- Phase 2 -->
+  <rect x="44" y="192" width="340" height="24" rx="4" fill="#65a30d" fill-opacity="0.06"/>
+  <text x="56" y="208" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#65a30d">PHASE 2 — Design</text>
+  <rect x="56" y="224" width="14" height="14" rx="3" fill="#65a30d"/>
+  <path d="M60 231 L63 234 L67 228" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="78" y="236" font-family="system-ui,sans-serif" font-size="11" fill="#171717">Wireframes (mobile + desktop)</text>
+  <rect x="56" y="248" width="14" height="14" rx="3" stroke="#d4d4d4" stroke-width="1.5"/>
+  <text x="78" y="260" font-family="system-ui,sans-serif" font-size="11" fill="#171717">Visual design mockups</text>
+  <rect x="56" y="272" width="14" height="14" rx="3" stroke="#d4d4d4" stroke-width="1.5"/>
+  <text x="78" y="284" font-family="system-ui,sans-serif" font-size="11" fill="#737373">Client review session</text>
+  <!-- Phase 3 -->
+  <rect x="44" y="308" width="340" height="24" rx="4" fill="#f5f5f5"/>
+  <text x="56" y="324" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#a3a3a3">PHASE 3 — Development</text>
+  <rect x="56" y="340" width="14" height="14" rx="3" stroke="#e5e5e5" stroke-width="1.5"/>
+  <text x="78" y="352" font-family="system-ui,sans-serif" font-size="11" fill="#a3a3a3">Frontend build</text>
+  <!-- Right panel - Validation -->
+  <rect x="416" y="76" width="340" height="288" rx="8" fill="#f9fafb" stroke="#e5e5e5"/>
+  <text x="436" y="104" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#525252">Validation Rules</text>
+  <rect x="436" y="118" width="300" height="44" rx="6" fill="white" stroke="#e5e5e5"/>
+  <text x="452" y="138" font-family="system-ui,sans-serif" font-size="10" fill="#171717">Each phase requires sign-off</text>
+  <text x="452" y="152" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Human checkpoint before next phase</text>
+  <rect x="436" y="170" width="300" height="44" rx="6" fill="white" stroke="#e5e5e5"/>
+  <text x="452" y="190" font-family="system-ui,sans-serif" font-size="10" fill="#171717">Budget check at 50% completion</text>
+  <text x="452" y="204" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Alert if burn rate exceeds plan by 20%</text>
+  <rect x="436" y="222" width="300" height="44" rx="6" fill="white" stroke="#e5e5e5"/>
+  <text x="452" y="242" font-family="system-ui,sans-serif" font-size="10" fill="#171717">Deliverable quality gate</text>
+  <text x="452" y="256" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">AI reviewer checks before client delivery</text>
+  <rect x="436" y="274" width="300" height="44" rx="6" fill="white" stroke="#e5e5e5"/>
+  <text x="452" y="294" font-family="system-ui,sans-serif" font-size="10" fill="#171717">Client approval required</text>
+  <text x="452" y="308" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Final sign-off before project close</text>
+  <!-- Progress indicator -->
+  <rect x="436" y="330" width="300" height="20" rx="4" fill="#e5e5e5"/>
+  <rect x="436" y="330" width="150" height="20" rx="4" fill="#65a30d"/>
+  <text x="446" y="344" font-family="system-ui,sans-serif" font-size="9" font-weight="500" fill="white">50% complete</text>
+</svg>

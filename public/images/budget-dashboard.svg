@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" fill="none">
+  <rect width="800" height="400" rx="12" fill="#fafafa"/>
+  <rect x="24" y="24" width="752" height="352" rx="8" fill="white" stroke="#e5e5e5"/>
+  <text x="44" y="56" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#171717">Budget Tracking — Acme Redesign</text>
+  <!-- Stats row -->
+  <rect x="44" y="72" width="168" height="64" rx="8" fill="#f5f5f5"/>
+  <text x="56" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">TOTAL BUDGET</text>
+  <text x="56" y="118" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="#171717">$24,000</text>
+  <rect x="228" y="72" width="168" height="64" rx="8" fill="#f5f5f5"/>
+  <text x="240" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">SPENT</text>
+  <text x="240" y="118" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="#f59e0b">$16,800</text>
+  <rect x="412" y="72" width="168" height="64" rx="8" fill="#f5f5f5"/>
+  <text x="424" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">REMAINING</text>
+  <text x="424" y="118" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="#65a30d">$7,200</text>
+  <rect x="596" y="72" width="168" height="64" rx="8" fill="#f5f5f5"/>
+  <text x="608" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">BURN RATE</text>
+  <text x="608" y="118" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="#ef4444">70%</text>
+  <!-- Progress bar -->
+  <rect x="44" y="152" width="720" height="8" rx="4" fill="#e5e5e5"/>
+  <rect x="44" y="152" width="504" height="8" rx="4" fill="#f59e0b"/>
+  <!-- Chart area -->
+  <text x="44" y="188" font-family="system-ui,sans-serif" font-size="11" font-weight="500" fill="#525252">Burn Rate Over Time</text>
+  <!-- Chart grid -->
+  <line x1="44" y1="350" x2="756" y2="350" stroke="#f5f5f5" stroke-width="1"/>
+  <line x1="44" y1="310" x2="756" y2="310" stroke="#f5f5f5" stroke-width="1"/>
+  <line x1="44" y1="270" x2="756" y2="270" stroke="#f5f5f5" stroke-width="1"/>
+  <line x1="44" y1="230" x2="756" y2="230" stroke="#f5f5f5" stroke-width="1"/>
+  <!-- Ideal line (dashed) -->
+  <line x1="44" y1="350" x2="756" y2="200" stroke="#d4d4d4" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="700" y="196" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Ideal</text>
+  <!-- Actual line -->
+  <polyline points="44,350 133,338 222,318 311,295 400,262 489,235 534,218" stroke="#f59e0b" stroke-width="2" fill="none"/>
+  <circle cx="534" cy="218" r="4" fill="#f59e0b"/>
+  <!-- Warning annotation -->
+  <rect x="544" y="206" width="120" height="28" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-opacity="0.3"/>
+  <text x="554" y="224" font-family="system-ui,sans-serif" font-size="9" font-weight="500" fill="#92400e">Above target pace</text>
+  <!-- X axis labels -->
+  <text x="44" y="366" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Week 1</text>
+  <text x="222" y="366" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Week 3</text>
+  <text x="400" y="366" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Week 5</text>
+  <text x="578" y="366" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Week 7</text>
+  <text x="720" y="366" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">Week 8</text>
+</svg>

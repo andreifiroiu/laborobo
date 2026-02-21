@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" fill="none">
+  <rect width="800" height="400" rx="12" fill="#fafafa"/>
+  <rect x="24" y="24" width="752" height="352" rx="8" fill="white" stroke="#e5e5e5"/>
+  <text x="44" y="56" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#171717">Profitability Report — Q1 2026</text>
+  <!-- Summary cards -->
+  <rect x="44" y="72" width="172" height="72" rx="8" fill="#65a30d" fill-opacity="0.05" stroke="#65a30d" stroke-opacity="0.15"/>
+  <text x="56" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#65a30d">REVENUE</text>
+  <text x="56" y="118" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#171717">$142K</text>
+  <text x="56" y="134" font-family="system-ui,sans-serif" font-size="9" fill="#65a30d">+18% vs Q4</text>
+  <rect x="228" y="72" width="172" height="72" rx="8" fill="#f5f5f5"/>
+  <text x="240" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">COSTS</text>
+  <text x="240" y="118" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#171717">$98K</text>
+  <text x="240" y="134" font-family="system-ui,sans-serif" font-size="9" fill="#737373">Labor + overhead</text>
+  <rect x="412" y="72" width="172" height="72" rx="8" fill="#65a30d" fill-opacity="0.05" stroke="#65a30d" stroke-opacity="0.15"/>
+  <text x="424" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#65a30d">NET MARGIN</text>
+  <text x="424" y="118" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#65a30d">31%</text>
+  <text x="424" y="134" font-family="system-ui,sans-serif" font-size="9" fill="#65a30d">Target: 25%</text>
+  <rect x="596" y="72" width="172" height="72" rx="8" fill="#f5f5f5"/>
+  <text x="608" y="92" font-family="system-ui,sans-serif" font-size="9" fill="#a3a3a3">UTILIZATION</text>
+  <text x="608" y="118" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#171717">78%</text>
+  <text x="608" y="134" font-family="system-ui,sans-serif" font-size="9" fill="#737373">Billable hours</text>
+  <!-- By client table -->
+  <text x="44" y="172" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#525252">Profitability by Client</text>
+  <!-- Table header -->
+  <rect x="44" y="182" width="712" height="28" rx="4" fill="#f5f5f5"/>
+  <text x="56" y="200" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#737373">CLIENT</text>
+  <text x="240" y="200" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#737373">REVENUE</text>
+  <text x="360" y="200" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#737373">COST</text>
+  <text x="470" y="200" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#737373">MARGIN</text>
+  <text x="580" y="200" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#737373">STATUS</text>
+  <!-- Row 1 -->
+  <text x="56" y="232" font-family="system-ui,sans-serif" font-size="10" fill="#171717">Acme Corporation</text>
+  <text x="240" y="232" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$52,000</text>
+  <text x="360" y="232" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$31,200</text>
+  <text x="470" y="232" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#65a30d">40%</text>
+  <rect x="580" y="220" width="80" height="20" rx="4" fill="#65a30d" fill-opacity="0.08"/>
+  <rect x="588" y="226" width="60" height="8" rx="4" fill="#65a30d"/>
+  <!-- Row 2 -->
+  <rect x="44" y="244" width="712" height="28" fill="#fafafa"/>
+  <text x="56" y="262" font-family="system-ui,sans-serif" font-size="10" fill="#171717">TechStart Inc</text>
+  <text x="240" y="262" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$38,000</text>
+  <text x="360" y="262" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$26,600</text>
+  <text x="470" y="262" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#65a30d">30%</text>
+  <rect x="580" y="250" width="80" height="20" rx="4" fill="#65a30d" fill-opacity="0.08"/>
+  <rect x="588" y="256" width="46" height="8" rx="4" fill="#65a30d"/>
+  <!-- Row 3 -->
+  <text x="56" y="292" font-family="system-ui,sans-serif" font-size="10" fill="#171717">Global Services Ltd</text>
+  <text x="240" y="292" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$32,000</text>
+  <text x="360" y="292" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$25,600</text>
+  <text x="470" y="292" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#f59e0b">20%</text>
+  <rect x="580" y="280" width="80" height="20" rx="4" fill="#f59e0b" fill-opacity="0.08"/>
+  <rect x="588" y="286" width="30" height="8" rx="4" fill="#f59e0b"/>
+  <!-- Row 4 -->
+  <rect x="44" y="304" width="712" height="28" fill="#fafafa"/>
+  <text x="56" y="322" font-family="system-ui,sans-serif" font-size="10" fill="#171717">Meridian Health</text>
+  <text x="240" y="322" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$20,000</text>
+  <text x="360" y="322" font-family="system-ui,sans-serif" font-size="10" fill="#171717">$14,600</text>
+  <text x="470" y="322" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#65a30d">27%</text>
+  <rect x="580" y="310" width="80" height="20" rx="4" fill="#65a30d" fill-opacity="0.08"/>
+  <rect x="588" y="316" width="40" height="8" rx="4" fill="#65a30d"/>
+  <!-- Total -->
+  <rect x="44" y="340" width="712" height="28" rx="4" fill="#f5f5f5"/>
+  <text x="56" y="358" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#171717">Total</text>
+  <text x="240" y="358" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#171717">$142,000</text>
+  <text x="360" y="358" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#171717">$98,000</text>
+  <text x="470" y="358" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#65a30d">31%</text>
+</svg>

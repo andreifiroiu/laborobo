@@ -63,13 +63,13 @@
                         <h3 class="text-2xl font-bold">{{ __('public.operations.sol_1_title') }}</h3>
                         <p class="mt-4 text-muted-foreground">{{ __('public.operations.sol_1_text') }}</p>
                     </div>
-                    <div class="flex h-48 w-full flex-1 items-center justify-center rounded-lg border border-border bg-secondary/50">
-                        <span class="text-sm text-muted-foreground">{{ __('public.operations.sol_1_placeholder') }}</span>
+                    <div class="flex-1 overflow-hidden rounded-lg border border-border">
+                        <img src="/images/dispatcher-workflow.svg" alt="{{ __('public.operations.sol_1_placeholder') }}" class="w-full">
                     </div>
                 </div>
                 <div class="flex flex-col-reverse items-center gap-8 md:flex-row">
-                    <div class="flex h-48 w-full flex-1 items-center justify-center rounded-lg border border-border bg-secondary/50">
-                        <span class="text-sm text-muted-foreground">{{ __('public.operations.sol_2_placeholder') }}</span>
+                    <div class="flex-1 overflow-hidden rounded-lg border border-border">
+                        <img src="/images/approval-stages.svg" alt="{{ __('public.operations.sol_2_placeholder') }}" class="w-full">
                     </div>
                     <div class="flex-1">
                         <div class="mb-2 text-sm font-semibold uppercase tracking-wider text-lime-600">{{ __('public.operations.sol_2_label') }}</div>
@@ -83,8 +83,8 @@
                         <h3 class="text-2xl font-bold">{{ __('public.operations.sol_3_title') }}</h3>
                         <p class="mt-4 text-muted-foreground">{{ __('public.operations.sol_3_text') }}</p>
                     </div>
-                    <div class="flex h-48 w-full flex-1 items-center justify-center rounded-lg border border-border bg-secondary/50">
-                        <span class="text-sm text-muted-foreground">{{ __('public.operations.sol_3_placeholder') }}</span>
+                    <div class="flex-1 overflow-hidden rounded-lg border border-border">
+                        <img src="/images/integration-diagram.svg" alt="{{ __('public.operations.sol_3_placeholder') }}" class="w-full">
                     </div>
                 </div>
             </div>
