@@ -1764,7 +1764,7 @@ export default function WorkOrderDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Accountable
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {workOrder.accountableName || 'Unassigned'}
                                 </div>
                             </div>
@@ -1775,7 +1775,7 @@ export default function WorkOrderDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Hours
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {workOrder.actualHours} /{' '}
                                     {workOrder.estimatedHours}h
                                     {!workOrder.estimatedHoursIsManual && (
@@ -1799,7 +1799,7 @@ export default function WorkOrderDetail({
                                     Due Date
                                 </div>
                                 <div
-                                    className={`truncate font-medium ${isOverdue ? 'text-destructive' : ''}`}
+                                    className={`font-medium break-words ${isOverdue ? 'text-destructive' : ''}`}
                                 >
                                     {dueDate ? (
                                         <>
@@ -1821,7 +1821,7 @@ export default function WorkOrderDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Tasks
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {completedTasks} / {tasks.length}
                                 </div>
                             </div>
@@ -1832,7 +1832,7 @@ export default function WorkOrderDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Deliverables
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {deliverables.length}
                                 </div>
                             </div>
@@ -2549,7 +2549,7 @@ export default function WorkOrderDetail({
                                 Add a new deliverable to this work order
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
+                        <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
                                 <Label>Title *</Label>
                                 <Input
@@ -2722,7 +2722,7 @@ export default function WorkOrderDetail({
                         <DialogHeader>
                             <DialogTitle>Edit Deliverable</DialogTitle>
                         </DialogHeader>
-                        <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
+                        <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
                                 <Label>Title *</Label>
                                 <Input

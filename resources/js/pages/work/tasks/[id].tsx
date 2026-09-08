@@ -816,7 +816,7 @@ export default function TaskDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Assigned To
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {task.assignedAgentName ||
                                         task.assignedToName ||
                                         'Unassigned'}
@@ -829,7 +829,7 @@ export default function TaskDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Estimated
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {task.estimatedHours}h
                                 </div>
                             </div>
@@ -840,7 +840,7 @@ export default function TaskDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Logged
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {totalTimeLogged.toFixed(1)}h
                                 </div>
                             </div>
@@ -851,7 +851,7 @@ export default function TaskDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Checklist
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {completedItems}/{totalItems}
                                 </div>
                             </div>
@@ -875,7 +875,7 @@ export default function TaskDetail({
                                                 Due Date
                                             </div>
                                             <div
-                                                className={`truncate font-medium ${taskIsOverdue ? 'text-destructive' : ''}`}
+                                                className={`font-medium break-words ${taskIsOverdue ? 'text-destructive' : ''}`}
                                             >
                                                 {task.dueDate ? (
                                                     <>

@@ -107,7 +107,7 @@ export function WorkOrderListGroup({
                             aria-label={
                                 isOpen ? 'Collapse list' : 'Expand list'
                             }
-                            className="h-8 w-8 shrink-0 md:h-6 md:w-6"
+                            className="h-8 w-8 shrink-0 sm:h-6 sm:w-6"
                         >
                             {isOpen ? (
                                 <ChevronDown className="h-4 w-4" />
@@ -147,7 +147,7 @@ export function WorkOrderListGroup({
                                     variant="ghost"
                                     size="icon"
                                     aria-label="List actions"
-                                    className="h-8 w-8 shrink-0 md:h-6 md:w-6"
+                                    className="h-8 w-8 shrink-0 sm:h-6 sm:w-6"
                                 >
                                     <MoreVertical className="h-4 w-4" />
                                 </Button>

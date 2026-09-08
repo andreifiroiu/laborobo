@@ -862,7 +862,7 @@ export default function DeliverableDetail({
                         <DialogHeader>
                             <DialogTitle>Edit Deliverable</DialogTitle>
                         </DialogHeader>
-                        <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
+                        <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-title">Title</Label>
                                 <Input

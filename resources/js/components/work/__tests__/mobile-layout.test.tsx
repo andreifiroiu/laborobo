@@ -7,6 +7,7 @@ import {
 import type { WorkOrderInList, WorkOrderList } from '@/types/work';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { MyWorkSubtabs } from '../my-work-subtabs';
 import { ViewTabs } from '../view-tabs';
 import { WorkOrderListGroup } from '../work-order-list-group';
 import { WorkOrderListItem } from '../work-order-list-item';
@@ -80,14 +81,30 @@ describe('WorkOrderListItem mobile layout', () => {
         expect(titleRow.parentElement).toHaveClass('flex-wrap');
     });
 
-    it('keeps the badges out of the title row while remaining unshrinkable', () => {
+    it('keeps the badges out of the title row', () => {
         render(<WorkOrderListItem workOrder={workOrder} />);
 
-        const statusBadge = screen.getByText('draft');
-        expect(statusBadge).toHaveClass('shrink-0');
-        expect(statusBadge.parentElement).not.toBe(
+        // Previously title and badges were children of one non-wrapping row,
+        // which is what squeezed the title down to an ellipsis.
+        expect(screen.getByText('draft').parentElement).not.toBe(
             screen.getByText(workOrder.title).parentElement,
         );
+    });
+
+    it('stops wrapping from sm up, so a long title ellipsises instead of growing the row', () => {
+        render(<WorkOrderListItem workOrder={workOrder} />);
+
+        const titleRow = screen.getByText(workOrder.title).parentElement!;
+        expect(titleRow.parentElement).toHaveClass('sm:flex-nowrap');
+    });
+
+    it('re-centres the actions button from sm up', () => {
+        render(<WorkOrderListItem workOrder={workOrder} />);
+
+        // `self-start` alone would beat the row's `sm:items-center` forever.
+        expect(
+            screen.getByRole('button', { name: 'Work order actions' }),
+        ).toHaveClass('sm:self-center');
     });
 
     it('lets the metadata line wrap on phones and truncate from sm up', () => {
@@ -132,18 +149,33 @@ describe('WorkOrderListGroup mobile layout', () => {
         expect(screen.getByText(list.name)).toHaveClass('truncate', 'min-w-0');
     });
 
-    it('drops the "work order(s)" wording below sm, keeping the count', () => {
-        render(
-            <WorkOrderListGroup
-                list={list}
-                projectId="p-1"
-                onCreateWorkOrder={vi.fn()}
-            />,
-        );
+    it.each([
+        [1, '1 work order'],
+        [2, '2 work orders'],
+    ])(
+        'hides the wording below sm but keeps it pluralised at sm+ (%i)',
+        (count, expected) => {
+            render(
+                <WorkOrderListGroup
+                    list={{
+                        ...list,
+                        workOrders: Array.from({ length: count }, (_, i) => ({
+                            ...workOrder,
+                            id: `wo-${i}`,
+                        })),
+                    }}
+                    projectId="p-1"
+                    onCreateWorkOrder={vi.fn()}
+                />,
+            );
 
-        expect(screen.getByText('work order')).toHaveClass('hidden');
-        expect(screen.getByText('work order')).toHaveClass('sm:inline');
-    });
+            const wording = screen.getByText(/work order/);
+            expect(wording).toHaveClass('hidden', 'sm:inline');
+            // The count sits outside the hidden span; together they must still
+            // read correctly, space and plural included, at sm+.
+            expect(wording.parentElement).toHaveTextContent(expected);
+        },
+    );
 });
 
 describe('ViewTabs mobile layout', () => {
@@ -156,6 +188,41 @@ describe('ViewTabs mobile layout', () => {
 
         expect(strip).toHaveClass('overflow-x-auto');
         expect(strip).not.toHaveClass('flex-wrap');
+    });
+
+    it('scrolls the active tab into view, since the strip hides its scrollbar', () => {
+        const scrollIntoView = vi.fn();
+        const spy = vi
+            .spyOn(Element.prototype, 'scrollIntoView')
+            .mockImplementation(scrollIntoView);
+
+        // 'archive' is the last tab: restored from a saved preference it would
+        // otherwise sit off the right edge of a phone with nothing to hint at it.
+        render(<ViewTabs currentView="archive" onViewChange={vi.fn()} />);
+
+        expect(scrollIntoView).toHaveBeenCalled();
+        expect(scrollIntoView.mock.instances[0]).toBe(
+            screen.getByRole('button', { name: /Archive/ }),
+        );
+
+        spy.mockRestore();
+    });
+});
+
+describe('MyWorkSubtabs mobile layout', () => {
+    it('scrolls the active subtab into view', () => {
+        const scrollIntoView = vi.fn();
+        const spy = vi
+            .spyOn(Element.prototype, 'scrollIntoView')
+            .mockImplementation(scrollIntoView);
+
+        render(<MyWorkSubtabs activeTab="all" onTabChange={vi.fn()} />);
+
+        expect(scrollIntoView.mock.instances[0]).toBe(
+            screen.getByRole('tab', { name: /All/ }),
+        );
+
+        spy.mockRestore();
     });
 });
 

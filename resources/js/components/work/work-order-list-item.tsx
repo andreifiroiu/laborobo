@@ -195,7 +195,7 @@ export function WorkOrderListItem({
             <button
                 type="button"
                 aria-label="Reorder work order"
-                className="-ml-1 flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground hover:text-foreground active:cursor-grabbing"
+                className="flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground hover:text-foreground active:cursor-grabbing sm:h-4 sm:w-4"
                 {...attributes}
                 {...listeners}
             >
@@ -212,7 +212,7 @@ export function WorkOrderListItem({
                  * badges wrap underneath instead of squeezing it down to an
                  * ellipsis on a phone.
                  */}
-                <div className="mb-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <div className="mb-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
                     <span className="flex min-w-0 basis-full items-center gap-2 sm:basis-auto">
                         {isOverdue && (
                             <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" />
@@ -266,7 +266,7 @@ export function WorkOrderListItem({
                         variant="ghost"
                         size="icon"
                         aria-label="Work order actions"
-                        className="h-8 w-8 shrink-0 self-start opacity-100 transition-opacity md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
+                        className="h-8 w-8 shrink-0 self-start opacity-100 transition-opacity sm:self-center md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
                     >
                         <MoreVertical className="h-4 w-4" />
                     </Button>

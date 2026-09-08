@@ -350,7 +350,7 @@ export default function ProjectDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Client
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {project.partyName}
                                 </div>
                             </div>
@@ -361,7 +361,7 @@ export default function ProjectDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Owner
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {project.ownerName}
                                 </div>
                             </div>
@@ -372,7 +372,7 @@ export default function ProjectDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Hours
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {project.actualHours}
                                     {project.budgetHours &&
                                         ` / ${project.budgetHours}`}
@@ -387,7 +387,7 @@ export default function ProjectDetail({
                                     <div className="text-xs text-muted-foreground">
                                         Budget
                                     </div>
-                                    <div className="truncate font-medium">
+                                    <div className="font-medium break-words">
                                         {budgetDisplayValue}
                                     </div>
                                 </div>
@@ -399,7 +399,7 @@ export default function ProjectDetail({
                                 <div className="text-xs text-muted-foreground">
                                     Target Date
                                 </div>
-                                <div className="truncate font-medium">
+                                <div className="font-medium break-words">
                                     {project.targetEndDate
                                         ? new Date(
                                               project.targetEndDate,

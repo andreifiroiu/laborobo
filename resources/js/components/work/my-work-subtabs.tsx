@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import type { MyWorkSubtab } from '@/types/work';
 import { Briefcase, CheckSquare, FolderKanban, Layers } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface MyWorkSubtabsProps {
     activeTab: MyWorkSubtab;
@@ -24,10 +25,22 @@ export function MyWorkSubtabs({
     onTabChange,
     className,
 }: MyWorkSubtabsProps) {
+    const activeTabRef = useRef<HTMLButtonElement>(null);
+
+    // The strip scrolls horizontally on phones and hides its scrollbar, and the
+    // subtab is restored from the user's saved preference, so a later tab can be
+    // active while sitting off-screen with nothing to hint at it.
+    useEffect(() => {
+        activeTabRef.current?.scrollIntoView({
+            block: 'nearest',
+            inline: 'nearest',
+        });
+    }, [activeTab]);
+
     return (
         <div className={cn('border-b border-border', className)}>
             <div
-                className="-mb-px flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 role="tablist"
                 aria-label="My Work subtabs"
             >
@@ -38,6 +51,7 @@ export function MyWorkSubtabs({
                     return (
                         <button
                             key={tab.value}
+                            ref={isActive ? activeTabRef : undefined}
                             role="tab"
                             aria-selected={isActive}
                             data-state={isActive ? 'active' : 'inactive'}
