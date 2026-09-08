@@ -27,7 +27,7 @@ export function MyWorkSubtabs({
     return (
         <div className={cn('border-b border-border', className)}>
             <div
-                className="flex flex-wrap gap-1 px-4"
+                className="-mb-px flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 role="tablist"
                 aria-label="My Work subtabs"
             >
@@ -43,7 +43,7 @@ export function MyWorkSubtabs({
                             data-state={isActive ? 'active' : 'inactive'}
                             onClick={() => onTabChange(tab.value)}
                             className={cn(
-                                'flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                                'flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
                                 isActive
                                     ? 'border-primary text-primary'
                                     : 'border-transparent text-muted-foreground hover:border-muted hover:text-foreground',

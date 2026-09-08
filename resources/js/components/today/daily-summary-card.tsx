@@ -9,7 +9,7 @@ interface DailySummaryCardProps {
 export function DailySummaryCard({ summary, onRefresh }: DailySummaryCardProps) {
     if (!summary.summary) {
         return (
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 p-6 shadow-lg">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 p-4 sm:p-6 shadow-lg">
                 <div className="flex items-center justify-center py-8">
                     <div className="text-center">
                         <Sparkles className="mx-auto mb-3 h-8 w-8 text-white/60" />
@@ -22,7 +22,7 @@ export function DailySummaryCard({ summary, onRefresh }: DailySummaryCardProps) 
     }
 
     return (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 p-6 shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700 p-4 sm:p-6 shadow-lg">
             {/* Decorative background pattern */}
             <div className="pointer-events-none absolute inset-0 opacity-10">
                 <div className="absolute right-0 top-0 h-64 w-64 translate-x-20 -translate-y-20 transform rounded-full bg-white blur-3xl" />

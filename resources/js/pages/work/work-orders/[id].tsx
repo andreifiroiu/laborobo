@@ -1603,7 +1603,7 @@ export default function WorkOrderDetail({
             <div className="flex h-full flex-1 flex-col">
                 {/* Rejection Feedback Banner */}
                 {rejectionFeedback && (
-                    <div className="px-6 pt-6">
+                    <div className="px-4 pt-4 sm:px-6 sm:pt-6">
                         <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/50">
                             <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                             <AlertTitle className="text-orange-900 dark:text-orange-100">
@@ -1637,7 +1637,7 @@ export default function WorkOrderDetail({
                         </Button>
                         <div className="min-w-0 flex-1">
                             <div className="mb-1 flex flex-wrap items-center gap-2 sm:gap-3">
-                                <h1 className="text-2xl font-bold text-foreground">
+                                <h1 className="text-xl font-bold break-words text-foreground sm:text-2xl">
                                     {workOrder.title}
                                 </h1>
                                 <StatusBadge
@@ -1759,23 +1759,23 @@ export default function WorkOrderDetail({
                     {/* Work Order Stats */}
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <User className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Accountable
                                 </div>
-                                <div className="font-medium">
+                                <div className="truncate font-medium">
                                     {workOrder.accountableName || 'Unassigned'}
                                 </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <Clock className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Hours
                                 </div>
-                                <div className="font-medium">
+                                <div className="truncate font-medium">
                                     {workOrder.actualHours} /{' '}
                                     {workOrder.estimatedHours}h
                                     {!workOrder.estimatedHoursIsManual && (
@@ -1792,14 +1792,14 @@ export default function WorkOrderDetail({
                             }`}
                         >
                             <Calendar
-                                className={`h-5 w-5 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
+                                className={`h-5 w-5 shrink-0 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
                             />
-                            <div>
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Due Date
                                 </div>
                                 <div
-                                    className={`font-medium ${isOverdue ? 'text-destructive' : ''}`}
+                                    className={`truncate font-medium ${isOverdue ? 'text-destructive' : ''}`}
                                 >
                                     {dueDate ? (
                                         <>
@@ -1816,23 +1816,23 @@ export default function WorkOrderDetail({
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Tasks
                                 </div>
-                                <div className="font-medium">
+                                <div className="truncate font-medium">
                                     {completedTasks} / {tasks.length}
                                 </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <FileText className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Deliverables
                                 </div>
-                                <div className="font-medium">
+                                <div className="truncate font-medium">
                                     {deliverables.length}
                                 </div>
                             </div>
@@ -1866,7 +1866,7 @@ export default function WorkOrderDetail({
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     {/* View Toggle Row (full width) */}
                     {localTasks.length > 0 && (
                         <div className="mb-4 flex justify-start">

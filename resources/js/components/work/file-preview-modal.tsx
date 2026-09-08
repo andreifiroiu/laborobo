@@ -25,7 +25,7 @@ export function FilePreviewModal({
 }: FilePreviewModalProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden p-0">
+            <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden p-0 sm:p-0">
                 <DialogHeader className="flex flex-row items-center justify-between border-b border-border px-6 py-4">
                     <DialogTitle className="truncate pr-4">{fileName}</DialogTitle>
                     <div className="flex shrink-0 items-center gap-2">

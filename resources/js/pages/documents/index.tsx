@@ -456,7 +456,7 @@ export default function DocumentsIndex({
                 open={!!previewDoc}
                 onOpenChange={(open) => !open && setPreviewDoc(null)}
             >
-                <DialogContent className="flex h-[85vh] max-h-[85vh] w-full flex-col sm:max-w-4xl">
+                <DialogContent className="flex h-[85vh] max-h-[85vh] w-full flex-col overflow-hidden sm:max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>{previewDoc?.name}</DialogTitle>
                         <DialogDescription>

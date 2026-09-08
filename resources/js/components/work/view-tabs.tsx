@@ -21,7 +21,7 @@ const views: Array<{
 export function ViewTabs({ currentView, onViewChange }: ViewTabsProps) {
     return (
         <div className="border-b border-sidebar-border/70 dark:border-sidebar-border">
-            <div className="flex flex-wrap gap-1 px-4">
+            <div className="-mb-px flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {views.map((view) => {
                     const Icon = view.icon;
                     const isActive = currentView === view.value;
@@ -30,7 +30,7 @@ export function ViewTabs({ currentView, onViewChange }: ViewTabsProps) {
                         <button
                             key={view.value}
                             onClick={() => onViewChange(view.value)}
-                            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                            className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors sm:px-4 ${
                                 isActive
                                     ? 'border-primary text-primary'
                                     : 'border-transparent text-muted-foreground hover:text-foreground'

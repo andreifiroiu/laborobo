@@ -191,7 +191,7 @@ export default function TimeEntriesIndex({
 
                 {/* Filters Panel */}
                 {showFilters && (
-                    <div className="border-b border-sidebar-border/70 bg-muted/30 px-6 py-4 dark:border-sidebar-border">
+                    <div className="border-b border-sidebar-border/70 bg-muted/30 px-4 py-4 sm:px-6 dark:border-sidebar-border">
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="date_from">From Date</Label>
@@ -275,7 +275,7 @@ export default function TimeEntriesIndex({
                 )}
 
                 {/* Content */}
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     {entries.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12">
                             <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">

@@ -351,7 +351,7 @@ export default function CommunicationsIndex({
                 </div>
 
                 {/* Message List */}
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     {messages.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center rounded-xl bg-muted/50 py-16 text-center">
                             <p className="text-lg text-muted-foreground">

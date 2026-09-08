@@ -52,7 +52,7 @@ export function ArchiveProjectCard({
         : null;
 
     return (
-        <div className="group relative bg-card border border-border rounded-xl p-6 hover:border-muted-foreground/30 transition-all hover:shadow-lg">
+        <div className="group relative bg-card border border-border rounded-xl p-4 sm:p-6 hover:border-muted-foreground/30 transition-all hover:shadow-lg">
             {/* Status Badge */}
             <div className="absolute top-4 right-4">
                 <Badge variant="outline" className={`${statusColors[project.status]}`}>

@@ -23,7 +23,7 @@ export function InboxTabs({ currentTab, counts, onTabChange }: InboxTabsProps) {
     ];
 
     return (
-        <div className="border-b border-sidebar-border/70 px-6 dark:border-sidebar-border">
+        <div className="border-b border-sidebar-border/70 px-4 sm:px-6 dark:border-sidebar-border">
             <Tabs value={currentTab} onValueChange={onTabChange}>
                 <TabsList className="flex h-auto flex-wrap justify-start border-0 bg-transparent p-0">
                     {tabs.map((tab) => {

@@ -25,7 +25,7 @@ export function ApprovalsCard({
 }: ApprovalsCardProps) {
     return (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <div className="border-b border-slate-200 p-6 dark:border-slate-800">
+            <div className="border-b border-slate-200 p-4 sm:p-6 dark:border-slate-800">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">

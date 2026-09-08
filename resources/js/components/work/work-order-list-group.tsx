@@ -91,7 +91,7 @@ export function WorkOrderListGroup({
                 {/* Header */}
                 <div
                     className={cn(
-                        'flex items-center gap-2 px-4 py-3',
+                        'flex items-center gap-2 px-3 py-3 sm:px-4',
                         list.color ? '' : 'bg-muted/50',
                     )}
                     style={
@@ -101,7 +101,14 @@ export function WorkOrderListGroup({
                     }
                 >
                     <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={
+                                isOpen ? 'Collapse list' : 'Expand list'
+                            }
+                            className="h-8 w-8 shrink-0 md:h-6 md:w-6"
+                        >
                             {isOpen ? (
                                 <ChevronDown className="h-4 w-4" />
                             ) : (
@@ -121,10 +128,16 @@ export function WorkOrderListGroup({
                         <FolderOpen className="h-4 w-4 text-muted-foreground" />
                     )}
 
-                    <span className="flex-1 font-medium">{list.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                        {list.workOrders.length} work order
-                        {list.workOrders.length !== 1 ? 's' : ''}
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                        {list.name}
+                    </span>
+                    <span className="shrink-0 text-sm text-muted-foreground">
+                        {list.workOrders.length}
+                        <span className="hidden sm:inline">
+                            {' '}
+                            work order
+                            {list.workOrders.length !== 1 ? 's' : ''}
+                        </span>
                     </span>
 
                     {!isUngrouped && (
@@ -133,7 +146,8 @@ export function WorkOrderListGroup({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    aria-label="List actions"
+                                    className="h-8 w-8 shrink-0 md:h-6 md:w-6"
                                 >
                                     <MoreVertical className="h-4 w-4" />
                                 </Button>
@@ -175,7 +189,7 @@ export function WorkOrderListGroup({
                         items={list.workOrders.map((wo) => wo.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        <div className="space-y-2 p-2">
+                        <div className="space-y-2 p-1.5 sm:p-2">
                             {list.workOrders.length === 0 ? (
                                 <div className="py-6 text-center text-sm text-muted-foreground">
                                     {isUngrouped

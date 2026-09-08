@@ -181,7 +181,7 @@ export function WorkOrderListItem({
             ref={setNodeRef}
             style={style}
             className={cn(
-                'group flex items-center gap-2 rounded-lg border bg-card p-3',
+                'group flex items-start gap-2 rounded-lg border bg-card p-3 sm:items-center',
                 isArchived
                     ? 'border-border bg-muted/50 opacity-50'
                     : isOverdue
@@ -193,7 +193,9 @@ export function WorkOrderListItem({
         >
             {/* Drag Handle */}
             <button
-                className="cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+                type="button"
+                aria-label="Reorder work order"
+                className="-ml-1 flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground hover:text-foreground active:cursor-grabbing"
                 {...attributes}
                 {...listeners}
             >
@@ -205,29 +207,36 @@ export function WorkOrderListItem({
                 href={`/work/work-orders/${workOrder.id}`}
                 className="min-w-0 flex-1 transition-colors hover:text-primary"
             >
-                <div className="mb-1 flex items-center gap-2">
-                    {isOverdue && (
-                        <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-500 dark:text-red-400" />
-                    )}
-                    <span className="truncate font-medium">
-                        {workOrder.title}
+                {/*
+                 * The title claims a full row of its own until `sm`, so the
+                 * badges wrap underneath instead of squeezing it down to an
+                 * ellipsis on a phone.
+                 */}
+                <div className="mb-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="flex min-w-0 basis-full items-center gap-2 sm:basis-auto">
+                        {isOverdue && (
+                            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400" />
+                        )}
+                        <span className="truncate font-medium">
+                            {workOrder.title}
+                        </span>
                     </span>
-                    <Badge variant="outline" className="flex-shrink-0">
+                    <Badge variant="outline" className="shrink-0">
                         {workOrder.status}
                     </Badge>
                     <Badge
                         variant={getPriorityVariant(workOrder.priority)}
-                        className="flex-shrink-0"
+                        className="shrink-0"
                     >
                         {workOrder.priority}
                     </Badge>
                     {isOverdue && (
-                        <Badge variant="destructive" className="flex-shrink-0">
+                        <Badge variant="destructive" className="shrink-0">
                             Overdue
                         </Badge>
                     )}
                 </div>
-                <div className="truncate text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground sm:truncate">
                     {workOrder.assignedToName} • {workOrder.completedTasksCount}
                     /{workOrder.tasksCount} tasks
                     {workOrder.dueDate && (
@@ -256,7 +265,8 @@ export function WorkOrderListItem({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+                        aria-label="Work order actions"
+                        className="h-8 w-8 shrink-0 self-start opacity-100 transition-opacity md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
                     >
                         <MoreVertical className="h-4 w-4" />
                     </Button>
