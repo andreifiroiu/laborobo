@@ -7,6 +7,13 @@ global.ResizeObserver = class ResizeObserver {
     disconnect() {}
 };
 
+// jsdom implements no layout, so Element.prototype.scrollIntoView is missing.
+// Ten test files already stub it individually; components that scroll an active
+// item into view need it too, so provide it once here.
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+    Element.prototype.scrollIntoView = function scrollIntoView() {};
+}
+
 // jsdom does not provide localStorage on an opaque origin, so supply a
 // minimal in-memory implementation for code that persists client-side state.
 if (typeof globalThis.localStorage === 'undefined') {

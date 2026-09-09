@@ -136,7 +136,7 @@ export function DirectoryView({
             </div>
 
             {/* Search Bar */}
-            <div className="border-b border-sidebar-border/70 px-6 py-4 dark:border-sidebar-border">
+            <div className="border-b border-sidebar-border/70 px-4 py-4 sm:px-6 dark:border-sidebar-border">
                 <div className="relative">
                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                     <Input

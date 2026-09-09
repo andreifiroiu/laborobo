@@ -117,7 +117,7 @@ export function DraftPreviewModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden">
                 <DialogHeader>
                     <div className="flex items-center gap-2 flex-wrap mb-2">
                         <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-700 dark:text-blue-400">

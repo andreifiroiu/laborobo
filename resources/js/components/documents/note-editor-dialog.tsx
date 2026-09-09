@@ -46,7 +46,7 @@ export function NoteEditorDialog({
 }: NoteEditorDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex h-[80vh] max-w-3xl flex-col">
+            <DialogContent className="flex h-[80vh] max-w-3xl flex-col overflow-hidden">
                 {/* Keyed so the form re-initializes whenever a different note is opened. */}
                 <NoteEditorForm
                     key={note?.id ?? 'new'}

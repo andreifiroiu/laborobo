@@ -525,7 +525,7 @@ export default function DeliverableDetail({
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         {/* Left Column - File Preview, Description & Version History */}
                         <div className="space-y-6">
@@ -862,7 +862,7 @@ export default function DeliverableDetail({
                         <DialogHeader>
                             <DialogTitle>Edit Deliverable</DialogTitle>
                         </DialogHeader>
-                        <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4">
+                        <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-title">Title</Label>
                                 <Input

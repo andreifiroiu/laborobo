@@ -485,7 +485,7 @@ export function ProjectDocumentsSection({
                 open={!!previewDoc}
                 onOpenChange={(open) => !open && setPreviewDoc(null)}
             >
-                <DialogContent className="flex h-[80vh] max-w-4xl flex-col">
+                <DialogContent className="flex h-[80vh] max-w-4xl flex-col overflow-hidden">
                     <DialogHeader>
                         <DialogTitle>{previewDoc?.name}</DialogTitle>
                         <DialogDescription>

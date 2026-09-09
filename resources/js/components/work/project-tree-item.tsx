@@ -124,7 +124,7 @@ export function ProjectTreeItem({
                             {project.partyName}
                         </span>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                         <span>{totalWorkOrders} work orders</span>
                         {project.budgetHours && (
                             <span>
@@ -618,7 +618,7 @@ function WorkOrderInListTreeItem({
                             {workOrder.priority}
                         </span>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                         <span>{workOrder.assignedToName}</span>
                         <span>
                             {workOrder.completedTasksCount}/
@@ -861,7 +861,7 @@ function TaskTreeItem({
                         </span>
                     )}
                 </div>
-                <div className="mt-0.5 flex items-center gap-4 text-xs text-muted-foreground">
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                     <span>{task.assignedToName}</span>
                     {totalItems > 0 && (
                         <span>

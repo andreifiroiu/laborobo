@@ -262,7 +262,7 @@ export default function ProjectDetail({
                         </Button>
                         <div className="min-w-0 flex-1">
                             <div className="mb-1 flex flex-wrap items-center gap-2 sm:gap-3">
-                                <h1 className="text-2xl font-bold text-foreground">
+                                <h1 className="text-xl font-bold break-words text-foreground sm:text-2xl">
                                     {project.name}
                                 </h1>
                                 {project.isPrivate && (
@@ -345,34 +345,34 @@ export default function ProjectDetail({
                     {/* Project Stats */}
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <User className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Client
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {project.partyName}
                                 </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <User className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Owner
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {project.ownerName}
                                 </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <Clock className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Hours
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {project.actualHours}
                                     {project.budgetHours &&
                                         ` / ${project.budgetHours}`}
@@ -382,24 +382,24 @@ export default function ProjectDetail({
                         </div>
                         {budgetDisplayValue && (
                             <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                                <DollarSign className="h-5 w-5 text-muted-foreground" />
-                                <div>
+                                <DollarSign className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                <div className="min-w-0">
                                     <div className="text-xs text-muted-foreground">
                                         Budget
                                     </div>
-                                    <div className="font-medium">
+                                    <div className="font-medium break-words">
                                         {budgetDisplayValue}
                                     </div>
                                 </div>
                             </div>
                         )}
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <Calendar className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <Calendar className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Target Date
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {project.targetEndDate
                                         ? new Date(
                                               project.targetEndDate,
@@ -457,7 +457,7 @@ export default function ProjectDetail({
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     {/* Team Members Section */}
                     <ProjectTeamSection
                         teamMembers={teamMembers}

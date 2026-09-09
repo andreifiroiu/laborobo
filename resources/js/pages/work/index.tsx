@@ -243,7 +243,7 @@ export default function Work({
                 <div className="flex-1 overflow-auto">
                     {/* Search Bar (for relevant views) */}
                     {view === 'all_projects' && (
-                        <div className="p-6 pb-0">
+                        <div className="p-4 pb-0 sm:p-6 sm:pb-0">
                             <div className="mb-6 flex items-center gap-4">
                                 <div className="relative flex-1">
                                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
@@ -263,7 +263,7 @@ export default function Work({
 
                     {/* All Projects View */}
                     {view === 'all_projects' && (
-                        <div className="px-6 pb-6">
+                        <div className="px-4 pb-4 sm:px-6 sm:pb-6">
                             <div className="overflow-hidden rounded-xl border border-border bg-card">
                                 <QuickAddBar onQuickAdd={handleQuickAdd} />
 
@@ -336,7 +336,7 @@ export default function Work({
 
                     {/* By Status (Kanban) View */}
                     {view === 'by_status' && (
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                             <KanbanView
                                 workOrders={workOrders}
                                 tasks={tasks}
@@ -349,7 +349,7 @@ export default function Work({
 
                     {/* Calendar View */}
                     {view === 'calendar' && (
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                             <CalendarView
                                 projects={projects}
                                 workOrders={workOrders}
@@ -359,7 +359,7 @@ export default function Work({
 
                     {/* Archive View */}
                     {view === 'archive' && (
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                             <ArchiveView
                                 projects={projects}
                                 workOrders={workOrders}

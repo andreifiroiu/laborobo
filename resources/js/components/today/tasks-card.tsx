@@ -39,7 +39,7 @@ export function TasksCard({ tasks, onViewTask }: TasksCardProps) {
 
     return (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <div className="border-b border-slate-200 p-6 dark:border-slate-800">
+            <div className="border-b border-slate-200 p-4 sm:p-6 dark:border-slate-800">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
                         <CheckSquare className="h-5 w-5" />

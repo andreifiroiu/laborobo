@@ -637,7 +637,7 @@ export default function TaskDetail({
             <div className="flex h-full flex-1 flex-col">
                 {/* Rejection Feedback Banner */}
                 {rejectionFeedback && (
-                    <div className="px-6 pt-6">
+                    <div className="px-4 pt-4 sm:px-6 sm:pt-6">
                         <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/50">
                             <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                             <AlertTitle className="text-orange-900 dark:text-orange-100">
@@ -671,7 +671,7 @@ export default function TaskDetail({
                         </Button>
                         <div className="min-w-0 flex-1">
                             <div className="mb-1 flex flex-wrap items-center gap-2 sm:gap-3">
-                                <h1 className="text-2xl font-bold text-foreground">
+                                <h1 className="text-xl font-bold break-words text-foreground sm:text-2xl">
                                     {task.title}
                                 </h1>
                                 <StatusBadge status={localStatus} type="task" />
@@ -808,15 +808,15 @@ export default function TaskDetail({
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
                             {task.assignedAgentId ? (
-                                <Bot className="h-5 w-5 text-muted-foreground" />
+                                <Bot className="h-5 w-5 shrink-0 text-muted-foreground" />
                             ) : (
-                                <User className="h-5 w-5 text-muted-foreground" />
+                                <User className="h-5 w-5 shrink-0 text-muted-foreground" />
                             )}
-                            <div>
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Assigned To
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {task.assignedAgentName ||
                                         task.assignedToName ||
                                         'Unassigned'}
@@ -824,34 +824,34 @@ export default function TaskDetail({
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <Clock className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Estimated
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {task.estimatedHours}h
                                 </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <Clock className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <Clock className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Logged
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {totalTimeLogged.toFixed(1)}h
                                 </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                            <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-                            <div>
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0">
                                 <div className="text-xs text-muted-foreground">
                                     Checklist
                                 </div>
-                                <div className="font-medium">
+                                <div className="font-medium break-words">
                                     {completedItems}/{totalItems}
                                 </div>
                             </div>
@@ -868,14 +868,14 @@ export default function TaskDetail({
                                 return (
                                     <>
                                         <Calendar
-                                            className={`h-5 w-5 ${taskIsOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
+                                            className={`h-5 w-5 shrink-0 ${taskIsOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
                                         />
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="text-xs text-muted-foreground">
                                                 Due Date
                                             </div>
                                             <div
-                                                className={`font-medium ${taskIsOverdue ? 'text-destructive' : ''}`}
+                                                className={`font-medium break-words ${taskIsOverdue ? 'text-destructive' : ''}`}
                                             >
                                                 {task.dueDate ? (
                                                     <>
@@ -898,7 +898,7 @@ export default function TaskDetail({
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto p-6">
+                <div className="flex-1 overflow-auto p-4 sm:p-6">
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3">
                         {/* Timer & Time Tracking */}
                         <div>

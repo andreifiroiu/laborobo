@@ -370,8 +370,8 @@ export function WorkOrderListSection({
 
     return (
         <div className="mb-8">
-            <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <h2 className="text-lg font-bold text-foreground">
                         Work Orders ({totalWorkOrders})
                     </h2>
@@ -389,7 +389,7 @@ export function WorkOrderListSection({
                         </label>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {hasDeliveredWOs && onBulkArchiveDelivered && (
                         <Button
                             variant="outline"
